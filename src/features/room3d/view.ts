@@ -1,10 +1,12 @@
 import {
   ACESFilmicToneMapping, AmbientLight, Box3, DirectionalLight, DoubleSide, Group, Mesh, PCFSoftShadowMap, PerspectiveCamera, Quaternion,
-  Raycaster, Scene, SRGBColorSpace, Vector2, Vector3, WebGLRenderer, type Material, type MeshStandardMaterial, type Object3D,
+  Raycaster, Scene, SRGBColorSpace, Vector2, Vector3, WebGLRenderer, type Material, type Object3D,
 } from 'three';
 import { CSS3DObject, CSS3DRenderer } from 'three/examples/jsm/renderers/CSS3DRenderer.js';
-import { COMPUTER_Z, DESK_TOP, GLASS, buildRoom, materialsOf, toolObject, type Room } from './room.ts';
+import { COMPUTER_Z, DESK_TOP, GLASS, buildRoom, toolObject, type Room } from './room.ts';
 import { cameraAt, type Pose } from './camera.ts';
+import { setLampOn } from './lamp.ts';
+import { setCoffee } from './mug.ts';
 
 export type Shot = 'overview' | 'wall' | 'computer';
 /** What the CRT shows. */
@@ -40,7 +42,6 @@ const v = {
   pointer: new Vector2(),
   drift: new Vector2(),
   hovered: undefined as string | undefined,
-  glow: new Map<string, MeshStandardMaterial[]>(),
   handlers: undefined as Handlers | undefined,
   tools: [] as string[],
   inspect: undefined as { renderer: WebGLRenderer; scene: Scene; camera: PerspectiveCamera; item: Group; aim: Quaternion; born: number } | undefined,
@@ -73,9 +74,7 @@ const moving = () => performance.now() - v.started < (v.reduced ? 0 : MOVE_MS);
 
 function setHover(id: string | undefined): void {
   if (id === v.hovered) return;
-  for (const m of v.glow.get(v.hovered ?? '') ?? []) m.emissiveIntensity = 0;
   v.hovered = id;
-  for (const m of v.glow.get(id ?? '') ?? []) { m.emissive.set('#ffcf8a'); m.emissiveIntensity = 0.18; }
   if (v.renderer) v.renderer.domElement.style.cursor = id ? 'pointer' : '';
   v.handlers?.hover(id);
 }
@@ -94,10 +93,24 @@ function resize(): void {
   }
 }
 
+/** Small one-off movements in the room (a chair turning, leaves swaying), each given how far through it is, 0 to 1. */
+const moves = new Set<{ start: number; ms: number; step: (k: number) => void }>();
+
+function play(ms: number, step: (k: number) => void): void {
+  if (v.reduced) { step(1); return; }
+  moves.add({ start: performance.now(), ms, step });
+}
+
 function frame(): void {
   requestAnimationFrame(frame);
   const r = v.renderer;
   if (!r || !v.room || r.domElement.hidden) return;
+  const now = performance.now();
+  for (const m of moves) {
+    const k = Math.min(1, (now - m.start) / m.ms);
+    m.step(k);
+    if (k === 1) moves.delete(m);
+  }
   // Ease the drift towards the pointer, then place the camera along its current move.
   v.drift.lerp(v.pointer, 0.05);
   const t = v.reduced ? 1 : Math.min(1, (performance.now() - v.started) / MOVE_MS);
@@ -145,7 +158,6 @@ export async function mountRoom(handlers: Handlers): Promise<void> {
   v.room.glass.getWorldPosition(onGlass.position);
   onGlass.scale.setScalar(GLASS.w / SCREEN_PX.w);
   v.cssScene.add(onGlass);
-  for (const [id, object] of v.room.pickables) if (id !== 'wall') v.glow.set(id, materialsOf(object));
   setTools(v.tools);
   resize();
   addEventListener('resize', resize);
@@ -211,6 +223,55 @@ export function pressMouse(): void {
   setTimeout(() => { button.position.y = 0; }, 140);
 }
 
+/** Give Sam's chair a push: the seat swings round a bit, overshoots, and settles. */
+export function spinChair(): void {
+  const swivel = v.room?.pickables.get('chair')?.getObjectByName('swivel');
+  if (!swivel) return;
+  const from = swivel.rotation.y;
+  const by = (Math.random() < 0.5 ? -1 : 1) * (0.5 + Math.random() * 0.5);
+  // Out a little past where it ends up, then back: the overshoot of a real swivel chair.
+  const overshoot = (k: number) => 1 + 2.7 * (k - 1) ** 3 + 1.7 * (k - 1) ** 2;
+  play(1200, (k) => { swivel.rotation.y = from + by * overshoot(k); });
+}
+
+/** Brush the plant: it sways and settles, and each leaf bobs a little on its own. */
+export function swayPlant(): void {
+  const foliage = v.room?.pickables.get('plant')?.getObjectByName('foliage');
+  if (!foliage) return;
+  const leaves = foliage.children.filter((o) => o.name === 'leaf');
+  play(2600, (k) => {
+    const t = k * 2.6;
+    const fade = Math.exp(-t * 1.5) * (1 - k);
+    foliage.rotation.z = 0.07 * fade * Math.sin(t * 8);
+    foliage.rotation.x = 0.04 * fade * Math.sin(t * 6 + 1);
+    leaves.forEach((leaf, i) => { leaf.rotation.x = Number(leaf.userData.rest) + 0.18 * fade * Math.sin(t * 11 + i); });
+  });
+}
+
+/** Pick the mug up for a sip and put it back down. */
+export function sipMug(): void {
+  const cup = v.room?.pickables.get('mug');
+  if (!cup) return;
+  const rest = (cup.userData.rest ??= { y: cup.position.y, x: cup.rotation.x }) as { y: number; x: number };
+  play(1100, (k) => {
+    const s = Math.sin(k * Math.PI);
+    cup.position.y = rest.y + 0.07 * s;
+    cup.rotation.x = rest.x + 0.5 * s * s;
+  });
+}
+
+/** The desk lamp, on or off. */
+export function setLamp(on: boolean): void {
+  const lamp = v.room?.pickables.get('lamp');
+  if (lamp) setLampOn(lamp, on);
+}
+
+/** How much coffee is left in the mug, 0 to 1. */
+export function setMug(level: number): void {
+  const cup = v.room?.pickables.get('mug');
+  if (cup) setCoffee(cup, level);
+}
+
 /** Put loot in the ticket tray. */
 export function setTools(ids: string[]): void {
   v.tools = ids;
@@ -250,6 +311,9 @@ export function inspectItem(id: string): void {
     const own = (Array.isArray(o.material) ? o.material : [o.material]).map((m: Material) => { const c = m.clone(); c.side = DoubleSide; return c; });
     o.material = own.length === 1 ? own[0] : own;
   });
+  // Flat things, like a book lying on the desk, are held up to face you rather than shown edge-on.
+  const lying = new Box3().setFromObject(copy).getSize(new Vector3());
+  if (lying.y < 0.3 * Math.min(lying.x, lying.z)) copy.rotation.x = Math.PI / 2;
   // Centre it and scale it to fill the view, whatever its real size.
   const box = new Box3().setFromObject(copy);
   const size = box.getSize(new Vector3()).length() || 1;

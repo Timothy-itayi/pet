@@ -620,3 +620,63 @@ body.in-room #app .room-hud > * { pointer-events: auto; }
 @media (prefers-reduced-motion: reduce) {
   .crt-screen .login { animation: none; }
 }
+
+/* The paper runbook, opened: a two-page spread with the rings down the middle. Typed pages, your notes in pen. */
+.book {
+  position: fixed; inset: 0; z-index: 4; display: grid; place-content: center; justify-items: center; gap: 14px; padding: 16px;
+  background: #0b0806b3; pointer-events: auto;
+}
+/* Reading it, you see the pages, not the closed book still turning behind them. */
+body:has(.book) .inspect-canvas { visibility: hidden; }
+.spread {
+  position: relative; display: grid; grid-template-columns: 1fr 1fr; width: min(900px, 100%); min-height: min(560px, 72vh);
+  background: #e9e2cf; border-radius: 6px; box-shadow: 0 24px 60px #000a, inset 0 0 0 1px #c9bfa5;
+}
+/* The binding: a shadowed gutter with three rings across it. */
+.spread::before {
+  content: ''; position: absolute; left: 50%; top: 0; bottom: 0; width: 46px; transform: translateX(-50%);
+  background: linear-gradient(90deg, transparent, #0003 40%, #0004 50%, #0003 60%, transparent); pointer-events: none;
+}
+.spread::after {
+  content: ''; position: absolute; left: 50%; top: 14%; bottom: 14%; width: 30px; transform: translateX(-50%); pointer-events: none;
+  background:
+    radial-gradient(ellipse 15px 9px at 50% 6%, transparent 9px, #9da1a8 10px, #e3e6ea 12px, #8d9198 13px, transparent 14px),
+    radial-gradient(ellipse 15px 9px at 50% 50%, transparent 9px, #9da1a8 10px, #e3e6ea 12px, #8d9198 13px, transparent 14px),
+    radial-gradient(ellipse 15px 9px at 50% 94%, transparent 9px, #9da1a8 10px, #e3e6ea 12px, #8d9198 13px, transparent 14px);
+}
+.sheet {
+  position: relative; padding: 34px 40px 28px; color: #2b2925; overflow: hidden;
+  background: repeating-linear-gradient(#0000 0 27px, #9fb6d233 27px 28px) 0 64px / 100% calc(100% - 64px) no-repeat, #f1ebdb;
+  animation: page-in 0.25s ease-out;
+}
+.sheet:first-child { border-radius: 6px 0 0 6px; box-shadow: inset -10px 0 18px -12px #0005; }
+.sheet:last-child { border-radius: 0 6px 6px 0; box-shadow: inset 10px 0 18px -12px #0005; }
+@keyframes page-in { from { opacity: 0.4; } }
+.sheet .folio { margin: 0 0 18px; font: 11px 'Courier New', monospace; letter-spacing: 0.2em; color: #8a8273; }
+.sheet h3 { margin: 0 0 14px; }
+.sheet .typed { font: 15px/1.75 'Courier New', monospace; }
+.sheet h3.typed { font-weight: bold; font-size: 16px; letter-spacing: 0.04em; }
+.sheet .typed.outdated { background: radial-gradient(circle at 80% 70%, #8a5a2a22 0 38px, transparent 40px); }
+.sheet .typed.missing { color: #8a8273; font-style: italic; }
+.sheet .typed.struck { text-decoration: line-through; text-decoration-color: #2a4fa0aa; color: #6e675a; }
+.sheet .hand { font: 21px/1.5 'Bradley Hand', 'Segoe Print', 'Ink Free', 'Marker Felt', cursive; color: #1f3a8a; transform: rotate(-1deg); }
+.sheet .hand.initials { text-align: right; font-size: 17px; margin-top: 4px; }
+.sheet .hand.faint { color: #6e7a96; font-size: 18px; }
+/* A page that's been torn out: just a ragged stub along the binding. */
+.sheet .torn {
+  height: 90px; margin: 0 -40px 14px; background: #f1ebdb;
+  clip-path: polygon(0 0, 100% 0, 100% 30%, 92% 42%, 85% 33%, 74% 47%, 63% 36%, 52% 50%, 41% 38%, 30% 52%, 19% 40%, 8% 55%, 0 45%);
+  filter: drop-shadow(0 3px 2px #0003);
+}
+.sheet.cover { background: #e4dcc6; }
+.sheet .contents { list-style: none; padding: 0; margin: 0; font-size: 13px; }
+.sheet .contents li { display: flex; justify-content: space-between; gap: 8px; border-bottom: 1px dotted #b9ae94; }
+.book-nav { display: flex; gap: 10px; align-items: center; justify-content: center; color: var(--paper); font-family: var(--pixel); }
+@media (max-width: 640px) {
+  .spread { grid-template-columns: 1fr; }
+  .spread::before, .spread::after { display: none; }
+  .sheet { padding: 24px 22px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sheet { animation: none; }
+}

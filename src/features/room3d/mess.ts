@@ -1,5 +1,5 @@
 import {
-  BoxGeometry, CanvasTexture, CatmullRomCurve3, Color, CylinderGeometry, Group, IcosahedronGeometry, Mesh, MeshStandardMaterial,
+  BoxGeometry, CanvasTexture, CatmullRomCurve3, Color, CylinderGeometry, Group, Mesh, MeshStandardMaterial,
   PlaneGeometry, SRGBColorSpace, TubeGeometry, Vector3, type Object3D,
 } from 'three';
 
@@ -90,18 +90,17 @@ function paper(w: number, d: number, color = '#f1ece0'): Mesh {
   return cast(new Mesh(new BoxGeometry(w, 0.002, d), solid(color, 1)));
 }
 
-function crumpled(size: number): Mesh {
-  const m = cast(new Mesh(new IcosahedronGeometry(size, 0), solid('#ece6d6', 1)));
-  m.rotation.set(1.1, 0.4, 2.3);
-  return m;
-}
-
 function pen(length: number, color: string): Group {
   const g = new Group();
-  const body = cast(new Mesh(new CylinderGeometry(0.004, 0.004, length, 8), solid(color, 0.5)));
-  const cap = cast(new Mesh(new CylinderGeometry(0.0045, 0.0045, length * 0.25, 8), solid('#1f1712', 0.5)));
+  const body = cast(new Mesh(new CylinderGeometry(0.004, 0.004, length, 24), solid(color, 0.5)));
+  const cap = cast(new Mesh(new CylinderGeometry(0.0045, 0.0045, length * 0.25, 24), solid('#1f1712', 0.5)));
   cap.position.y = length * 0.4;
-  g.add(body, cap);
+  // The clip on the cap, and the writing tip.
+  const clip = cast(new Mesh(new BoxGeometry(0.0015, length * 0.2, 0.003), solid('#b9bcc2', 0.3)));
+  clip.position.set(0.005, length * 0.4, 0);
+  const tip = cast(new Mesh(new CylinderGeometry(0.0008, 0.004, 0.012, 24), solid('#c9ccd1', 0.3)));
+  tip.position.y = -length / 2 - 0.006;
+  g.add(body, cap, clip, tip);
   g.rotation.z = Math.PI / 2;
   return g;
 }
@@ -109,7 +108,7 @@ function pen(length: number, color: string): Group {
 /** A tangle of cable from one point to another, sagging along the way. */
 function cable(points: [number, number, number][], radius = 0.006, color = '#14100c'): Mesh {
   const curve = new CatmullRomCurve3(points.map((p) => new Vector3(...p)));
-  return cast(new Mesh(new TubeGeometry(curve, 48, radius, 6, false), solid(color, 0.6)));
+  return cast(new Mesh(new TubeGeometry(curve, 144, radius, 16, false), solid(color, 0.6)));
 }
 
 function takeawayMenu(): Mesh {
@@ -162,7 +161,7 @@ export function mess(top: number, wallZ: number): Object3D {
   wear.position.set(-0.01, top + 0.001, -0.38);
   g.add(wear);
 
-  // Papers: a pile by the keyboard, one sliding off the edge, a couple crumpled.
+  // Papers: a pile by the lamp. Everything Sam screwed up is in the bin.
   const pile = new Group();
   for (const [i, turn] of [0.1, -0.15, 0.35, -0.05].entries()) {
     const sheet = paper(0.21, 0.29, i === 2 ? '#f7e27a' : '#f1ece0');
@@ -171,16 +170,7 @@ export function mess(top: number, wallZ: number): Object3D {
     pile.add(sheet);
   }
   pile.position.set(-0.62, top + 0.002, -0.14);
-  const sliding = paper(0.21, 0.29);
-  sliding.position.set(0.66, top + 0.002, -0.06);
-  sliding.rotation.y = 0.5;
-  const ball1 = crumpled(0.03);
-  ball1.position.set(0.62, top + 0.025, 0.02);
-  const ball2 = crumpled(0.025);
-  ball2.position.set(-1.0, 0.025, 0.3);
-  const ball3 = crumpled(0.028);
-  ball3.position.set(-1.12, 0.45, -0.2); // missed the bin, landed on the rim
-  g.add(pile, sliding, ball1, ball2, ball3);
+  g.add(pile);
 
   // Pens that don't work, a chewed pencil, crumbs.
   const pen1 = pen(0.14, '#2f4c7c');
@@ -200,17 +190,11 @@ export function mess(top: number, wallZ: number): Object3D {
     g.add(crumb);
   }
 
-  // A takeaway menu half under the keyboard, and an old mug with a tea bag string hanging out.
+  // A takeaway menu half under the keyboard.
   const menu = takeawayMenu();
   menu.position.set(-0.34, top + 0.002, -0.17);
   menu.rotation.y = -0.6;
-  const oldMug = cast(new Mesh(new CylinderGeometry(0.036, 0.034, 0.09, 16), solid('#7a9bb5', 0.5)));
-  oldMug.position.set(-0.69, top + 0.045, -0.37);
-  const string = new Mesh(new BoxGeometry(0.001, 0.07, 0.001), solid('#efe9dc'));
-  string.position.set(-0.655, top + 0.06, -0.37);
-  const tag = new Mesh(new BoxGeometry(0.016, 0.02, 0.001), solid('#f2c94c'));
-  tag.position.set(-0.655, top + 0.025, -0.368);
-  g.add(menu, oldMug, string, tag);
+  g.add(menu);
 
   // Cables: from the computer down the back of the desk, and a loose one coiled on the floor.
   g.add(cable([[0.2, top + 0.05, -0.55], [0.35, top - 0.02, -0.7], [0.3, top - 0.35, -0.74], [0.3, 0.12, -0.6], [0.295, 0.064, -0.52]]));
@@ -251,7 +235,7 @@ export function mess(top: number, wallZ: number): Object3D {
   const lanyard = cable([[0.6, 1.42, wallZ + 0.02], [0.57, 1.25, wallZ + 0.03], [0.6, 1.17, wallZ + 0.03], [0.63, 1.25, wallZ + 0.03], [0.6, 1.42, wallZ + 0.02]], 0.004, '#c8453b');
   const badge = cast(new Mesh(new BoxGeometry(0.05, 0.07, 0.003), solid('#f4efe2')));
   badge.position.set(0.6, 1.14, wallZ + 0.035);
-  const tape = cast(new Mesh(new CylinderGeometry(0.035, 0.035, 0.02, 20), solid('#9a9a93', 0.6)));
+  const tape = cast(new Mesh(new CylinderGeometry(0.035, 0.035, 0.02, 48), solid('#9a9a93', 0.6)));
   tape.rotation.x = Math.PI / 2;
   tape.position.set(0.82, 1.4, wallZ + 0.03);
   g.add(p, lanyard, badge, tape);

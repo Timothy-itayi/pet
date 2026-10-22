@@ -17,6 +17,12 @@ export interface Ui {
   note?: string;
   /** An item you've picked up to look at. */
   inspecting?: string;
+  /** The runbook, open at this two-page spread, while you're holding it. */
+  book?: number;
+  /** The desk lamp is switched off. */
+  lampOff?: boolean;
+  /** Sips taken from Sam's mug (it's empty after SIPS.length). */
+  sips?: number;
   power: Power;
   /** When (performance.now()) you stepped away from the computer, to know if it has locked or gone to sleep. Cleared when you sit back down. */
   leftAt?: number;

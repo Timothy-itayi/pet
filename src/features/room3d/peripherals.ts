@@ -192,7 +192,7 @@ export function mouseMat(): Object3D {
 /** One beige cable lying on the desk and running to the back of the case. */
 export function lead(points: [number, number, number][], color = CABLE): Mesh {
   const curve = new CatmullRomCurve3(points.map((p) => new Vector3(...p)));
-  return cast(new Mesh(new TubeGeometry(curve, 96, CABLE_R, 6, false), solid(color, 0.6)));
+  return cast(new Mesh(new TubeGeometry(curve, 192, CABLE_R, 12, false), solid(color, 0.6)));
 }
 
 /** Where a cable lies on a surface at height y: just resting on it. */
