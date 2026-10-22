@@ -91,3 +91,20 @@ export interface DayScript {
   metGoal: string;
   missedGoal: string;
 }
+
+/**
+ * Loot: something left on your desk that gives you a faster fix for one kind of problem.
+ * It isn't in the runbook: after you first use it, you write its page.
+ */
+export interface Tool {
+  id: string;
+  /** Who leaves it. 'sam' means it was in Sam's bottom drawer: what you get with no friends. */
+  from: VillagerId | 'sam';
+  name: string;
+  /** The note it comes with, read on your desk the morning it arrives. */
+  gift: string;
+  issue: string;
+  fixLabel: string;
+  /** Choices for its runbook page after you first use it. Exactly one is right. */
+  notes: { text: string; right?: true }[];
+}

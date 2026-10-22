@@ -32,7 +32,9 @@ export const GRACE_AFTER_MISS = 30;
 /** Friends give you more time, nemeses less. */
 export const PATIENCE = { friend: 1.5, neutral: 1, nemesis: 0.7 } as const;
 /** Clock minutes each action takes. A fix is faster when your own note tells you what to do. */
-export const COST = { update: 2, fix: 15, knownFix: 5, wrongFix: 15, workaround: 10, push: 2, note: 3, walk: 1, askForTicket: 2 } as const;
+export const COST = { update: 2, fix: 15, knownFix: 5, toolFix: 5, wrongFix: 15, workaround: 10, push: 2, note: 3, walk: 1, askForTicket: 2 } as const;
+/** The one morning in week 1 when something turns up on your desk. Loot is rare. */
+export const DROP_DAY = 3;
 export const REPLIES = {
   first: 'Thanks, we\u2019ve got your ticket and we\u2019re on it.',
   update: 'Quick update: still working on this. Thanks for your patience.',
@@ -120,3 +122,4 @@ export const JOBS: Job[] = [
 
 
 export { ISSUES, TICKETS } from './tickets.ts';
+export { TOOLS } from './tools.ts';

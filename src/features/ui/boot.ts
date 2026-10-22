@@ -3,7 +3,8 @@ import { goTo, isWeekOver, newGame } from '../game/rules.ts';
 import type { App } from './app.ts';
 import { h } from './dom.ts';
 import { panel } from './panels.ts';
-import { H, HOTSPOTS, W, drawDesk } from '../room/scene.ts';
+import { H, HOTSPOTS, TOOL_SPOT, W, drawDesk } from '../room/scene.ts';
+import { TOOLS } from '../game/data.ts';
 
 const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
@@ -40,24 +41,29 @@ const SAYS: Record<string, (day: number) => string> = {
 
 /** Morning at the desk you inherited: Sam's leftovers, empty spaces, and a computer that takes a while to wake up. */
 function deskScene(app: App, turnOn: () => void): HTMLElement {
+  const tool = TOOLS.find((t) => app.state.tools.includes(t.id));
+  const dropped = TOOLS.find((t) => t.id === app.state.drop);
   const caption = h('p', { class: 'caption', 'aria-live': 'polite', 'data-testid': 'caption' },
-    app.state.day === 1 ? 'Your first day. This was Sam\u2019s desk.' : 'Back at your desk. Well, Sam\u2019s desk.');
+    dropped ? `Something new on your desk. ${dropped.gift}`
+      : app.state.day === 1 ? 'Your first day. This was Sam\u2019s desk.' : 'Back at your desk. Well, Sam\u2019s desk.');
   const canvas = document.createElement('canvas');
   canvas.width = W;
   canvas.height = H;
   canvas.className = 'desk-canvas';
   canvas.setAttribute('aria-hidden', 'true');
   const ctx = canvas.getContext('2d');
-  if (ctx) drawDesk(ctx);
+  if (ctx) drawDesk(ctx, app.state.tools);
   const pct = (n: number, of: number) => `${(n / of) * 100}%`;
+  const spots = tool ? [...HOTSPOTS, { id: 'item-tool', label: tool.name, ...TOOL_SPOT }] : HOTSPOTS;
   const act = (id: string) => () => {
     if (id === 'turn-on') return turnOn();
+    if (id === 'item-tool' && tool) { caption.textContent = `${tool.name}. ${tool.gift}`; return; }
     if (id === 'item-runbook') { app.ui.panel = 'runbook'; app.rerender(); return; }
     caption.textContent = SAYS[id]?.(app.state.day) ?? '';
   };
-  return h('main', { class: 'screen room', 'data-testid': 'room' },
+  return h('main', { class: `screen room${dropped ? ' new-drop' : ''}`, 'data-testid': 'room' },
     h('div', { class: 'desk-art' }, canvas,
-      ...HOTSPOTS.map((spot) => h('button', {
+      ...spots.map((spot) => h('button', {
         class: 'hotspot', 'data-testid': spot.id, 'aria-label': spot.label, title: spot.label,
         style: `left:${pct(spot.x, W)};top:${pct(spot.y, H)};width:${pct(spot.w, W)};height:${pct(spot.h, H)}`,
         onclick: act(spot.id),

@@ -166,7 +166,37 @@ export const SLOTS = {
   pegboard: { x: 14, y: 50, w: 70, h: 36 },
 } as const;
 
-export function drawDesk(ctx: Ctx): void {
+/** Where a new tool sits: in the ticket tray, where whoever left it put it. */
+export const TOOL_SPOT = { x: 202, y: 96, w: 34, h: 24 };
+
+/** Each tool as a little pixel drawing, sitting in the tray. */
+const TOOL_ART: Record<string, (ctx: Ctx, x: number, y: number) => void> = {
+  tweezers: (ctx, x, y) => { for (let i = 0; i < 12; i++) { rect(ctx, x + 6 + i, y + 12 - i / 2, 1, 1, '#c9c9c9'); rect(ctx, x + 6 + i, y + 14 - i / 3, 1, 1, '#9a9a9a'); } },
+  'wifi-card': (ctx, x, y) => {
+    rect(ctx, x + 8, y + 4, 14, 11, '#fff');
+    for (const [a, b] of [[9, 5], [12, 5], [15, 8], [10, 10], [17, 11], [19, 6]] as const) rect(ctx, x + a, y + b, 2, 2, '#1f1712');
+  },
+  'hdmi-labels': (ctx, x, y) => {
+    rect(ctx, x + 6, y + 10, 18, 2, '#1f1712'); rect(ctx, x + 8, y + 13, 16, 2, '#1f1712');
+    rect(ctx, x + 6, y + 8, 4, 3, '#f2b8c6'); rect(ctx, x + 20, y + 12, 4, 3, '#f7e27a');
+  },
+  'cable-tester': (ctx, x, y) => {
+    rect(ctx, x + 10, y + 5, 12, 10, '#f2c94c'); rect(ctx, x + 10, y + 5, 12, 1, '#fff3a8');
+    for (const [a, c] of [[12, '#7fdc7f'], [15, '#7fdc7f'], [18, '#c8453b']] as const) rect(ctx, x + a, y + 8, 2, 2, c);
+  },
+  'restart-stickers': (ctx, x, y) => { rect(ctx, x + 9, y + 6, 12, 9, '#c8453b'); rect(ctx, x + 11, y + 8, 8, 1, '#fff'); rect(ctx, x + 11, y + 11, 6, 1, '#fff'); },
+  batteries: (ctx, x, y) => {
+    rect(ctx, x + 10, y + 2, 12, 14, '#cfe6f555'); rect(ctx, x + 10, y + 2, 12, 2, '#9a9a9a');
+    for (const [a, c] of [[11, '#c8453b'], [14, '#3b2f2a'], [17, '#c8453b'], [20, '#3b2f2a']] as const) rect(ctx, x + a, y + 7, 2, 8, c);
+  },
+  'cheat-sheet': (ctx, x, y) => {
+    rect(ctx, x + 8, y + 5, 16, 11, '#f4efe2');
+    for (const row of [7, 9, 11, 13]) rect(ctx, x + 10, y + row, 11, 1, '#3b2f2a88');
+    rect(ctx, x + 8, y + 5, 16, 1, '#cfc6b2');
+  },
+};
+
+export function drawDesk(ctx: Ctx, tools: readonly string[] = []): void {
   ctx.imageSmoothingEnabled = false;
   wall(ctx);
   shelves(ctx);
@@ -179,6 +209,7 @@ export function drawDesk(ctx: Ctx): void {
   underDesk(ctx);
   cables(ctx);
   chair(ctx);
+  for (const id of tools) TOOL_ART[id]?.(ctx, TOOL_SPOT.x, TOOL_SPOT.y);
   light(ctx);
 }
 

@@ -1,7 +1,7 @@
 import { MAX_PUSHES, VILLAGERS, WAIT_MINUTES, WORKAROUND_RETURNS_AFTER } from '../game/data.ts';
 import {
-  askForTicket, canPush, canWorkaround, fix, goTo, isKnown, issueOf, minutesLeft, moodName, next, pushBack, relation,
-  reply, scriptFor, ticketById, ticketState, wait, walk, workaround, writeNote, type GameState, type Outcome, type Status,
+  askForTicket, canPush, canWorkaround, fix, goTo, isKnown, issueOf, minutesLeft, moodName, next, noteTarget, pushBack, relation,
+  reply, scriptFor, ticketById, ticketState, toolFor, wait, walk, workaround, writeNote, type GameState, type Outcome, type Status,
 } from '../game/rules.ts';
 import type { Ticket } from '../game/types.ts';
 import { worldMap } from '../floor/world.ts';
@@ -93,6 +93,7 @@ export function ticketView(app: App, t: Ticket): HTMLElement {
   const issue = issueOf(t);
   const bond = relation(state, t.who);
   const known = isKnown(state, t);
+  const tool = toolFor(state, t);
   const [first, ...later] = st.messages;
   /** Someone who caught you on the floor with no ticket. */
   const onFloor = state.floor.includes(t.id);
@@ -138,6 +139,8 @@ export function ticketView(app: App, t: Ticket): HTMLElement {
         st.status === 'new' ? 'Send first reply' : 'Send an update'),
       h('div', { class: 'fixes', role: 'group', 'aria-labelledby': 'fix-heading' },
         h('h3', { id: 'fix-heading', class: 'small-heading' }, 'Fix it'),
+        tool && h('button', { class: 'btn fix from-tool', 'data-testid': 'fix-tool', onclick: () => app.set(fix(state, t.id, 'tool')) },
+          tool.fixLabel, h('span', { class: 'from-note-tag' }, state.runbook[`tool:${tool.id}`] === 'yours' ? tool.name : `${tool.name}: not in the runbook yet`)),
         ...fixes.map((f) => h('button', {
           class: `btn fix${known && f.id === issue.correctFix ? ' from-note' : ''}`, 'data-testid': `fix-${f.id}`,
           onclick: () => app.set(fix(state, t.id, f.id)),
@@ -171,17 +174,22 @@ function outcomeCard(app: App, o: Outcome): HTMLElement {
     asked: `${v.name} rolls their eyes and heads back to their desk to fill one in. It\u2019ll land in your queue soon, a bit grumpier, and this time Mr. Grisby will count it.`,
     storm: `${v.name} has had enough and goes straight to Mr. Grisby to complain. No experience, and it’s on your day report. Send updates so people know you haven’t forgotten them.`,
   }[o.kind];
-  const canNote = o.kind === 'fix' && !o.noted && state.runbook[issue.id] !== 'yours';
+  const target = noteTarget(state, o);
+  const canNote = Boolean(target);
   return h('div', { class: 'overlay' },
     h('section', { class: `outcome ${o.kind}`, role: 'dialog', 'aria-labelledby': 'outcome-title', 'data-testid': 'outcome' },
       h('h2', { id: 'outcome-title' }, headline),
       o.xp > 0 && h('p', { class: 'xp' }, `+${o.xp} ${SKILL_NAMES[issue.skill]} XP`),
       h('p', {}, body),
       uncounted && h('p', { class: 'meta', 'data-testid': 'uncounted' }, `No ticket, so Mr. Grisby won\u2019t count this one. ${v.name} will remember, though.`),
-      canNote && h('div', { class: 'note-pick', role: 'group', 'aria-labelledby': 'note-heading' },
-        h('h3', { id: 'note-heading' }, 'Internal note: what caused it?'),
-        h('p', { class: 'meta' }, 'Only you see this. The right note becomes your runbook page, so next time it’s a known issue.'),
-        ...issue.notes.map((n, i) => h('button', {
+      target && h('div', { class: 'note-pick', role: 'group', 'aria-labelledby': 'note-heading' },
+        o.tool
+          ? h('h3', { id: 'note-heading' }, `New runbook page: ${target.title}. What does it do?`)
+          : h('h3', { id: 'note-heading' }, 'Internal note: what caused it?'),
+        h('p', { class: 'meta' }, o.tool
+          ? 'It isn\u2019t in the runbook. Write it up so the next person knows.'
+          : 'Only you see this. The right note becomes your runbook page, so next time it\u2019s a known issue.'),
+        ...target.notes.map((n, i) => h('button', {
           class: `btn note${o.wrongNote === i ? ' wrong' : ''}`, 'data-testid': `note-${i}`, disabled: o.wrongNote === i,
           'data-autofocus': i === 0, onclick: () => app.set(writeNote(state, i)),
         }, n.text)),

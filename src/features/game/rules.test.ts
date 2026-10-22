@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { CLOSE, DAILY_COST, DAYS, GOAL_VOUCHER, REPLIES, START_SAVINGS } from './data.ts';
 import {
   acceptOffer, apply, arriveOnSite, askForTicket, clockTime, fix, goHome, goTo, issueOf, newGame, next, parseSave,
-  pushBack, relation, reply, tick, ticketById, ticketState, wait, walk, workaround, writeNote, type GameState,
+  noteTarget, pushBack, relation, reply, tick, ticketById, ticketState, wait, walk, workaround, writeNote, type GameState,
 } from './rules.ts';
 
 type Act = (s: GameState, id: string) => GameState;
@@ -35,7 +35,13 @@ function playDay(s: GameState, each: Act = solve): GameState {
   }
   return goHome(s);
 }
-const pushAll: Act = (s, id) => handle(s, id, pushBack);
+/** Set everything to pending; once that's used up, a workaround; once that's used up too, fix it. */
+const pushAll: Act = (s, id) => handle(s, id, (x, i) => {
+  const pushed = pushBack(x, i);
+  if (pushed !== x) return pushed;
+  const worked = workaround(x, i);
+  return worked !== x ? worked : fix(x, i, correct(i));
+});
 
 describe('the queue and the clock', () => {
   it('opens at 9am, and tickets arrive at their time without warning', () => {
@@ -202,6 +208,45 @@ describe('workarounds and pending', () => {
     expect(s.escort).toBe('t101');
     s = arriveOnSite(s);
     expect(pushBack(s, 't101')).toBe(s);
+  });
+});
+
+describe('the day-3 loot drop', () => {
+  /** Fix only these people's tickets; set everyone else's to pending. */
+  const onlyHelp = (...who: string[]): Act => (s, id) => (who.includes(ticketById(id).who) ? solve(s, id) : pushAll(s, id));
+  const toDay3 = (s: GameState, each: Act) => goTo(playDay(playDay(s, each), pushAll), 'desk');
+
+  it('with no friends, you find Sam\u2019s cheat sheet in the drawer', () => {
+    const s = toDay3(newGame(0), pushAll);
+    expect(s).toMatchObject({ tools: ['cheat-sheet'], drop: 'cheat-sheet' });
+    expect(s.runbook['tool:cheat-sheet']).toBe('missing');
+  });
+
+  it('comes from one of your friends, picked at random, and never from the manager', () => {
+    expect(toDay3(newGame(0), onlyHelp('dot')).tools).toEqual(['tweezers']);
+    expect(toDay3(newGame(0), onlyHelp('dot', 'juniper')).tools).toEqual(['tweezers']);
+    expect(toDay3(newGame(1), onlyHelp('dot', 'juniper')).tools).toEqual(['hdmi-labels']);
+    const grisbyOnly = { ...newGame(0), bonds: { ...newGame(0).bonds, grisby: 3 } };
+    expect(toDay3(grisbyOnly, pushAll).tools).toEqual(['cheat-sheet']);
+  });
+
+  it('is only a one-off: nothing new turns up the next day', () => {
+    const s = goTo(playDay(toDay3(newGame(0), pushAll), pushAll), 'desk');
+    expect(s).toMatchObject({ day: 4, tools: ['cheat-sheet'], drop: undefined });
+  });
+
+  it('gives a faster fix that isn\u2019t in the runbook, until you write its page', () => {
+    let s: GameState = { ...atDesk(), tools: ['tweezers'], runbook: { ...atDesk().runbook, 'tool:tweezers': 'missing' } };
+    s = arriveOnSite(until(s, '9:05'));
+    const before = s.clock;
+    s = fix(s, 't101', 'tool');
+    expect(s.clock - before).toBe(5);
+    const card = s.outcomes[0];
+    expect(card?.tool).toBe('tweezers');
+    expect(card && noteTarget(s, card)?.title).toMatch(/tweezers/);
+    s = writeNote(s, 0);
+    expect(s.runbook['tool:tweezers']).toBe('yours');
+    expect(s.runbook['paper-jam']).toBe('ok'); // one note per fix
   });
 });
 
