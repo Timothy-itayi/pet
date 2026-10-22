@@ -1,15 +1,15 @@
-import { MAX_PUSHES, VILLAGERS, WORKAROUND_RETURNS_AFTER } from '../game/data.ts';
+import { MAX_PUSHES, VILLAGERS, WAIT_MINUTES, WORKAROUND_RETURNS_AFTER } from '../game/data.ts';
 import {
-  canClockOut, canPush, canWorkaround, clockOut, fix, goTo, isKnown, issueOf, minutesLeft, moodName, next, pushBack,
-  relation, reply, scriptFor, ticketById, ticketState, workaround, writeNote, type GameState, type Outcome, type Status,
+  askForTicket, canPush, canWorkaround, fix, goTo, isKnown, issueOf, minutesLeft, moodName, next, pushBack, relation,
+  reply, scriptFor, ticketById, ticketState, wait, walk, workaround, writeNote, type GameState, type Outcome, type Status,
 } from '../game/rules.ts';
-import type { Ticket } from '../game/types.ts';
+import { AREAS, type Ticket } from '../game/types.ts';
 import { face } from '../art/sprites.ts';
 import type { App } from './app.ts';
 import { clockText, h, money } from './dom.ts';
 import { panel, SKILL_NAMES } from './panels.ts';
 
-const STATUS: Record<Status, string> = { new: 'New', open: 'Open', pending: 'Pending', resolved: 'Resolved' };
+const STATUS: Record<Status, string> = { new: 'New', open: 'Open', pending: 'Pending', resolved: 'Resolved', gone: 'Gave up' };
 const PRIORITY = { low: 'Low priority', normal: 'Normal priority', high: 'High priority' } as const;
 
 /** "Reply by 10:50 (8 min)" or "Overdue": the countdown that drives everyone's mood. */
@@ -38,7 +38,11 @@ function statusBar(app: App): HTMLElement {
     h('span', { class: 'clock', 'data-clock': true, 'data-testid': 'clock' }, clockText(state.clock)),
     h('button', { class: 'btn small', 'data-testid': 'pause', 'aria-pressed': ui.paused ? 'true' : 'false', onclick: toggle },
       ui.paused ? 'Resume' : 'Pause'),
-    h('span', { 'data-testid': 'goal' }, `Resolved ${state.today.resolved}/${scriptFor(state.day).goal}`),
+    h('span', { 'data-testid': 'goal' }, `Tickets resolved ${state.today.resolved}/${scriptFor(state.day).goal}`),
+    h('button', {
+      class: 'btn small walk', 'data-testid': 'walk',
+      onclick: () => app.set(walk(state, state.place === 'computer' ? 'floor' : 'computer')),
+    }, state.place === 'computer' ? 'Walk the office floor' : 'Back to my desk'),
     h('span', {}, `Savings ${money(state.savings)}`),
     h('button', { class: 'btn small', onclick: () => { app.ui.panel = 'runbook'; app.rerender(); } }, 'Runbook'),
     h('button', { class: 'btn small', onclick: () => app.set(goTo(state, 'desktop')) }, 'Computer'),
@@ -47,7 +51,6 @@ function statusBar(app: App): HTMLElement {
 
 function queueList(app: App, selected: string | undefined): HTMLElement {
   const { state } = app;
-  const nextAt = state.arriving[0]?.at;
   return h('nav', { class: 'queue', 'aria-label': 'Ticket queue' },
     h('h2', { class: 'small-heading' }, `Queue (${state.queue.length})`),
     ...state.queue.map((id) => {
@@ -66,11 +69,34 @@ function queueList(app: App, selected: string | undefined): HTMLElement {
           h('span', { class: `due${urgent(state, id) ? ' urgent' : ''}`, 'data-due': id }, dueText(state, id))));
     }),
     !state.queue.length && h('div', { class: 'queue-empty' },
-      h('p', {}, 'Nobody’s waiting. The printer hums ominously.'),
-      nextAt !== undefined && h('p', {}, `Next ticket around ${clockText(nextAt)}.`),
-      canClockOut(state) && h('button', {
-        class: 'btn primary', 'data-testid': 'clock-out', 'data-autofocus': true, onclick: () => app.set(clockOut(state)),
-      }, 'Clock out early')),
+      h('p', {}, 'Nothing in your queue right now. The printer hums ominously.'),
+      h('button', { class: 'btn', 'data-testid': 'wait', onclick: () => app.set(wait(state)) }, `Wait ${WAIT_MINUTES} minutes`)),
+  );
+}
+
+/** The office floor: whoever is flagging you down, by where they are. You only find out by walking over. */
+function floorList(app: App, selected: string | undefined): HTMLElement {
+  const { state } = app;
+  return h('nav', { class: 'queue floor', 'aria-label': 'Office floor' },
+    h('h2', { class: 'small-heading' }, 'Around the office'),
+    ...AREAS.map((area) => {
+      const here = state.floor.filter((id) => ticketById(id).where === area);
+      return h('section', { class: 'area', 'aria-label': area },
+        h('h3', { class: 'area-name' }, area),
+        ...here.map((id) => {
+          const t = ticketById(id);
+          const v = VILLAGERS[t.who];
+          const st = ticketState(state, id);
+          return h('button', {
+            class: `queue-item${id === selected ? ' selected' : ''}`, 'data-testid': `floor-${id}`,
+            'aria-current': id === selected ? 'true' : false,
+            onclick: () => { app.ui.selected = id; app.rerender(); },
+          },
+            h('img', { class: 'sprite tiny', src: face(v, st.mood), alt: '' }),
+            h('span', { class: 'queue-text' }, h('strong', {}, v.name), h('span', {}, t.title)));
+        }),
+        !here.length && h('p', { class: 'area-empty' }, 'Nobody needs you here.'));
+    }),
   );
 }
 
@@ -92,6 +118,7 @@ function ticketView(app: App, t: Ticket): HTMLElement {
   const bond = relation(state, t.who);
   const known = isKnown(state, t);
   const [first, ...later] = st.messages;
+  const onFloor = state.place === 'floor';
   // Alphabetical, so the right answer isn't always in the same spot.
   const fixes = issue.fixes.filter((f) => !st.tried.includes(f.id)).sort((a, b) => a.label.localeCompare(b.label));
   const choice = (props: Record<string, string | boolean | (() => void)>, title: string, detail: string) =>
@@ -102,8 +129,9 @@ function ticketView(app: App, t: Ticket): HTMLElement {
     h('header', { class: 'ticket-head' },
       h('div', {},
         h('h2', {}, t.title),
-        h('p', { class: 'meta' }, `${t.via === 'walkup' ? 'Walked up to your desk' : 'From the tray'}. ${PRIORITY[t.priority]}.`)),
-      h('span', { class: `status-pill ${st.status}`, 'data-testid': 'status' }, STATUS[st.status])),
+        h('p', { class: 'meta' }, onFloor ? `Caught you in the ${t.where?.toLowerCase() ?? 'office'}. No ticket.`
+          : `${t.via === 'walkup' ? 'Walked up to your desk' : t.via === 'floor' ? 'Submitted after you asked' : 'From the tray'}. ${PRIORITY[t.priority]}.`)),
+      !onFloor && h('span', { class: `status-pill ${st.status}`, 'data-testid': 'status' }, STATUS[st.status])),
     h('div', { class: 'who' },
       h('img', { class: 'sprite', src: face(v, st.mood), alt: `${v.name} the ${v.species}, looking ${moodName(st.mood).toLowerCase()}` }),
       h('div', {},
@@ -111,7 +139,9 @@ function ticketView(app: App, t: Ticket): HTMLElement {
         h('div', { class: 'badges' },
           h('span', { class: `mood mood-${st.mood}`, 'data-testid': 'mood' }, moodName(st.mood)),
           bond !== 'neutral' && h('span', { class: `bond ${bond}`, 'data-testid': 'bond' }, bond === 'friend' ? '♥ Friend' : 'Nemesis')),
-        h('p', { class: `due${urgent(state, t.id) ? ' urgent' : ''}`, 'data-due': t.id, 'data-testid': 'due' }, dueText(state, t.id)))),
+        onFloor
+          ? h('p', { class: 'due' }, 'Waiting for help. No ticket, so no reply-by time: just their patience.')
+          : h('p', { class: `due${urgent(state, t.id) ? ' urgent' : ''}`, 'data-due': t.id, 'data-testid': 'due' }, dueText(state, t.id)))),
     first && h('p', { class: 'opening msg them', 'data-testid': 'opening' },
       h('span', { class: 'msg-meta' }, `${v.name}, ${clockText(first.at)}`), h('span', {}, first.text)),
     t.details.length > 0 && h('dl', { class: 'details', 'data-testid': 'details' }, ...t.details.flatMap((d) => [h('dt', {}, d.label), h('dd', {}, d.text)])),
@@ -124,7 +154,7 @@ function ticketView(app: App, t: Ticket): HTMLElement {
     ),
     h('section', { class: 'decide', 'aria-label': 'What do you do?' },
       state.notice?.ticketId === t.id && h('p', { class: 'notice', role: 'alert', 'data-testid': 'notice' }, state.notice.text),
-      h('button', { class: 'btn primary send', 'data-testid': 'reply', 'data-autofocus': true, onclick: () => app.set(reply(state, t.id)) },
+      !onFloor && h('button', { class: 'btn primary send', 'data-testid': 'reply', 'data-autofocus': true, onclick: () => app.set(reply(state, t.id)) },
         st.status === 'new' ? 'Send first reply' : 'Send an update'),
       h('div', { class: 'fixes', role: 'group', 'aria-labelledby': 'fix-heading' },
         h('h3', { id: 'fix-heading', class: 'small-heading' }, 'Fix it'),
@@ -132,7 +162,9 @@ function ticketView(app: App, t: Ticket): HTMLElement {
           class: `btn fix${known && f.id === issue.correctFix ? ' from-note' : ''}`, 'data-testid': `fix-${f.id}`,
           onclick: () => app.set(fix(state, t.id, f.id)),
         }, f.label, known && f.id === issue.correctFix && h('span', { class: 'from-note-tag' }, 'Your note says this')))),
-      h('div', { class: 'row' },
+      onFloor && choice({ 'data-testid': 'ask-ticket', onclick: () => app.set(askForTicket(state, t.id)) },
+        'Ask them to submit a ticket', 'They\u2019ll be annoyed, but then it counts'),
+      !onFloor && h('div', { class: 'row' },
         choice({ 'data-testid': 'workaround', disabled: !canWorkaround(state, t.id), onclick: () => app.set(workaround(state, t.id)) },
           'Give them something', canWorkaround(state, t.id) ? t.workaround : 'They won’t take a workaround again'),
         choice({ 'data-testid': 'push', disabled: !canPush(state, t.id), onclick: () => app.set(pushBack(state, t.id)) },
@@ -147,11 +179,16 @@ function outcomeCard(app: App, o: Outcome): HTMLElement {
   const t = ticketById(o.ticketId);
   const v = VILLAGERS[t.who];
   const issue = issueOf(t);
-  const headline = { fix: 'Resolved!', workaround: 'Good enough for now', push: 'Set to pending', storm: `${v.name} storms off` }[o.kind];
+  const headline = {
+    fix: 'Resolved!', workaround: 'Good enough for now', push: 'Set to pending', storm: `${v.name} storms off`,
+    asked: 'Submit a ticket, please',
+  }[o.kind];
+  const uncounted = o.kind === 'fix' && t.via === 'floor' && !ticketState(state, t.id).logged;
   const body = {
     fix: issue.why,
     workaround: `${v.name} is happy for now. It’ll probably come back in ${WORKAROUND_RETURNS_AFTER} days. Fix it properly to learn what was really wrong.`,
     push: `${v.name} sighs and shuffles off. They’ll be back tomorrow, grumpier.`,
+    asked: `${v.name} rolls their eyes and heads back to their desk to fill one in. It\u2019ll land in your queue soon, a bit grumpier, and this time Mr. Grisby will count it.`,
     storm: `${v.name} has had enough and goes straight to Mr. Grisby to complain. No experience, and it’s on your day report. Send updates so people know you haven’t forgotten them.`,
   }[o.kind];
   const canNote = o.kind === 'fix' && !o.noted && state.runbook[issue.id] !== 'yours';
@@ -160,6 +197,7 @@ function outcomeCard(app: App, o: Outcome): HTMLElement {
       h('h2', { id: 'outcome-title' }, headline),
       o.xp > 0 && h('p', { class: 'xp' }, `+${o.xp} ${SKILL_NAMES[issue.skill]} XP`),
       h('p', {}, body),
+      uncounted && h('p', { class: 'meta', 'data-testid': 'uncounted' }, `No ticket, so Mr. Grisby won\u2019t count this one. ${v.name} will remember, though.`),
       canNote && h('div', { class: 'note-pick', role: 'group', 'aria-labelledby': 'note-heading' },
         h('h3', { id: 'note-heading' }, 'Internal note: what caused it?'),
         h('p', { class: 'meta' }, 'Only you see this. The right note becomes your runbook page, so next time it’s a known issue.'),
@@ -178,14 +216,17 @@ function outcomeCard(app: App, o: Outcome): HTMLElement {
 
 export function deskScreen(app: App): HTMLElement {
   const { state, ui } = app;
-  if (!ui.selected || !state.queue.includes(ui.selected)) ui.selected = state.queue[0];
+  const here = state.place === 'computer' ? state.queue : state.floor;
+  if (!ui.selected || !here.includes(ui.selected)) ui.selected = here[0];
   const t = ui.selected ? ticketById(ui.selected) : undefined;
   const outcome = state.outcomes[0];
   return h('main', { class: 'screen desk', 'data-testid': 'desk' },
     statusBar(app),
     h('div', { class: 'desk-body' },
-      queueList(app, ui.selected),
-      t ? ticketView(app, t) : h('section', { class: 'ticket-view empty-view' }, h('p', {}, 'Pick a ticket from the queue when one comes in.'))),
+      state.place === 'computer' ? queueList(app, ui.selected) : floorList(app, ui.selected),
+      t ? ticketView(app, t) : h('section', { class: 'ticket-view empty-view' }, h('p', {}, state.place === 'computer'
+        ? 'Your queue is empty. Check back soon, or walk the office floor.'
+        : 'Nobody is flagging you down right now.'))),
     ui.paused && !outcome && h('div', { class: 'overlay' },
       h('section', { class: 'outcome', role: 'dialog', 'aria-label': 'Paused', 'data-testid': 'paused' },
         h('h2', {}, 'Paused'),

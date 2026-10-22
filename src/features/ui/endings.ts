@@ -12,6 +12,8 @@ export function dayEndScreen(app: App): HTMLElement {
     h('h1', {}, `Day ${state.day} done`),
     h('dl', { class: 'summary' },
       h('dt', {}, 'Tickets resolved'), h('dd', {}, `${today.resolved} (goal ${script.goal})`),
+      h('dt', {}, 'Helped with no ticket (Grisby doesn\u2019t count these)'), h('dd', { 'data-testid': 'helped' }, today.helped),
+      h('dt', {}, 'Gave up waiting for you on the floor'), h('dd', { 'data-testid': 'gave-up' }, today.gaveUp),
       h('dt', {}, 'Set to pending'), h('dd', {}, today.pushed),
       h('dt', {}, 'Missed reply-by times'), h('dd', { 'data-testid': 'missed' }, today.missed),
       h('dt', {}, 'Fixes that didn’t work'), h('dd', {}, today.wrongFixes),

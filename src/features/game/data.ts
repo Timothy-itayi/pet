@@ -16,17 +16,23 @@ export const XP = { fix: 2, workaround: 1, note: 1 } as const;
 /** The office clock, in minutes since midnight. */
 export const OPEN = 9 * 60;
 export const CLOSE = 17 * 60;
-/** How fast the office clock runs: a full day takes about 5 real minutes. */
-export const GAME_MINUTES_PER_SECOND = 1.6;
+/** How fast the office clock runs: a full day takes about 10 real minutes. */
+export const GAME_MINUTES_PER_SECOND = 0.8;
 /** Minutes until someone expects a first reply. Walk-ups are standing right there. */
-export const REPLY_WITHIN = { walkup: 10, high: 20, normal: 40, low: 90 } as const;
+export const REPLY_WITHIN = { walkup: 15, high: 20, normal: 40, low: 90 } as const;
+/** How long someone on the office floor waits for you before giving up. */
+export const FLOOR_WAITS = 60;
+/** After you ask a floor request to submit a ticket, minutes until it lands in your queue. */
+export const TICKET_LANDS_AFTER = 30;
+/** "Wait" button when your queue is empty. */
+export const WAIT_MINUTES = 15;
 /** After a reply, minutes until they expect the next update; after a missed one, minutes of grace. */
 export const UPDATE_EVERY = 60;
 export const GRACE_AFTER_MISS = 30;
 /** Friends give you more time, nemeses less. */
 export const PATIENCE = { friend: 1.5, neutral: 1, nemesis: 0.7 } as const;
 /** Clock minutes each action takes. A fix is faster when your own note tells you what to do. */
-export const COST = { update: 2, fix: 15, knownFix: 5, wrongFix: 15, workaround: 10, push: 2, note: 3 } as const;
+export const COST = { update: 2, fix: 15, knownFix: 5, wrongFix: 15, workaround: 10, push: 2, note: 3, walk: 3, askForTicket: 2 } as const;
 export const REPLIES = {
   first: 'Thanks, we\u2019ve got your ticket and we\u2019re on it.',
   update: 'Quick update: still working on this. Thanks for your patience.',

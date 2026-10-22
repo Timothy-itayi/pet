@@ -24,6 +24,9 @@ export type Mood = 0 | 1 | 2 | 3;
 
 export type Priority = 'low' | 'normal' | 'high';
 
+export const AREAS = ['Kitchen', 'Meeting room', 'Finance corner', 'Corridor'] as const;
+export type Area = (typeof AREAS)[number];
+
 export interface Fix {
   id: string;
   label: string;
@@ -60,7 +63,10 @@ export interface Ticket {
   /** Arrival time on the office clock, e.g. '9:10'. */
   at: string;
   who: VillagerId;
-  via: 'tray' | 'walkup';
+  /** 'floor' means they catch you in the office with no ticket; you only see them if you walk the floor. */
+  via: 'tray' | 'walkup' | 'floor';
+  /** Where in the office a floor request waits. */
+  where?: Area;
   priority: Priority;
   issue: string;
   title: string;

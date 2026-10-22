@@ -115,17 +115,17 @@ export const ISSUES: Issue[] = [
     skill: 'devices',
     page: { status: 'missing', text: '(Coffee stain. Unreadable.)' },
     fixes: [
-      { id: 'input', label: 'Switch the monitor’s input to the port the cable is in' },
-      { id: 'replace', label: 'Swap in a different monitor', fail: 'Budget freeze. There is no different monitor.' },
+      { id: 'input', label: 'Switch the screen’s input to the port the cable is in' },
+      { id: 'replace', label: 'Swap in a different screen', fail: 'Budget freeze. There is no different screen.' },
       { id: 'driver', label: 'Update the graphics driver', fail: 'Updated. Still “No signal”.' },
     ],
     correctFix: 'input',
     notes: [
-      { text: '“No signal” = monitor looking at the wrong port. Switch input to match the cable.', right: true },
+      { text: '“No signal” = screen looking at the wrong port. Switch input to match the cable.', right: true },
       { text: 'Monitor broken.' },
       { text: 'Graphics driver out of date.' },
     ],
-    why: 'Monitors with several ports only show one at a time. “No signal” often means it’s looking at the wrong port, not that it’s broken.',
+    why: 'Screens and projectors with several ports only show one at a time. “No signal” often means it’s looking at the wrong port, not that it’s broken.',
   },
   {
     id: 'default-printer',
@@ -199,6 +199,42 @@ export const ISSUES: Issue[] = [
     ],
     why: 'Nothing was broken: the password had expired. People change their own passwords, so only they know them. The old runbook page had it backwards.',
   },
+  {
+    id: 'mouse-battery',
+    title: 'Mouse stopped working',
+    skill: 'devices',
+    page: { status: 'missing', text: '(Nobody ever wrote this one down.)' },
+    fixes: [
+      { id: 'battery', label: 'Swap the mouse’s batteries' },
+      { id: 'driver', label: 'Reinstall the mouse driver', fail: 'Driver reinstalled. The mouse is still dark.' },
+      { id: 'new', label: 'Order a new mouse', fail: 'Budget freeze. Not even a mouse. It was in the memo.' },
+    ],
+    correctFix: 'battery',
+    notes: [
+      { text: 'Wireless mouse dead = flat battery. Spare AAs in the kitchen drawer.', right: true },
+      { text: 'Mouse driver corrupted.' },
+      { text: 'Mouse broken. Needs replacing.' },
+    ],
+    why: 'Wireless mice and keyboards run on batteries. If the light is off, try fresh batteries before anything else.',
+  },
+  {
+    id: 'caps-lock',
+    title: 'Password suddenly “wrong”',
+    skill: 'access',
+    page: { status: 'missing', text: '(Torn out.)' },
+    fixes: [
+      { id: 'caps', label: 'Turn off Caps Lock and try again' },
+      { id: 'reset', label: 'Reset their password', fail: 'They now have a new password and still can’t type it. Caps Lock is on.' },
+      { id: 'unlock', label: 'Unlock their account', fail: 'It wasn’t locked. Yet. One more try and it will be.' },
+    ],
+    correctFix: 'caps',
+    notes: [
+      { text: '“Password wrong”: check Caps Lock before resetting anything.', right: true },
+      { text: 'Account locked. Unlocked it.' },
+      { text: 'Forgot password. Reset it.' },
+    ],
+    why: 'Passwords care about capital letters. Check Caps Lock first: it saves a reset, and too many wrong tries can lock the account.',
+  },
 ];
 
 export const TICKETS: Ticket[] = [
@@ -222,6 +258,16 @@ export const TICKETS: Ticket[] = [
       { label: 'Juniper’s laptop', text: 'Airplane mode: ON' },
     ],
     workaround: 'Let her use the hot-desk PC for now',
+  },
+  {
+    id: 'f101', day: 1, at: '11:30', who: 'biscuit', via: 'floor', where: 'Kitchen', priority: 'normal', issue: 'mouse-battery', mood: 0,
+    title: 'Mouse stopped working',
+    message: 'Oh! You’re here! Can you look at my mouse real quick? It just stopped.',
+    details: [
+      { label: 'Mouse', text: 'Wireless. The little light underneath is off.' },
+      { label: 'Kitchen drawer', text: 'A pack of AA batteries, next to the tea bags.' },
+    ],
+    workaround: '',
   },
   // Day 2
   {
@@ -253,6 +299,16 @@ export const TICKETS: Ticket[] = [
       { label: 'Tray 1', text: 'A crumpled sheet is wedged at the back.' },
     ],
     workaround: 'Print it on the upstairs printer',
+  },
+  {
+    id: 'f201', day: 2, at: '14:40', who: 'otis', via: 'floor', where: 'Meeting room', priority: 'normal', issue: 'monitor-input', mood: 1,
+    title: 'Projector shows nothing',
+    message: 'My meeting starts in five minutes and the projector just says no signal. Hoo.',
+    details: [
+      { label: 'Projector', text: 'No signal – HDMI 1' },
+      { label: 'Wall plate', text: 'His laptop cable is plugged into the socket marked HDMI 2.' },
+    ],
+    workaround: '',
   },
   // Day 3
   {
@@ -294,6 +350,16 @@ export const TICKETS: Ticket[] = [
     ],
     workaround: 'Let her read email on her phone for now',
   },
+  {
+    id: 'f301', day: 3, at: '10:40', who: 'marlo', via: 'floor', where: 'Corridor', priority: 'normal', issue: 'caps-lock', mood: 1,
+    title: 'Password stopped working',
+    message: 'You! Quick. My password stopped working. I haven’t changed it. I’ve typed it four times.',
+    details: [
+      { label: 'His keyboard', text: 'The Caps Lock light is on.' },
+      { label: 'Login screen', text: 'Password incorrect. 1 try left before your account is locked.' },
+    ],
+    workaround: '',
+  },
   // Day 4
   {
     id: 't401', day: 4, at: '9:20', who: 'biscuit', via: 'tray', priority: 'normal', issue: 'default-printer', mood: 1,
@@ -334,6 +400,15 @@ export const TICKETS: Ticket[] = [
     ],
     workaround: 'Close everything she isn’t using',
   },
+  {
+    id: 'f401', day: 4, at: '12:30', who: 'dot', via: 'floor', where: 'Finance corner', priority: 'normal', issue: 'paper-jam', mood: 1,
+    title: 'Finance printer stuck',
+    message: 'Since you’re walking past: the finance printer’s out of ink. Again. Probably.',
+    details: [
+      { label: 'Printer screen', text: 'PAPER JAM – TRAY 1. Ink: 81%' },
+    ],
+    workaround: '',
+  },
   // Day 5
   {
     id: 't501', day: 5, at: '9:10', who: 'pip', via: 'tray', priority: 'high', issue: 'cable-unplugged', mood: 2,
@@ -372,5 +447,15 @@ export const TICKETS: Ticket[] = [
       { label: 'Printer screen', text: 'PAPER JAM – TRAY 2. Ink: 64%' },
     ],
     workaround: 'Send it to the printer upstairs',
+  },
+  {
+    id: 'f501', day: 5, at: '10:30', who: 'juniper', via: 'floor', where: 'Meeting room', priority: 'normal', issue: 'monitor-input', mood: 2,
+    title: 'Meeting room screen is blank',
+    message: 'The big client is HERE and the screen is blank! Please please please.',
+    details: [
+      { label: 'Big screen', text: 'No signal – HDMI 2' },
+      { label: 'Wall plate', text: 'Her cable is plugged into the socket marked HDMI 1.' },
+    ],
+    workaround: '',
   },
 ];

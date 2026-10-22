@@ -267,3 +267,10 @@ img.sprite.tiny { width: 40px; height: 40px; }
 .bond.neutral { background: var(--paper); }
 .bonds { list-style: none; padding: 0; margin: 0 0 12px; display: grid; gap: 6px; }
 .bonds .bond { white-space: normal; border-radius: 10px; padding: 4px 12px; font-size: 1rem; }
+
+/* The office floor */
+.queue.floor { background: #e9e2cf; }
+.area { display: flex; flex-direction: column; gap: 6px; padding: 8px 0; border-top: 2px dashed #b9aa8c; }
+.area-name { font: 1rem var(--pixel); margin: 0; }
+.area-empty { margin: 0; color: var(--muted); font-size: 0.95rem; }
+.btn.walk { background: var(--manila); }
