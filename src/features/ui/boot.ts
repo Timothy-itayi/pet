@@ -3,6 +3,7 @@ import { goTo, isWeekOver, newGame } from '../game/rules.ts';
 import type { App } from './app.ts';
 import { h } from './dom.ts';
 import { panel } from './panels.ts';
+import { H, HOTSPOTS, W, drawDesk } from '../room/scene.ts';
 
 const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
@@ -24,31 +25,46 @@ const SAM_NOTE = [
   'Be nice to Dot. Good luck.',
 ];
 
-/** Things on the desk you inherited. Each one says something when you pick it up. */
-const ITEMS: { id: string; label: string; says: (day: number) => string }[] = [
-  { id: 'notes', label: 'Sticky notes', says: (day) => (day === 1 ? SAM_NOTE.join(' ') : `Sam’s notes, now with coffee rings. ${SAM_NOTE[3]}`) },
-  { id: 'tray', label: 'Ticket tray', says: () => 'The ticket tray. Empty for now. It won’t stay that way.' },
-  { id: 'mug', label: 'Mug', says: () => 'WORLD’S OKAYEST IT PERSON. Sam left it behind. It’s yours now.' },
-  { id: 'plant', label: 'Plant', says: () => 'A plant. Mostly alive. Sam watered it on Fridays.' },
-  { id: 'phone', label: 'Where the phone was', says: () => 'A clean rectangle in the dust where a phone used to be. Budget cuts.' },
-];
+/** What each thing on the desk says when you look at it. */
+const SAYS: Record<string, (day: number) => string> = {
+  'item-notes': (day) => (day === 1 ? SAM_NOTE.join(' ') : `Sam\u2019s notes, now with coffee rings. ${SAM_NOTE[3]}`),
+  'item-tray': () => 'The ticket tray. Empty for now. It won\u2019t stay that way.',
+  'item-mug': () => 'WORLD\u2019S OKAYEST IT PERSON. Sam left it behind. It\u2019s yours now.',
+  'item-plant': () => 'A plant. Mostly alive. Sam watered it on Fridays.',
+  'item-phone': () => 'A clean rectangle in the dust where a phone used to be. Budget cuts.',
+  'item-chair': () => 'Sam\u2019s chair. It squeaks, and it leans slightly to the left.',
+  'item-shelves': () => 'Sam\u2019s old binders: \u201CPrinters 2016\u201D, \u201CPrinters 2017\u201D, \u201CPrinters (other)\u201D.',
+  'item-calendar': () => 'Sam crossed off every day this month. The last one is circled in red: \u201CFREEDOM\u201D.',
+  'item-space': () => 'Empty spaces on the shelf, the pegboard and the desk. Sam\u2019s things went home with Sam. Maybe people will help you fill them.',
+};
 
-/** Monday morning at someone else's desk: their things, their notes, and a computer that takes a while to wake up. */
+/** Morning at the desk you inherited: Sam's leftovers, empty spaces, and a computer that takes a while to wake up. */
 function deskScene(app: App, turnOn: () => void): HTMLElement {
   const caption = h('p', { class: 'caption', 'aria-live': 'polite', 'data-testid': 'caption' },
-    app.state.day === 1 ? 'Your first day. This was Sam’s desk.' : 'Back at your desk. Well, Sam’s desk.');
-  const pick = (says: string) => () => { caption.textContent = says; };
+    app.state.day === 1 ? 'Your first day. This was Sam\u2019s desk.' : 'Back at your desk. Well, Sam\u2019s desk.');
+  const canvas = document.createElement('canvas');
+  canvas.width = W;
+  canvas.height = H;
+  canvas.className = 'desk-canvas';
+  canvas.setAttribute('aria-hidden', 'true');
+  const ctx = canvas.getContext('2d');
+  if (ctx) drawDesk(ctx);
+  const pct = (n: number, of: number) => `${(n / of) * 100}%`;
+  const act = (id: string) => () => {
+    if (id === 'turn-on') return turnOn();
+    if (id === 'item-runbook') { app.ui.panel = 'runbook'; app.rerender(); return; }
+    caption.textContent = SAYS[id]?.(app.state.day) ?? '';
+  };
   return h('main', { class: 'screen room', 'data-testid': 'room' },
-    h('div', { class: 'wall' }, h('p', { class: 'wall-sign' }, `${COMPANY} IT Help Desk. Please take a ticket.`)),
-    h('div', { class: 'desktop-surface' },
-      h('button', { class: 'item monitor', 'data-testid': 'turn-on', 'data-autofocus': true, onclick: turnOn },
-        h('span', { class: 'crt', 'aria-hidden': 'true' }, h('span', { class: 'crt-glass' }, 'Press Enter')),
-        h('span', { class: 'item-label' }, 'Turn on the computer')),
-      h('button', { class: 'item binder', 'data-testid': 'item-runbook', onclick: () => { app.ui.panel = 'runbook'; app.rerender(); } },
-        h('span', { class: 'shape', 'aria-hidden': 'true' }), h('span', { class: 'item-label' }, 'The old runbook')),
-      ...ITEMS.map((item) => h('button', { class: `item ${item.id}`, 'data-testid': `item-${item.id}`, onclick: pick(item.says(app.state.day)) },
-        h('span', { class: 'shape', 'aria-hidden': 'true' }), h('span', { class: 'item-label' }, item.label)))),
-    caption,
+    h('div', { class: 'desk-art' }, canvas,
+      ...HOTSPOTS.map((spot) => h('button', {
+        class: 'hotspot', 'data-testid': spot.id, 'aria-label': spot.label, title: spot.label,
+        style: `left:${pct(spot.x, W)};top:${pct(spot.y, H)};width:${pct(spot.w, W)};height:${pct(spot.h, H)}`,
+        onclick: act(spot.id),
+      }, h('span', { class: 'hotspot-label' }, spot.label)))),
+    h('div', { class: 'room-bar' },
+      caption,
+      h('button', { class: 'btn primary', 'data-autofocus': true, onclick: turnOn }, 'Turn on the computer')),
     app.ui.panel && panel(app, app.ui.panel),
   );
 }

@@ -293,34 +293,6 @@ img.sprite.tiny { width: 40px; height: 40px; }
 .floor-talk .ticket-view { flex: 1; }
 .close-ticket { align-self: flex-start; margin: 12px 14px 0; }
 
-/* Sam's desk, first thing in the morning */
-.room { background: var(--wall); }
-.wall { padding: 18px 20px 28px; background: repeating-linear-gradient(90deg, #e8dcc0 0 46px, #e1d4b5 46px 48px); }
-.wall-sign { display: inline-block; margin: 0; padding: 6px 12px; font-family: var(--pixel); background: var(--paper); border: 3px solid var(--ink); border-radius: 4px; box-shadow: 3px 3px 0 #0003; }
-.desktop-surface {
-  flex: 1; display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: center; gap: 18px 26px;
-  padding: 28px 20px; background: linear-gradient(var(--wood) 0 85%, var(--wood-dark) 85%); border-top: 6px solid var(--wood-dark);
-}
-.item {
-  font: inherit; color: var(--ink); cursor: pointer; background: none; border: 0; padding: 6px;
-  display: flex; flex-direction: column; align-items: center; gap: 6px; border-radius: 10px;
-}
-.item:hover { background: #ffffff22; }
-.item-label { font: 0.95rem var(--pixel); background: var(--paper); border: 2px solid var(--ink); border-radius: 6px; padding: 0 8px; }
-.shape { display: block; position: relative; }
-.crt { display: block; width: 210px; height: 160px; padding: 14px; background: #e6dcc6; border: 4px solid var(--ink); border-radius: 12px 12px 6px 6px; box-shadow: 0 10px 0 -4px #cbbf9f, 0 14px 0 -2px var(--ink); }
-.crt-glass { display: grid; place-items: center; height: 100%; background: var(--crt); color: var(--crt-text); font: 1.3rem var(--term); border-radius: 10px; border: 3px solid #0006; }
-.monitor:hover .crt-glass, .monitor:focus-visible .crt-glass { box-shadow: inset 0 0 18px #9be39b55; }
-.binder .shape { width: 60px; height: 82px; background: #4a6fa5; border: 3px solid var(--ink); border-radius: 4px; box-shadow: inset 10px 0 0 #3a5784; }
-.binder .shape::after { content: 'RUNBOOK'; position: absolute; left: 14px; right: 4px; top: 30px; font: 0.6rem var(--pixel); color: #fff; text-align: center; }
-.notes .shape { width: 58px; height: 52px; background: #f7e27a; border: 2px solid var(--ink); transform: rotate(-6deg); box-shadow: 6px 6px 0 -2px #f2c94c, 6px 6px 0 0 var(--ink); }
-.notes .shape::after { content: ''; position: absolute; inset: 12px 8px; background: repeating-linear-gradient(#0000 0 6px, #3b2f2a55 6px 7px); }
-.tray .shape { width: 90px; height: 26px; background: #9a9a93; border: 3px solid var(--ink); border-top-width: 6px; border-radius: 3px; }
-.mug .shape { width: 34px; height: 40px; background: #fff; border: 3px solid var(--ink); border-radius: 0 0 8px 8px; }
-.mug .shape::after { content: ''; position: absolute; right: -14px; top: 8px; width: 10px; height: 14px; border: 3px solid var(--ink); border-left: 0; border-radius: 0 8px 8px 0; }
-.plant .shape { width: 34px; height: 30px; margin-top: 30px; background: #b56a3c; border: 3px solid var(--ink); border-radius: 0 0 6px 6px; }
-.plant .shape::before { content: ''; position: absolute; left: -10px; bottom: 26px; width: 48px; height: 36px; background: #6fae4f; border: 3px solid var(--ink); border-radius: 50% 50% 40% 40%; }
-.phone .shape { width: 70px; height: 40px; border: 3px dashed #3b2f2a88; border-radius: 6px; }
 .caption {
   margin: 0; padding: 12px 16px; min-height: 3.2em; font: 1.05rem/1.4 var(--pixel);
   background: #fff; border-top: 4px double var(--ink);
@@ -330,3 +302,23 @@ img.sprite.tiny { width: 40px; height: 40px; }
 .login label { display: flex; gap: 10px; align-items: center; margin: 0 0 8px; font-size: 1.2rem; }
 .login input { font: 1.2rem var(--term); background: #0b1a10; color: var(--crt-text); border: 2px solid var(--crt-text); border-radius: 4px; padding: 2px 8px; }
 .login .hint { margin: 4px 0 10px; }
+
+/* Sam's desk, as a picture you can click on */
+.room { background: #1f1712; }
+.desk-art { position: relative; line-height: 0; }
+.desk-canvas { width: 100%; height: auto; image-rendering: pixelated; display: block; }
+.hotspot { position: absolute; padding: 0; background: none; border: 2px solid transparent; border-radius: 4px; cursor: pointer; }
+.hotspot:hover, .hotspot:focus-visible { border-color: #fff3a8; background: #fff3a822; outline: none; }
+.hotspot-label {
+  position: absolute; left: 50%; bottom: calc(100% + 4px); transform: translateX(-50%); white-space: nowrap;
+  font: 0.85rem/1.4 var(--pixel); color: var(--ink); background: var(--paper); border: 2px solid var(--ink); border-radius: 6px; padding: 0 6px;
+  opacity: 0; pointer-events: none;
+}
+.hotspot:hover .hotspot-label, .hotspot:focus-visible .hotspot-label { opacity: 1; }
+.room-bar { display: flex; gap: 12px; align-items: stretch; background: #fff; border-top: 4px double var(--ink); }
+.room-bar .caption { flex: 1; border-top: 0; }
+.room-bar .btn { margin: 10px 12px 10px 0; align-self: center; }
+@media (max-width: 640px) {
+  .room-bar { flex-direction: column; gap: 0; }
+  .room-bar .btn { margin: 0 12px 12px; align-self: stretch; text-align: center; }
+}
