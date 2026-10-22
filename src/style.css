@@ -421,3 +421,137 @@ body.in-room #app .room-hud > * { pointer-events: auto; }
   .walk-over { animation: none; display: none; }
   .chat-face.mood-3 { animation: none; }
 }
+
+/* ---------------------------------------------------------------
+   BurrowOS 2000: everything on the monitor. Windows 2000 chrome
+   (grey bevels, blue gradient title bars, Tahoma) with an Azure-blue
+   service desk inside. Only applies on the glass; the room keeps its look.
+   --------------------------------------------------------------- */
+.crt-screen {
+  --os-face: #d4d0c8; --os-light: #ffffff; --os-mid: #808080; --os-dark: #404040;
+  --os-title: linear-gradient(90deg, #0a246a, #3a6ea5 60%, #a6caf0);
+  --os-blue: #0078d4; --os-blue-dark: #005a9e; --os-bg: #f3f2f1; --os-line: #c8c6c4; --os-text: #1b1a19;
+  --read: Tahoma, Verdana, 'Segoe UI', sans-serif; --pixel: Tahoma, Verdana, 'Segoe UI', sans-serif;
+  font: 14px/1.45 var(--read); color: var(--os-text);
+}
+.crt-screen h1, .crt-screen h2, .crt-screen h3 { font-family: var(--read); font-weight: bold; }
+.crt-screen h2 { font-size: 1.15rem; }
+.crt-screen h3 { font-size: 1rem; }
+.crt-screen .small-heading, .crt-screen .meta, .crt-screen .msg-meta, .crt-screen .card-label { font-family: var(--read); color: #605e5c; font-size: 0.8rem; }
+.crt-screen .small-heading { font-weight: bold; }
+
+/* Bevelled grey buttons; the main action in Azure blue. */
+.crt-screen .btn, .crt-screen .close {
+  font: 13px var(--read); color: var(--os-text); background: var(--os-face); border-radius: 0; padding: 4px 14px;
+  border: 1px solid; border-color: var(--os-light) var(--os-dark) var(--os-dark) var(--os-light);
+  box-shadow: inset -1px -1px var(--os-mid), inset 1px 1px #dfdfdf; text-align: center;
+}
+.crt-screen .btn:hover:not(:disabled) { background: var(--os-face); }
+.crt-screen .btn:active:not(:disabled) { transform: none; border-color: var(--os-dark) var(--os-light) var(--os-light) var(--os-dark); box-shadow: inset 1px 1px var(--os-mid); }
+.crt-screen .btn:disabled { opacity: 1; color: var(--os-mid); text-shadow: 1px 1px #fff; box-shadow: inset -1px -1px var(--os-mid), inset 1px 1px #dfdfdf; }
+.crt-screen .btn.primary { background: var(--os-blue); color: #fff; border: 1px solid var(--os-blue-dark); box-shadow: none; border-radius: 2px; }
+.crt-screen .btn.primary:hover:not(:disabled) { background: var(--os-blue-dark); }
+.crt-screen .btn.small { padding: 2px 10px; font-size: 12px; }
+.crt-screen :focus-visible { outline: 1px dotted #000; outline-offset: -4px; }
+
+/* The desktop: corporate blue, icons, a balloon from the manager, and a taskbar with a Start button. */
+.crt-screen .desktop { background: radial-gradient(ellipse at 70% 40%, #4f86c2, #2a5a95 60%, #1d3f6e); }
+.crt-screen .desktop::before {
+  content: 'Burrow & Co.'; position: absolute; right: 40px; top: 40%; font: italic bold 64px Georgia, serif; color: #ffffff14; pointer-events: none;
+}
+.crt-screen .icon { font: 12px var(--read); color: #fff; text-shadow: 1px 1px 1px #000; border: 1px dotted transparent; border-radius: 0; }
+.crt-screen .icon:hover, .crt-screen .icon:focus-visible { border-color: #fff; background: #0a246a66; }
+.crt-screen .taskbar {
+  background: var(--os-face); border-top: 1px solid var(--os-light); box-shadow: inset 0 1px #dfdfdf; padding: 3px 4px; gap: 6px; font-size: 12px;
+}
+.crt-screen .taskbar .btn { margin-left: 0; }
+.crt-screen .start {
+  display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; font-weight: bold;
+  border: 1px solid; border-color: var(--os-light) var(--os-dark) var(--os-dark) var(--os-light); box-shadow: inset -1px -1px var(--os-mid);
+}
+.crt-screen .start-logo { width: 16px; height: 14px; background: conic-gradient(#f35325 0 25%, #81bc06 0 50%, #ffba08 0 75%, #05a6f0 0); transform: skewY(-6deg); }
+.crt-screen .tray {
+  margin-left: auto; display: flex; gap: 12px; padding: 2px 10px;
+  border: 1px solid; border-color: var(--os-mid) var(--os-light) var(--os-light) var(--os-mid);
+}
+.crt-screen .toast { background: #ffffe1; border: 1px solid #000; border-radius: 8px; box-shadow: 2px 2px 4px #0006; }
+.crt-screen .toast .rule { color: #a4262c; }
+
+/* Windows: grey frame, blue gradient title bar, white content. */
+.crt-screen .window {
+  background: var(--os-face); border: 2px solid; border-color: #dfdfdf var(--os-dark) var(--os-dark) #dfdfdf; border-radius: 0;
+  box-shadow: 2px 2px 0 #000; padding: 2px;
+}
+.crt-screen .titlebar, .crt-screen .app-titlebar {
+  background: var(--os-title); color: #fff; font: bold 13px var(--read); border: 0; border-radius: 0; padding: 3px 4px 3px 8px;
+}
+.crt-screen .close { width: 20px; height: 18px; padding: 0; font-size: 13px; line-height: 1; }
+.crt-screen .window-body { background: #fff; border: 1px solid; border-color: var(--os-mid) #fff #fff var(--os-mid); margin-top: 2px; }
+.crt-screen .page { border-left-width: 4px; background: #fff; border-bottom: 1px solid var(--os-line); }
+
+/* The service desk app. */
+.crt-screen .desk { background: var(--os-face); }
+.crt-screen .app-titlebar { display: flex; align-items: center; gap: 8px; }
+.crt-screen .app-icon { width: 14px; height: 14px; background: var(--os-blue); border: 1px solid #fff; }
+.crt-screen .status { background: #fff; border-bottom: 1px solid var(--os-line); padding: 6px 10px; gap: 6px 14px; font-size: 13px; }
+.crt-screen .clock { background: #0a246a; color: #fff; font: bold 13px var(--read); border-radius: 2px; padding: 1px 8px; }
+.crt-screen .where-you-are { font-family: var(--read); border-radius: 2px; border-color: var(--os-blue); background: #deecf9; }
+.crt-screen .desk-body { background: var(--os-bg); }
+.crt-screen .queue { background: #fff; border-right: 1px solid var(--os-line); padding: 8px; }
+.crt-screen .tab {
+  font: 12px var(--read); background: var(--os-face); color: var(--os-text); border-radius: 3px 3px 0 0;
+  border: 1px solid; border-color: var(--os-light) var(--os-dark) transparent var(--os-light);
+}
+.crt-screen .tab.on { background: #fff; font-weight: bold; }
+.crt-screen .queue-item { background: transparent; border: 1px solid transparent; border-radius: 0; padding: 6px; }
+.crt-screen .queue-item:hover { background: var(--os-bg); }
+.crt-screen .queue-item.selected { background: #cce4f7; border-color: var(--os-blue); box-shadow: none; }
+.crt-screen .ticket-view { background: #fff; border: 1px solid var(--os-line); border-radius: 0; box-shadow: none; margin: 8px; }
+.crt-screen .decide { background: #faf9f8; border-left: 1px solid var(--os-line); border-radius: 0; }
+.crt-screen .status-pill, .crt-screen .mood, .crt-screen .bond { font: 11px var(--read); border-radius: 2px; border-width: 1px; padding: 0 6px; }
+.crt-screen .status-pill.new { background: #fff4ce; } .crt-screen .status-pill.open { background: #deecf9; }
+.crt-screen .msg { border-radius: 2px; border-width: 1px; }
+.crt-screen .msg.them { background: #fff; border-color: var(--os-line); }
+.crt-screen .msg.you { background: #deecf9; border-color: #9cc8ef; }
+.crt-screen .details { background: var(--os-bg); border-radius: 0; }
+.crt-screen .details dt { font-family: var(--read); }
+.crt-screen .runbook-box { background: #fff8e1; border-left: 4px solid #ffb900; border-radius: 0; }
+.crt-screen .runbook-box.yours { background: #dff6dd; border-left-color: #107c10; }
+.crt-screen .notice { background: #fde7e9; border: 0; border-left: 4px solid #a4262c; border-radius: 0; }
+.crt-screen .btn.fix, .crt-screen .btn.choice, .crt-screen .btn.note {
+  background: #fff; border: 1px solid #8a8886; border-radius: 2px; box-shadow: none; text-align: left; padding: 6px 10px;
+}
+.crt-screen .btn.fix:hover:not(:disabled), .crt-screen .btn.choice:hover:not(:disabled), .crt-screen .btn.note:hover:not(:disabled) { background: var(--os-bg); }
+.crt-screen .btn.fix.from-note, .crt-screen .btn.fix.from-tool { border-left: 4px solid #107c10; box-shadow: none; }
+.crt-screen .from-note-tag { font: 11px var(--read); border-radius: 2px; border-width: 1px; border-color: #107c10; background: #dff6dd; }
+.crt-screen .due { font: 12px var(--read); }
+.crt-screen .due.urgent { color: #a4262c; font-weight: bold; }
+.crt-screen .unread { background: #a4262c; font-family: var(--read); }
+
+/* Dialog boxes: grey, bevelled, with the heading as a blue title bar. */
+.crt-screen .overlay { background: #00000055; }
+.crt-screen .outcome {
+  background: var(--os-face); border: 2px solid; border-color: #dfdfdf var(--os-dark) var(--os-dark) #dfdfdf; border-radius: 0;
+  box-shadow: 2px 2px 0 #000; padding: 0 16px 16px;
+}
+.crt-screen .outcome h2, .crt-screen .outcome.fix h2, .crt-screen .outcome.push h2, .crt-screen .outcome.storm h2 {
+  margin: 0 -16px 12px; padding: 4px 8px; background: var(--os-title); color: #fff; font-size: 13px;
+}
+.crt-screen .xp { background: var(--os-blue); color: #fff; border: 0; border-radius: 2px; font-size: 12px; }
+.crt-screen .note-pick { border-top: 1px solid var(--os-mid); }
+
+/* The log-on box, after the BIOS text. */
+.crt-screen .screen.boot { background: #000; display: flex; flex-direction: column; }
+.crt-screen .boot-log { font: 15px/1.6 'Courier New', monospace; color: #c0c0c0; }
+.crt-screen .login {
+  margin: auto; width: 420px; max-width: 90%; padding: 0 0 14px; color: var(--os-text); background: var(--os-face);
+  border: 2px solid; border-color: #dfdfdf var(--os-dark) var(--os-dark) #dfdfdf; border-radius: 0; box-shadow: 2px 2px 0 #000;
+}
+.crt-screen .login-title { margin: 0 0 14px; padding: 4px 8px; background: var(--os-title); color: #fff; font: bold 13px var(--read); }
+.crt-screen .login label { padding: 0 16px; font: 13px var(--read); justify-content: space-between; }
+.crt-screen .login input {
+  font: 13px var(--read); color: var(--os-text); background: #fff; width: 230px; border-radius: 0;
+  border: 1px solid; border-color: var(--os-mid) #fff #fff var(--os-mid); box-shadow: inset 1px 1px var(--os-dark);
+}
+.crt-screen .login .hint { padding: 0 16px; color: #605e5c; font: 12px var(--read); }
+.crt-screen .login .row { padding: 0 16px; justify-content: flex-end; }

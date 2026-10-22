@@ -43,13 +43,15 @@ export function desktopScreen(app: App): HTMLElement {
     app.ui.panel && panel(app, app.ui.panel),
     notification(app),
     h('footer', { class: 'taskbar' },
+      h('span', { class: 'start', 'aria-hidden': 'true' }, h('span', { class: 'start-logo' }), 'Start'),
       h('button', { class: 'btn small', 'data-testid': 'back-to-desk', onclick: () => leaveComputer(app) }, 'Back to desk'),
-      h('span', {}, weekOver ? 'Saturday · week over' : `Day ${state.day} of ${DAYS}`),
-      h('span', {}, `Savings ${money(state.savings)}`),
+      h('span', { class: 'tray' },
+        h('span', {}, weekOver ? 'Saturday' : `Day ${state.day} of ${DAYS}`),
+        h('span', {}, `Savings ${money(state.savings)}`)),
       !weekOver && h('button', {
         class: 'btn primary', 'data-testid': 'clock-in', 'data-autofocus': !app.ui.panel,
         onclick: () => { app.ui.panel = undefined; app.set(goTo(state, 'desk')); },
-      }, 'Go to the help desk →'),
+      }, 'Open Service Desk'),
     ),
   );
 }

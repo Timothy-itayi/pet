@@ -269,6 +269,7 @@ export function deskScreen(app: App): HTMLElement {
   const id = onChat ? ui.chat : ui.selected;
   const outcome = state.outcomes[0];
   return h('main', { class: 'screen desk', 'data-testid': 'desk' },
+    h('header', { class: 'app-titlebar', 'aria-hidden': 'true' }, h('span', { class: 'app-icon' }), 'Burrow Service Desk \u2014 Incidents'),
     statusBar(app),
     h('div', { class: 'desk-body' },
       sidebar(app),
