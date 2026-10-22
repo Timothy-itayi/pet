@@ -13,4 +13,11 @@ export function h(tag: string, props: Props = {}, ...children: Child[]): HTMLEle
   return el;
 }
 
+/** Minutes since midnight -> '9:05am'. */
+export function clockText(minutes: number): string {
+  const h = Math.floor(minutes / 60);
+  const m = Math.floor(minutes % 60);
+  return `${((h + 11) % 12) + 1}:${String(m).padStart(2, '0')}${h < 12 ? 'am' : 'pm'}`;
+}
+
 export const money = (n: number) => `${n < 0 ? '-' : ''}$${Math.abs(n)}`;

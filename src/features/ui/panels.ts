@@ -1,4 +1,4 @@
-import { JOBS, MANAGER, RUNBOOK, VILLAGERS } from '../game/data.ts';
+import { ISSUES, JOBS, MANAGER, VILLAGERS } from '../game/data.ts';
 import { apply, isWeekOver, missingFor, peopleWho, scriptFor } from '../game/rules.ts';
 import { SKILLS, type Skill } from '../game/types.ts';
 import type { App, Panel } from './app.ts';
@@ -19,12 +19,12 @@ function inbox(app: App): HTMLElement {
 }
 
 function runbook(app: App): HTMLElement {
-  return h('ol', { class: 'runbook' }, ...RUNBOOK.map((p) => {
-    const status = app.state.runbook[p.id] ?? p.status;
-    return h('li', { class: `page ${status}` },
-      h('h3', {}, p.title),
-      h('p', {}, status === 'updated' ? p.updated : p.text),
-      status === 'updated' && h('p', { class: 'stamp' }, '✎ Updated by you'),
+  return h('ol', { class: 'runbook' }, ...ISSUES.map((issue) => {
+    const yours = app.state.runbook[issue.id] === 'yours';
+    return h('li', { class: `page ${app.state.runbook[issue.id] ?? issue.page.status}` },
+      h('h3', {}, issue.title),
+      h('p', {}, yours ? issue.notes.find((n) => n.right)?.text : issue.page.text),
+      yours && h('p', { class: 'stamp' }, '\u270E Your note'),
     );
   }));
 }
@@ -36,7 +36,7 @@ function resume(app: App): HTMLElement {
     h('p', {}, 'Experience: IT Intern (unpaid), Burrow & Co.'),
     h('ul', { class: 'skills' }, ...SKILLS.map((s) => h('li', {},
       h('span', { class: 'skill-name' }, SKILL_NAMES[s]),
-      h('meter', { min: 0, max: 12, value: app.state.xp[s], 'aria-label': `${SKILL_NAMES[s]} experience` }),
+      h('meter', { min: 0, max: 14, value: app.state.xp[s], 'aria-label': `${SKILL_NAMES[s]} experience` }),
       h('span', {}, `${app.state.xp[s]} XP`),
     ))),
     h('h3', {}, 'References'),
