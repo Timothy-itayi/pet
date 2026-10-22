@@ -3,6 +3,7 @@ import {
   LineSegments, Mesh, MeshBasicMaterial, MeshStandardMaterial, NoBlending, PlaneGeometry, PointLight, RepeatWrapping, Scene, SpotLight, SRGBColorSpace, TorusGeometry,
   type Material, type Object3D,
 } from 'three';
+import { mess } from './mess.ts';
 import { model, type ModelName } from './models.ts';
 
 /** Kenney's models are about half real size; this makes the desk 1.5 m wide and 77 cm high. */
@@ -317,6 +318,7 @@ export async function buildRoom(): Promise<Room> {
     if (o instanceof Mesh && o.material instanceof MeshStandardMaterial) { o.material = o.material.clone(); o.material.color.multiplyScalar(0.28); }
   });
   add('chair', chair);
+  scene.add(mess(top, WALL_Z));
   add(undefined, await place('sideTableDrawers', [0.78, 0, -0.02], { scale: 1.4 }));
   add(undefined, await place('trashcan', [-1.05, 0, -0.2], { scale: 1.3 }));
   add(undefined, await place('pottedPlant', [1.45, 0, -0.62], { scale: 1.9 }));
