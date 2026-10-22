@@ -1,9 +1,9 @@
 import {
   ACESFilmicToneMapping, AmbientLight, Box3, DirectionalLight, DoubleSide, Group, Mesh, PCFSoftShadowMap, PerspectiveCamera, Quaternion,
-  Raycaster, Scene, SRGBColorSpace, Vector2, Vector3, WebGLRenderer, type Material, type MeshStandardMaterial, type Object3D,
+  Raycaster, Scene, SRGBColorSpace, Vector2, Vector3, WebGLRenderer, type Material, type Object3D,
 } from 'three';
 import { CSS3DObject, CSS3DRenderer } from 'three/examples/jsm/renderers/CSS3DRenderer.js';
-import { COMPUTER_Z, DESK_TOP, GLASS, buildRoom, materialsOf, toolObject, type Room } from './room.ts';
+import { COMPUTER_Z, DESK_TOP, GLASS, buildRoom, toolObject, type Room } from './room.ts';
 import { cameraAt, type Pose } from './camera.ts';
 import { setLampOn } from './lamp.ts';
 import { setCoffee } from './mug.ts';
@@ -42,7 +42,6 @@ const v = {
   pointer: new Vector2(),
   drift: new Vector2(),
   hovered: undefined as string | undefined,
-  glow: new Map<string, MeshStandardMaterial[]>(),
   handlers: undefined as Handlers | undefined,
   tools: [] as string[],
   inspect: undefined as { renderer: WebGLRenderer; scene: Scene; camera: PerspectiveCamera; item: Group; aim: Quaternion; born: number } | undefined,
@@ -75,9 +74,7 @@ const moving = () => performance.now() - v.started < (v.reduced ? 0 : MOVE_MS);
 
 function setHover(id: string | undefined): void {
   if (id === v.hovered) return;
-  for (const m of v.glow.get(v.hovered ?? '') ?? []) m.emissiveIntensity = 0;
   v.hovered = id;
-  for (const m of v.glow.get(id ?? '') ?? []) { m.emissive.set('#ffffff'); m.emissiveIntensity = 0.1; }
   if (v.renderer) v.renderer.domElement.style.cursor = id ? 'pointer' : '';
   v.handlers?.hover(id);
 }
@@ -161,7 +158,6 @@ export async function mountRoom(handlers: Handlers): Promise<void> {
   v.room.glass.getWorldPosition(onGlass.position);
   onGlass.scale.setScalar(GLASS.w / SCREEN_PX.w);
   v.cssScene.add(onGlass);
-  for (const [id, object] of v.room.pickables) if (id !== 'wall') v.glow.set(id, materialsOf(object));
   setTools(v.tools);
   resize();
   addEventListener('resize', resize);

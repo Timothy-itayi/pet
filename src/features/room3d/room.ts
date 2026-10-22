@@ -2,7 +2,7 @@ import {
   BoxGeometry, CanvasTexture, Color, CylinderGeometry, DirectionalLight, EdgesGeometry, Fog, Group, HemisphereLight, LineBasicMaterial,
   LineSegments, Mesh, MeshBasicMaterial, MeshStandardMaterial, PlaneGeometry, PointLight, RepeatWrapping, Scene,
   SRGBColorSpace, TorusGeometry,
-  type Material, type Object3D,
+  type Object3D,
 } from 'three';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 import { mess } from './mess.ts';
@@ -388,18 +388,4 @@ export async function buildRoom(): Promise<Room> {
 
 
   return { scene, pickables, glass: set.glass, led: set.led, screenLight, traySpot, mouseButton: rodent.leftButton };
-}
-
-/** Every material inside something, so it can glow when you point at it. */
-export function materialsOf(object: Object3D): MeshStandardMaterial[] {
-  const found: MeshStandardMaterial[] = [];
-  object.traverse((o) => {
-    if (!(o instanceof Mesh)) return;
-    // Give each clickable thing its own materials, so highlighting one doesn't light up another.
-    const own = (Array.isArray(o.material) ? o.material : [o.material]).map((m: Material) => m.clone());
-    o.material = own.length === 1 ? own[0] : own;
-    // Parts that glow by themselves (a bulb, a power light) keep their own glow, not the highlight.
-    for (const m of own) if (m instanceof MeshStandardMaterial && m.emissive.getHex() === 0) found.push(m);
-  });
-  return found;
 }
