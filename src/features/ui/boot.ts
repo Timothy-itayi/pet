@@ -5,18 +5,25 @@ import { h } from './dom.ts';
 
 const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-/** An old machine's boot, line by line, with how long each one takes (ms). About ten seconds in all. */
-const bootFor = (day: number): [string, number][] => [
+/** An old machine's BIOS, line by line, with how long each one takes (ms). */
+const BIOS: [string, number][] = [
   ['Award Modular BIOS v4.51PG, An Energy Star Ally', 600],
   ['Main Processor : Pentium III 450MHz', 500],
-  ['Memory Test : 131072K OK', 1600],
-  ['Detecting IDE Primary Master ... QUANTUM FIREBALL 8.4GB', 1400],
+  ['Memory Test : 131072K OK', 1400],
+  ['Detecting IDE Primary Master ... QUANTUM FIREBALL 8.4GB', 1200],
   ['Detecting IDE Primary Slave  ... None', 700],
   ['Starting BurrowOS 2000...', 900],
-  ['Loading drivers ......................... some', 1600],
-  ['Applying computer settings...', 1500],
-  [`Welcome to ${COMPANY}. ${day > DAYS ? 'Saturday. Of course.' : `${WEEKDAYS[day - 1]}, day ${day} of ${DAYS}.`}`, 800],
 ];
+/** Then the splash screen's progress bar, with what it says it's doing. Adds up to the bar's 4s in style.css. */
+const SPLASH: [string, number][] = [
+  ['Starting up...', 1400],
+  ['Loading drivers ......... some', 1400],
+  ['Applying computer settings...', 1200],
+];
+/** Then the smooth "welcome" animation, before the login. Matches the animations in style.css. */
+const REVEAL_MS = 3200;
+
+const dayLine = (day: number) => (day > DAYS ? 'Saturday. Of course.' : `${WEEKDAYS[day - 1]}, day ${day} of ${DAYS}`);
 
 /** Off: just dark glass. The power button is on the case. */
 export function darkScreen(): HTMLElement {
@@ -40,15 +47,29 @@ export function asleepScreen(app: App, atComputer: boolean): HTMLElement {
 }
 
 /**
- * The monitor once it has power: booting (after the power button on the case) then the login,
- * or straight to the lock screen if it was only locked or just woke up. Enter logs you in.
+ * The monitor once it has power. After the power button: BIOS text, a splash screen with a progress bar,
+ * a smooth welcome, then the login in the middle of the screen. Locked or just woken: straight to the login.
+ * Enter logs you in.
  */
 export function computerScreen(app: App): HTMLElement {
   const { state, ui } = app;
   const power = ui.power;
   const log = h('pre', { class: 'boot-log', 'aria-live': 'polite' });
-  const login = h('form', { class: 'login', hidden: true, 'data-testid': 'login' });
-  const root = h('main', { class: `screen boot${power === 'waking' ? ' waking' : ''}`, 'data-testid': 'boot' }, log, login);
+  const status = h('p', { class: 'splash-status', 'aria-live': 'polite' });
+  const splash = h('div', { class: 'splash' },
+    h('div', { class: 'os-logo', 'aria-hidden': 'true' }),
+    h('p', { class: 'splash-name' }, 'BurrowOS ', h('b', {}, '2000')),
+    h('p', { class: 'splash-edition' }, 'Professional'),
+    h('div', { class: 'splash-bar', 'aria-hidden': 'true' }, h('span')),
+    status);
+  const reveal = h('div', { class: 'reveal', 'aria-hidden': 'true' },
+    h('div', { class: 'os-logo' }),
+    h('p', { class: 'reveal-hello' }, 'Welcome'),
+    h('p', { class: 'reveal-day' }, dayLine(state.day)));
+  const login = h('form', { class: 'login', 'data-testid': 'login' });
+  const root = h('main', { class: `screen boot${power === 'waking' ? ' waking' : ''}`, 'data-testid': 'boot', 'data-stage': 'bios' },
+    log, splash, reveal, login);
+  const stage = (s: 'splash' | 'reveal' | 'login') => { root.dataset.stage = s; };
   const firstLoad = !ui.booted && app.hasSave;
 
   const enter = (next = state) => {
@@ -59,21 +80,24 @@ export function computerScreen(app: App): HTMLElement {
   login.addEventListener('submit', (e) => { e.preventDefault(); enter(); });
 
   const showLogin = () => {
-    if (!login.hidden) return;
-    if (power === 'booting') log.textContent = bootFor(state.day).map(([line]) => line).join('\n');
+    if (root.dataset.stage === 'login') return;
+    stage('login');
     login.append(
+      h('div', { class: 'login-avatar', 'aria-hidden': 'true' }),
+      h('h1', { class: 'login-name' }, 'intern'),
       h('p', { class: 'login-title' }, power === 'booting' ? 'Log on to BurrowOS' : 'This computer is locked'),
-      h('label', {}, 'User ', h('input', { name: 'user', value: 'intern', readonly: true, autocomplete: 'off' })),
-      h('label', {}, 'Password ', h('input', {
-        name: 'password', type: 'password', value: 'password', 'data-autofocus': true, 'data-testid': 'password', autocomplete: 'off',
-      })),
+      h('input', {
+        name: 'password', type: 'password', value: 'password', 'aria-label': 'Password',
+        'data-autofocus': true, 'data-testid': 'password', autocomplete: 'off',
+      }),
       h('p', { class: 'hint' }, 'Press Enter to log in.'),
       h('div', { class: 'row' },
         h('button', { class: 'btn primary', type: 'submit', 'data-testid': 'log-in' },
           firstLoad ? (isWeekOver(state) || state.phase === 'ending' ? 'Continue' : `Continue (Day ${state.day})`) : 'Log in'),
         firstLoad && h('button', { class: 'btn', type: 'button', onclick: () => enter(goTo(newGame(), 'desktop')) }, 'New game')),
     );
-    login.hidden = false;
+    // Outside the form: the form's fade-in would otherwise pin this to the form instead of the bottom of the screen.
+    root.append(h('p', { class: 'login-foot' }, `${COMPANY} \u00b7 ${dayLine(state.day)}`));
     login.querySelector<HTMLElement>('[data-autofocus]')?.focus();
   };
 
@@ -84,10 +108,16 @@ export function computerScreen(app: App): HTMLElement {
   }
   // It's old. It takes its time, and there's no hurrying it.
   let at = 300;
-  for (const [i, [line, wait]] of bootFor(state.day).entries()) {
-    setTimeout(() => { if (login.hidden) log.textContent += (i ? '\n' : '') + line; }, at);
+  for (const [i, [line, wait]] of BIOS.entries()) {
+    setTimeout(() => { log.textContent += (i ? '\n' : '') + line; }, at);
     at += wait;
   }
-  setTimeout(showLogin, at);
+  setTimeout(() => stage('splash'), at);
+  for (const [line, wait] of SPLASH) {
+    setTimeout(() => { status.textContent = line; }, at);
+    at += wait;
+  }
+  setTimeout(() => stage('reveal'), at);
+  setTimeout(showLogin, at + REVEAL_MS);
   return root;
 }

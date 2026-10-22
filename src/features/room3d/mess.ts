@@ -175,7 +175,7 @@ export function mess(top: number, wallZ: number): Object3D {
   sliding.position.set(0.66, top + 0.002, -0.06);
   sliding.rotation.y = 0.5;
   const ball1 = crumpled(0.03);
-  ball1.position.set(0.42, top + 0.025, -0.02);
+  ball1.position.set(0.62, top + 0.025, 0.02);
   const ball2 = crumpled(0.025);
   ball2.position.set(-1.0, 0.025, 0.3);
   const ball3 = crumpled(0.028);
@@ -190,32 +190,52 @@ export function mess(top: number, wallZ: number): Object3D {
   pen2.position.set(-0.5, top + 0.014, -0.12);
   pen2.rotation.y = -1.1;
   const pencil = pen(0.16, '#e0b84a');
-  pencil.position.set(0.55, top + 0.005, -0.3);
+  pencil.position.set(0.47, top + 0.005, -0.52);
   pencil.rotation.y = 1.4;
   g.add(pen1, pen2, pencil);
   const rand = seeded(3);
   for (let i = 0; i < 18; i++) {
-    const crumb = new Mesh(new BoxGeometry(0.004, 0.003, 0.004), solid('#b5874a'));
-    crumb.position.set(0.05 + rand() * 0.3, top + 0.0015, -0.12 + rand() * 0.12);
+    const crumb = new Mesh(new BoxGeometry(0.003, 0.002, 0.003), solid('#7a5a34'));
+    crumb.position.set(0.32 + rand() * 0.16, top + 0.0015, -0.3 + rand() * 0.1);
     g.add(crumb);
   }
 
   // A takeaway menu half under the keyboard, and an old mug with a tea bag string hanging out.
   const menu = takeawayMenu();
-  menu.position.set(0.32, top + 0.002, -0.16);
+  menu.position.set(-0.34, top + 0.002, -0.17);
   menu.rotation.y = -0.6;
   const oldMug = cast(new Mesh(new CylinderGeometry(0.036, 0.034, 0.09, 16), solid('#7a9bb5', 0.5)));
-  oldMug.position.set(-0.58, top + 0.045, -0.55);
+  oldMug.position.set(-0.69, top + 0.045, -0.37);
   const string = new Mesh(new BoxGeometry(0.001, 0.07, 0.001), solid('#efe9dc'));
-  string.position.set(-0.545, top + 0.06, -0.55);
+  string.position.set(-0.655, top + 0.06, -0.37);
   const tag = new Mesh(new BoxGeometry(0.016, 0.02, 0.001), solid('#f2c94c'));
-  tag.position.set(-0.545, top + 0.025, -0.548);
+  tag.position.set(-0.655, top + 0.025, -0.368);
   g.add(menu, oldMug, string, tag);
 
   // Cables: from the computer down the back of the desk, and a loose one coiled on the floor.
-  g.add(cable([[0.2, top + 0.05, -0.5], [0.35, top - 0.02, -0.7], [0.3, top - 0.35, -0.74], [0.5, 0.05, -0.6], [0.9, 0.01, -0.5]]));
+  g.add(cable([[0.2, top + 0.05, -0.55], [0.35, top - 0.02, -0.7], [0.3, top - 0.35, -0.74], [0.3, 0.12, -0.6], [0.295, 0.064, -0.52]]));
+  g.add(cable([[0.47, 0.018, -0.52], [0.6, 0.006, -0.55], [0.8, 0.006, -0.7], [0.95, 0.2, -0.8]]));
   g.add(cable([[-0.15, top + 0.05, -0.5], [-0.3, top - 0.1, -0.72], [-0.6, 0.2, -0.7], [-0.9, 0.01, -0.45], [-0.8, 0.01, -0.2]]));
-  g.add(cable([[-0.2, top + 0.01, 0.02], [-0.05, top + 0.01, 0.1], [-0.1, top - 0.03, 0.05], [-0.1, 0.3, 0.06], [0.0, 0.01, 0.2]], 0.004, '#d8cdb3'));
+  // Under the desk: everything runs along the back, zip-tied to the underside of the top, with one loop
+  // that's come loose and hangs down where you can see it, before it all drops to the power board.
+  const under = top - 0.035;
+  for (const [dz, color] of [[0, '#14100c'], [0.012, '#3a3632'], [-0.01, '#cfc6ad']] as const) {
+    g.add(cable([
+      [-0.62, under, -0.74 + dz], [-0.35, under, -0.73 + dz], [-0.2, top - 0.2 + dz, -0.68 + dz], [-0.02, under - 0.005, -0.7 + dz],
+      [0.12, top - 0.26 - dz * 2, -0.64 + dz], [0.24, under, -0.69 + dz], [0.27, top - 0.3, -0.66], [0.255, 0.07, -0.56 + dz], [0.24, 0.025, -0.52 + dz],
+    ], 0.0045, color));
+  }
+  // The zip ties holding it up, one of them snapped.
+  for (const x of [-0.35, -0.02, 0.24]) {
+    const tie = cast(new Mesh(new BoxGeometry(0.008, 0.012, 0.045), solid('#0f0d0b', 0.5)));
+    tie.position.set(x, under + 0.002, -0.71);
+    g.add(tie);
+  }
+  const snapped = cast(new Mesh(new BoxGeometry(0.006, 0.05, 0.004), solid('#0f0d0b', 0.5)));
+  snapped.position.set(0.12, under - 0.02, -0.66);
+  snapped.rotation.z = 0.4;
+  g.add(snapped);
+
   const coil = new Group();
   for (let i = 0; i < 3; i++) {
     const loop = cable([[0.09, 0, 0], [0, 0, 0.08 + i * 0.01], [-0.09, 0, 0], [0, 0, -0.08 - i * 0.01], [0.09, 0.004 * i, 0]], 0.005, '#2a2a2a');

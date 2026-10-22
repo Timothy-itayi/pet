@@ -3,7 +3,7 @@ import {
   Raycaster, Scene, SRGBColorSpace, Vector2, Vector3, WebGLRenderer, type Material, type MeshStandardMaterial, type Object3D,
 } from 'three';
 import { CSS3DObject, CSS3DRenderer } from 'three/examples/jsm/renderers/CSS3DRenderer.js';
-import { DESK_TOP, GLASS, buildRoom, materialsOf, toolObject, type Room } from './room.ts';
+import { COMPUTER_Z, DESK_TOP, GLASS, buildRoom, materialsOf, toolObject, type Room } from './room.ts';
 import { cameraAt, type Pose } from './camera.ts';
 
 export type Shot = 'overview' | 'wall' | 'computer';
@@ -12,7 +12,7 @@ export type ScreenState = 'off' | 'asleep' | 'on';
 
 /** Centre of the monitor's glass (see computerSet in room.ts). */
 const SCREEN_Y = DESK_TOP + 0.29;
-const SCREEN_Z = -0.225;
+const SCREEN_Z = -0.225 + COMPUTER_Z;
 /** The screen page is laid out at this size, then shrunk onto the glass. */
 export const SCREEN_PX = { w: 1024, h: 768 } as const;
 /** Where the camera sits for each view: [position, point it looks at]. */
@@ -64,8 +64,9 @@ function idOf(object: Object3D | null): string | undefined {
 function pickAt(x: number, y: number): string | undefined {
   if (!v.room || v.inspect || moving()) return undefined;
   raycaster.setFromCamera(new Vector2(x, y), v.camera);
-  const hits = raycaster.intersectObjects([...v.room.pickables.values()], true);
-  return idOf(hits[0]?.object ?? null);
+  // The first solid thing under the pointer decides, so the desk blocks the wall behind it.
+  const hit = raycaster.intersectObject(v.room.scene, true).find((h) => h.object instanceof Mesh);
+  return idOf(hit?.object ?? null);
 }
 
 const moving = () => performance.now() - v.started < (v.reduced ? 0 : MOVE_MS);
@@ -202,6 +203,14 @@ export function setScreen(state: ScreenState): void {
   room.screenLight.intensity = state === 'off' ? 0 : state === 'asleep' ? 0.03 : 0.18;
 }
 
+/** Click the mouse's left button: down, and back up a moment later. */
+export function pressMouse(): void {
+  const button = v.room?.mouseButton;
+  if (!button) return;
+  button.position.y = -0.0012;
+  setTimeout(() => { button.position.y = 0; }, 140);
+}
+
 /** Put loot in the ticket tray. */
 export function setTools(ids: string[]): void {
   v.tools = ids;
@@ -210,7 +219,7 @@ export function setTools(ids: string[]): void {
   spot.clear();
   ids.forEach((id, i) => {
     const object = toolObject(id);
-    object.position.x = (i - (ids.length - 1) / 2) * 0.1;
+    object.position.z = (i - (ids.length - 1) / 2) * 0.08;
     spot.add(object);
   });
   if (ids.length) v.room?.pickables.set('tool', spot);
