@@ -1,9 +1,9 @@
 import { COMPANY, DAYS, TOOLS } from '../game/data.ts';
 import { ROOM_ITEMS } from '../room3d/items.ts';
-import { closeInspect, goTo, inspectItem, isInspecting, turnInspected } from '../room3d/view.ts';
+import { closeInspect, goTo, inspectItem, isInspecting, pressMouse, turnInspected } from '../room3d/view.ts';
 import type { App } from './app.ts';
 import { clockText, h } from './dom.ts';
-import { powerOnReturn } from './power.ts';
+import { powerAway } from './power.ts';
 
 const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
@@ -44,18 +44,33 @@ export function sitAtComputer(app: App): void {
   ui.inspecting = undefined;
   ui.view = 'computer';
   ui.flying = true;
-  ui.power = powerOnReturn(ui.power, ui.leftAt, app.state.clock);
+  ui.power = powerAway(ui.power, ui.leftAt, performance.now());
+  ui.leftAt = undefined;
   app.rerender();
   void goTo('computer').then(() => { ui.flying = false; app.rerender(); });
 }
 
-/** Stand up from the computer: it locks, and the camera pulls back to the whole desk. */
+/** Stand up from the computer: it stays on, counting the time until it locks, and the camera pulls back to the whole desk. */
 export function leaveComputer(app: App): void {
   const { ui } = app;
   ui.view = 'room';
   ui.shot = 'overview';
   ui.panel = undefined;
-  if (ui.power === 'on') { ui.power = 'locked'; ui.leftAt = app.state.clock; }
+  ui.leftAt ??= performance.now();
+  app.rerender();
+}
+
+/** Tap the mouse from where you stand: the left button clicks, and a sleeping computer wakes up. The camera stays put. */
+export function tapMouse(app: App): void {
+  const { ui } = app;
+  pressMouse();
+  ui.note = ui.power === 'asleep' ? 'Click. The screen flickers back to life.'
+    : ui.power === 'off' ? 'Click. Nothing. The computer is off.'
+    : ui.power === 'locked' || ui.power === 'waking' ? 'Click. It\u2019s locked. Sit down to log in.'
+    : 'Click.';
+  if (ui.power === 'asleep') ui.power = 'waking';
+  // A click counts as using it, so its count to locking and sleeping starts again.
+  if (ui.power !== 'off') ui.leftAt = performance.now();
   app.rerender();
 }
 
@@ -65,6 +80,7 @@ export function pickInRoom(app: App, id: string): void {
   const item = ROOM_ITEMS.find((i) => i.id === id);
   if (id === 'computer') return sitAtComputer(app);
   if (id === 'power') return pressPower(app);
+  if (id === 'mouse') return tapMouse(app);
   if (id === 'wall' || item?.kind === 'wall') { ui.shot = 'wall'; app.rerender(); return; }
   if (!describe(app, id)) return;
   ui.inspecting = id;

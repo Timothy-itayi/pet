@@ -540,18 +540,83 @@ body.in-room #app .room-hud > * { pointer-events: auto; }
 .crt-screen .xp { background: var(--os-blue); color: #fff; border: 0; border-radius: 2px; font-size: 12px; }
 .crt-screen .note-pick { border-top: 1px solid var(--os-mid); }
 
-/* The log-on box, after the BIOS text. */
-.crt-screen .screen.boot { background: #000; display: flex; flex-direction: column; }
+/* Starting up: BIOS text, a splash screen with a progress bar, a smooth welcome, then the login. One stage shows at a time. */
+.crt-screen .screen.boot { position: relative; background: #000; display: flex; flex-direction: column; }
 .crt-screen .boot-log { font: 15px/1.6 'Courier New', monospace; color: #c0c0c0; }
+.crt-screen .boot > :is(.splash, .reveal, .login) { display: none; }
+.crt-screen .boot:not([data-stage='bios']) > .boot-log { display: none; }
+.crt-screen .boot[data-stage='splash'] > .splash,
+.crt-screen .boot[data-stage='reveal'] > .reveal,
+.crt-screen .boot[data-stage='login'] > .login { display: flex; }
+.crt-screen .boot[data-stage='login'], .crt-screen .reveal::before { background: radial-gradient(ellipse at 50% 40%, #4f86c2, #2a5a95 60%, #1d3f6e); }
+
+.crt-screen .os-logo {
+  width: 84px; height: 72px; border-radius: 4px; transform: skewY(-6deg);
+  background: conic-gradient(#81bc06 0 25%, #ffba08 0 50%, #05a6f0 0 75%, #f35325 0);
+}
+.crt-screen .splash { position: absolute; inset: 0; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: #fff; }
+.crt-screen .splash-name { margin: 18px 0 0; font: 40px 'Franklin Gothic Medium', Tahoma, sans-serif; letter-spacing: 0.02em; }
+.crt-screen .splash-name b { color: #a6caf0; }
+.crt-screen .splash-edition { margin: 0; font: 12px var(--read); letter-spacing: 0.35em; text-transform: uppercase; color: #c0c0c0; }
+.crt-screen .splash-bar {
+  width: 300px; height: 18px; margin-top: 40px; padding: 2px; background: #000;
+  border: 1px solid; border-color: var(--os-mid) var(--os-light) var(--os-light) var(--os-mid);
+}
+.crt-screen .splash-bar span {
+  display: block; height: 100%; width: 0;
+  background: repeating-linear-gradient(90deg, #3a6ea5 0 10px, transparent 10px 12px);
+  animation: splash-fill 4s steps(25) forwards;
+}
+@keyframes splash-fill { to { width: 100%; } }
+.crt-screen .splash-status { margin: 8px 0 0; min-height: 1.4em; font: 13px var(--read); color: #c0c0c0; }
+
+/* As if Windows had been to Cupertino: the logo glows in out of a blur, the blue blooms up behind it, "Welcome" settles. */
+.crt-screen .reveal { position: absolute; inset: 0; flex-direction: column; align-items: center; justify-content: center; gap: 0; color: #fff; }
+.crt-screen .reveal::before { content: ''; position: absolute; inset: 0; animation: reveal-bloom 3.2s ease-in-out both; }
+.crt-screen .reveal > * { position: relative; }
+.crt-screen .reveal .os-logo { animation: reveal-logo 3.2s cubic-bezier(0.2, 0.8, 0.2, 1) both; box-shadow: 0 0 40px #a6caf066; }
+.crt-screen .reveal-hello { margin: 26px 0 0; font: 300 46px 'Helvetica Neue', 'Segoe UI', Tahoma, sans-serif; animation: reveal-hello 3.2s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.crt-screen .reveal-day { margin: 6px 0 0; font: 14px var(--read); color: #dbe7f5; animation: reveal-day 3.2s ease both; }
+@keyframes reveal-bloom { 0%, 30% { opacity: 0; transform: scale(1.2); } 85%, 100% { opacity: 1; transform: scale(1); } }
+@keyframes reveal-logo {
+  0% { opacity: 0; transform: skewY(-6deg) scale(0.7); filter: blur(14px); }
+  35%, 65% { opacity: 1; transform: skewY(-6deg) scale(1); filter: blur(0); }
+  100% { opacity: 0; transform: skewY(-6deg) translateY(-24px) scale(0.9); filter: blur(6px); }
+}
+@keyframes reveal-hello {
+  0%, 25% { opacity: 0; letter-spacing: 0.6em; filter: blur(8px); }
+  60%, 80% { opacity: 1; letter-spacing: 0.1em; filter: blur(0); }
+  100% { opacity: 0; letter-spacing: 0.1em; filter: blur(4px); }
+}
+@keyframes reveal-day { 0%, 45% { opacity: 0; } 65%, 85% { opacity: 1; } 100% { opacity: 0; } }
+
+/* The login: in the middle of the blue, a round picture, your name and one password box. */
 .crt-screen .login {
-  margin: auto; width: 420px; max-width: 90%; padding: 0 0 14px; color: var(--os-text); background: var(--os-face);
-  border: 2px solid; border-color: #dfdfdf var(--os-dark) var(--os-dark) #dfdfdf; border-radius: 0; box-shadow: 2px 2px 0 #000;
+  margin: auto; width: 320px; max-width: 90%; padding: 0; border: 0; background: none; color: #fff;
+  flex-direction: column; align-items: center; gap: 8px; text-align: center;
+  animation: login-in 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
-.crt-screen .login-title { margin: 0 0 14px; padding: 4px 8px; background: var(--os-title); color: #fff; font: bold 13px var(--read); }
-.crt-screen .login label { padding: 0 16px; font: 13px var(--read); justify-content: space-between; }
+@keyframes login-in { from { opacity: 0; transform: scale(0.96); } }
+.crt-screen .login-avatar {
+  width: 112px; height: 112px; border-radius: 50%; border: 3px solid #ffffffcc; box-shadow: 0 6px 24px #0006;
+  background:
+    radial-gradient(circle at 50% 38%, #e8eef6 0 18%, transparent 19%),
+    radial-gradient(ellipse 34% 30% at 50% 96%, #e8eef6 0 98%, transparent 100%),
+    linear-gradient(#7fa6d6, #3a6ea5);
+}
+.crt-screen .login-name { margin: 8px 0 0; font: 24px var(--read); text-shadow: 0 1px 3px #0008; }
+.crt-screen .login-title { margin: 0; font: 13px var(--read); color: #dbe7f5; }
 .crt-screen .login input {
-  font: 13px var(--read); color: var(--os-text); background: #fff; width: 230px; border-radius: 0;
-  border: 1px solid; border-color: var(--os-mid) #fff #fff var(--os-mid); box-shadow: inset 1px 1px var(--os-dark);
+  width: 240px; margin-top: 10px; padding: 7px 14px; text-align: center; font: 14px var(--read); color: var(--os-text);
+  background: #fffffff0; border: 1px solid #ffffff99; border-radius: 999px; box-shadow: 0 2px 8px #0004;
 }
-.crt-screen .login .hint { padding: 0 16px; color: #605e5c; font: 12px var(--read); }
-.crt-screen .login .row { padding: 0 16px; justify-content: flex-end; }
+.crt-screen .login .hint { margin: 0; color: #dbe7f5; opacity: 1; font: 12px var(--read); }
+.crt-screen .login .row { justify-content: center; gap: 8px; margin-top: 6px; }
+.crt-screen .login .btn { border-radius: 999px; padding: 5px 18px; }
+.crt-screen .login .btn:not(.primary) { background: #ffffff26; color: #fff; border: 1px solid #ffffff66; box-shadow: none; }
+.crt-screen .login :focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.crt-screen .login-foot { position: absolute; left: 0; right: 0; bottom: 20px; margin: 0; text-align: center; font: 12px var(--read); color: #dbe7f5cc; }
+
+@media (prefers-reduced-motion: reduce) {
+  .crt-screen .login { animation: none; }
+}

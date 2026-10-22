@@ -18,7 +18,7 @@ export interface Ui {
   /** An item you've picked up to look at. */
   inspecting?: string;
   power: Power;
-  /** Office clock when you last stepped away from the computer, to know if it went to sleep. */
+  /** When (performance.now()) you stepped away from the computer, to know if it has locked or gone to sleep. Cleared when you sit back down. */
   leftAt?: number;
   panel?: Panel;
   /** Tickets or chat, on the left of the help desk. */

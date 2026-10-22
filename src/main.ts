@@ -7,6 +7,7 @@ import { loadGame, saveGame } from './features/save/save.ts';
 import type { App } from './features/ui/app.ts';
 import { asleepScreen, computerScreen, darkScreen } from './features/ui/boot.ts';
 import { deskScreen, refreshTimes } from './features/ui/desk.ts';
+import { powerAway } from './features/ui/power.ts';
 import { desktopScreen } from './features/ui/desktop.ts';
 import { dayEndScreen, endingScreen } from './features/ui/endings.ts';
 import { computerHud, pickInRoom, roomHud, roomKeys } from './features/ui/roomHud.ts';
@@ -38,9 +39,13 @@ const app: App = {
     if (next.phase !== app.state.phase) ui.panel = undefined;
     // A new day starts at your desk with the computer off.
     if (next.phase === 'boot' && app.state.phase !== 'boot') { ui.view = 'room'; ui.shot = 'overview'; ui.power = 'off'; }
-    // Walking away locks it; walking back means sitting down at it again.
-    if (app.state.place === 'computer' && next.place === 'floor' && ui.power === 'on') { ui.power = 'locked'; ui.leftAt = next.clock; }
-    if (app.state.place === 'floor' && next.place === 'computer') ui.view = 'computer';
+    // Walking away leaves it on, counting the time until it locks; walking back means sitting down at it again.
+    if (app.state.place === 'computer' && next.place === 'floor') ui.leftAt ??= performance.now();
+    if (app.state.place === 'floor' && next.place === 'computer') {
+      ui.view = 'computer';
+      ui.power = powerAway(ui.power, ui.leftAt, performance.now());
+      ui.leftAt = undefined;
+    }
     app.state = next;
     saveGame(next);
     app.rerender();
@@ -93,6 +98,9 @@ const bigChange = (a: GameState, b: GameState) =>
 // The office clock: it only runs at the desk, and stops while paused, reading a window, holding something, or in another tab.
 setInterval(() => {
   const { ui } = app;
+  // The computer's own clock runs regardless: left on while you're away, it locks itself and then sleeps, right there on the monitor.
+  const power = powerAway(ui.power, ui.leftAt, performance.now());
+  if (power !== ui.power) { ui.power = power; app.rerender(); }
   if (!ui.booted || ui.paused || ui.panel || ui.inspecting || document.hidden) return;
   const next = tick(app.state, GAME_MINUTES_PER_SECOND);
   if (next === app.state) return;
