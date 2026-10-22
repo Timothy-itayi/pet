@@ -240,7 +240,7 @@ export const ISSUES: Issue[] = [
 export const TICKETS: Ticket[] = [
   // Day 1
   {
-    id: 't101', day: 1, at: '9:05', who: 'dot', via: 'walkup', priority: 'normal', issue: 'paper-jam', mood: 1,
+    id: 't101', day: 1, at: '9:05', who: 'dot', via: 'walkup', where: 'Finance corner', priority: 'normal', issue: 'paper-jam', mood: 1,
     title: 'The printer is broken',
     message: 'The printer’s out of ink. I pressed print three times and nothing!',
     details: [
@@ -271,7 +271,7 @@ export const TICKETS: Ticket[] = [
   },
   // Day 2
   {
-    id: 't201', day: 2, at: '9:10', who: 'marlo', via: 'walkup', priority: 'normal', issue: 'slow-laptop', mood: 1,
+    id: 't201', day: 2, at: '9:10', who: 'marlo', via: 'walkup', where: 'Open office', priority: 'normal', issue: 'slow-laptop', mood: 1,
     title: 'My laptop is SO slow',
     message: 'It takes five minutes to open email. I need a new laptop.',
     details: [
@@ -312,7 +312,7 @@ export const TICKETS: Ticket[] = [
   },
   // Day 3
   {
-    id: 't301', day: 3, at: '9:15', who: 'pip', via: 'walkup', priority: 'normal', issue: 'printer-driver', mood: 1,
+    id: 't301', day: 3, at: '9:15', who: 'pip', via: 'walkup', where: 'Open office', priority: 'normal', issue: 'printer-driver', mood: 1,
     title: 'Can’t add the printer',
     message: 'My new laptop can’t print. I followed the runbook! I found the CD!',
     details: [
@@ -332,7 +332,7 @@ export const TICKETS: Ticket[] = [
     workaround: 'Copy the files he needs onto a USB stick',
   },
   {
-    id: 't303', day: 3, at: '11:30', who: 'juniper', via: 'walkup', priority: 'normal', issue: 'monitor-input', mood: 2,
+    id: 't303', day: 3, at: '11:30', who: 'juniper', via: 'walkup', where: 'Open office', priority: 'normal', issue: 'monitor-input', mood: 2,
     title: 'My second screen is broken',
     message: 'The new screen just says no signal. I think it’s broken!',
     details: [
@@ -351,7 +351,7 @@ export const TICKETS: Ticket[] = [
     workaround: 'Let her read email on her phone for now',
   },
   {
-    id: 'f301', day: 3, at: '10:40', who: 'marlo', via: 'floor', where: 'Corridor', priority: 'normal', issue: 'caps-lock', mood: 1,
+    id: 'f301', day: 3, at: '10:40', who: 'marlo', via: 'floor', where: 'Open office', priority: 'normal', issue: 'caps-lock', mood: 1,
     title: 'Password stopped working',
     message: 'You! Quick. My password stopped working. I haven’t changed it. I’ve typed it four times.',
     details: [
@@ -372,7 +372,7 @@ export const TICKETS: Ticket[] = [
     workaround: 'Ask Finance to carry his prints down',
   },
   {
-    id: 't402', day: 4, at: '10:10', who: 'marlo', via: 'walkup', priority: 'normal', issue: 'admin-request', mood: 0,
+    id: 't402', day: 4, at: '10:10', who: 'marlo', via: 'walkup', where: 'Open office', priority: 'normal', issue: 'admin-request', mood: 0,
     title: 'Needs admin rights',
     message: 'I need full admin rights on my laptop. For... a spreadsheet plug-in. Definitely not a game.',
     details: [
@@ -382,7 +382,7 @@ export const TICKETS: Ticket[] = [
     workaround: 'Tell him to use the web version of the spreadsheet for now',
   },
   {
-    id: 't403', day: 4, at: '11:00', who: 'otis', via: 'walkup', priority: 'high', issue: 'airplane-mode', mood: 1,
+    id: 't403', day: 4, at: '11:00', who: 'otis', via: 'walkup', where: 'Meeting room', priority: 'high', issue: 'airplane-mode', mood: 1,
     title: 'No internet on my laptop',
     message: 'I flew to my sister’s at the weekend. Now nothing loads. Hoo.',
     details: [
@@ -421,7 +421,7 @@ export const TICKETS: Ticket[] = [
     workaround: 'Let him work from the hot-desk PC',
   },
   {
-    id: 't502', day: 5, at: '10:00', who: 'grisby', via: 'walkup', priority: 'high', issue: 'password-expired', mood: 2,
+    id: 't502', day: 5, at: '10:00', who: 'grisby', via: 'walkup', where: 'Meeting room', priority: 'high', issue: 'password-expired', mood: 2,
     title: 'The boss’s email is broken',
     message: 'My email is BROKEN. Fix it. And don’t make me change any passwords, I don’t do that.',
     details: [
@@ -440,7 +440,7 @@ export const TICKETS: Ticket[] = [
     workaround: 'Email him the files he needs',
   },
   {
-    id: 't504', day: 5, at: '13:20', who: 'dot', via: 'walkup', priority: 'normal', issue: 'paper-jam', mood: 1,
+    id: 't504', day: 5, at: '13:20', who: 'dot', via: 'walkup', where: 'Finance corner', priority: 'normal', issue: 'paper-jam', mood: 1,
     title: 'Printer’s broken AGAIN',
     message: 'The printer is broken again. I bet it’s the ink this time.',
     details: [

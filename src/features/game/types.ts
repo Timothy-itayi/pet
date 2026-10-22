@@ -24,7 +24,7 @@ export type Mood = 0 | 1 | 2 | 3;
 
 export type Priority = 'low' | 'normal' | 'high';
 
-export const AREAS = ['Kitchen', 'Meeting room', 'Finance corner', 'Corridor'] as const;
+export const AREAS = ['Kitchen', 'Meeting room', 'Finance corner', 'Open office'] as const;
 export type Area = (typeof AREAS)[number];
 
 export interface Fix {
@@ -65,7 +65,7 @@ export interface Ticket {
   who: VillagerId;
   /** 'floor' means they catch you in the office with no ticket; you only see them if you walk the floor. */
   via: 'tray' | 'walkup' | 'floor';
-  /** Where in the office a floor request waits. */
+  /** Where in the office the problem is: where a floor request waits, or where a walk-up leads you. */
   where?: Area;
   priority: Priority;
   issue: string;

@@ -32,7 +32,7 @@ export const GRACE_AFTER_MISS = 30;
 /** Friends give you more time, nemeses less. */
 export const PATIENCE = { friend: 1.5, neutral: 1, nemesis: 0.7 } as const;
 /** Clock minutes each action takes. A fix is faster when your own note tells you what to do. */
-export const COST = { update: 2, fix: 15, knownFix: 5, wrongFix: 15, workaround: 10, push: 2, note: 3, walk: 3, askForTicket: 2 } as const;
+export const COST = { update: 2, fix: 15, knownFix: 5, wrongFix: 15, workaround: 10, push: 2, note: 3, walk: 1, askForTicket: 2 } as const;
 export const REPLIES = {
   first: 'Thanks, we\u2019ve got your ticket and we\u2019re on it.',
   update: 'Quick update: still working on this. Thanks for your patience.',

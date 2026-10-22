@@ -34,6 +34,10 @@ export interface TicketState {
   messages: Message[];
   /** A floor request you asked to submit a ticket: it now comes through your queue. */
   logged?: boolean;
+  /** A walk-up has already come and led you away from your desk. */
+  escorted?: boolean;
+  /** You've followed them to the problem and can work on it. */
+  onSite?: boolean;
 }
 
 export interface Outcome {
@@ -64,7 +68,7 @@ export interface Today {
 }
 
 export interface GameState {
-  version: 5;
+  version: 6;
   /** 1..DAYS while working; DAYS + 1 once the week is over. */
   day: number;
   phase: Phase;
@@ -75,6 +79,8 @@ export interface GameState {
   queue: string[];
   /** People on the office floor waiting for help, with no ticket. */
   floor: string[];
+  /** A walk-up leading you to their problem. While set, you're on the floor following them. */
+  escort?: string;
   /** Tickets still to arrive today. */
   arriving: { id: string; at: number }[];
   /** Tickets coming back on a later day. */
@@ -186,6 +192,7 @@ function arrive(d: GameState, id: string, at: number): void {
   };
   if (onFloor) d.floor.push(id);
   else d.queue.push(id);
+  fetchedBy(d);
 }
 
 function changeBond(d: GameState, who: VillagerId, by: number): void {
@@ -204,6 +211,7 @@ function close(d: GameState, t: Ticket, kind: Outcome['kind'], xp: number): void
   st.status = kind === 'push' || kind === 'asked' ? 'pending' : 'resolved';
   d.queue = d.queue.filter((id) => id !== t.id);
   d.floor = d.floor.filter((id) => id !== t.id);
+  if (d.escort === t.id) { d.escort = undefined; st.onSite = false; }
   const skill = issueOf(t).skill;
   d.xp[skill] += xp;
   d.today.xp += xp;
@@ -244,6 +252,23 @@ function advance(d: GameState, minutes: number): void {
   if (d.clock >= CLOSE && !d.outcomes.length) finishDay(d);
 }
 
+/**
+ * A walk-up at your desk takes you away from it to show you the problem. In this office, that's a given.
+ * If you're out on the floor, they wait at your desk until you come back.
+ */
+function fetchedBy(d: GameState): void {
+  if (d.escort || d.place !== 'computer') return;
+  const id = d.queue.find((x) => ticketById(x).via === 'walkup' && !ticketState(d, x).escorted);
+  if (!id) return;
+  const st = ticketState(d, id);
+  st.escorted = true;
+  st.status = 'open';
+  // They're with you now: no reply-by time while you follow them.
+  st.due = Number.MAX_SAFE_INTEGER;
+  d.escort = id;
+  d.place = 'floor';
+}
+
 /** Someone on the floor stops waiting for you. You don't find out until the end of the day. */
 function giveUp(d: GameState, id: string): void {
   ticketState(d, id).status = 'gone';
@@ -263,6 +288,7 @@ function startDay(d: GameState): void {
   d.queue = [];
   d.floor = [];
   d.place = 'computer';
+  d.escort = undefined;
   d.clock = OPEN;
   d.today = emptyToday();
   d.outcomes = [];
@@ -279,6 +305,13 @@ function startDay(d: GameState): void {
 
 function finishDay(d: GameState): void {
   for (const id of d.floor) giveUp(d, id);
+  // Anyone you were following will catch you again tomorrow.
+  if (d.escort) {
+    const st = ticketState(d, d.escort);
+    st.escorted = false;
+    st.onSite = false;
+    d.escort = undefined;
+  }
   d.phase = 'dayEnd';
   d.today.voucher = d.today.resolved >= scriptFor(d.day).goal;
   d.savings += (d.today.voucher ? GOAL_VOUCHER : 0) - DAILY_COST;
@@ -286,7 +319,7 @@ function finishDay(d: GameState): void {
 
 export function newGame(): GameState {
   const s: GameState = {
-    version: 5,
+    version: 6,
     day: 1,
     phase: 'boot',
     clock: OPEN,
@@ -317,15 +350,17 @@ export function tick(s: GameState, minutes: number): GameState {
 
 /** You can only work on what's in front of you: your queue at the computer, or people on the floor. Not while a card is up. */
 function workable(s: GameState, id: string): Ticket | undefined {
-  const here = s.place === 'computer' ? s.queue : s.floor;
-  return s.phase === 'desk' && !s.outcomes.length && here.includes(id) ? ticketById(id) : undefined;
+  if (s.phase !== 'desk' || s.outcomes.length) return undefined;
+  const onSite = id === s.escort && Boolean(s.tickets[id]?.onSite);
+  const here = s.place === 'computer' ? s.queue.filter((x) => x !== s.escort) : s.floor;
+  return here.includes(id) || onSite ? ticketById(id) : undefined;
 }
-/** Replies, workarounds and pending are ticket-system things: only for tickets in your queue. */
-const ticketWork = (s: GameState, id: string) => (s.place === 'computer' ? workable(s, id) : undefined);
+/** Workarounds and pending are ticket things: for tickets in your queue, or a walk-up you've followed to the problem. */
+const ticketWork = (s: GameState, id: string) => (s.place === 'computer' || id === s.escort ? workable(s, id) : undefined);
 
 /** Send a standard update: it buys you time before they expect to hear from you again. */
 export function reply(s: GameState, id: string): GameState {
-  const t = ticketWork(s, id);
+  const t = s.place === 'computer' ? workable(s, id) : undefined;
   if (!t) return s;
   return act(s, (d) => {
     const st = ticketState(d, id);
@@ -420,10 +455,21 @@ export const next = (s: GameState) => act(s, (d) => {
 
 /** Leave your computer to walk the office floor, or go back to it. Walking takes a few minutes. */
 export function walk(s: GameState, to: Place): GameState {
-  if (s.phase !== 'desk' || s.outcomes.length || s.place === to) return s;
+  if (s.phase !== 'desk' || s.outcomes.length || s.place === to || s.escort) return s;
   return act(s, (d) => {
     d.place = to;
     advance(d, COST.walk);
+    fetchedBy(d); // anyone who walked up while you were away is waiting at your desk
+  });
+}
+
+/** You've followed a walk-up to the problem: now you can see it and fix it. */
+export function arriveOnSite(s: GameState): GameState {
+  if (!s.escort || s.outcomes.length) return s;
+  return act(s, (d) => {
+    const st = ticketState(d, d.escort ?? '');
+    st.onSite = true;
+    st.messages.push({ from: 'them', text: 'Here. Look.', at: d.clock });
   });
 }
 
@@ -497,7 +543,8 @@ export function parseSave(raw: string | null): GameState | undefined {
     const known = new Set(TICKETS.map((t) => t.id));
     const isObject = (x: unknown) => typeof x === 'object' && x !== null;
     const ok =
-      s.version === 5 && (s.place === 'computer' || s.place === 'floor') &&
+      s.version === 6 && (s.place === 'computer' || s.place === 'floor') &&
+      (s.escort === undefined || known.has(s.escort)) &&
       Array.isArray(s.floor) && s.floor.every((id) => known.has(id) && isObject(s.tickets?.[id])) &&
       typeof s.day === 'number' && s.day >= 1 && s.day <= DAYS + 1 &&
       typeof s.clock === 'number' && typeof s.savings === 'number' &&

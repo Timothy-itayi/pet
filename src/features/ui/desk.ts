@@ -3,7 +3,8 @@ import {
   askForTicket, canPush, canWorkaround, fix, goTo, isKnown, issueOf, minutesLeft, moodName, next, pushBack, relation,
   reply, scriptFor, ticketById, ticketState, wait, walk, workaround, writeNote, type GameState, type Outcome, type Status,
 } from '../game/rules.ts';
-import { AREAS, type Ticket } from '../game/types.ts';
+import type { Ticket } from '../game/types.ts';
+import { worldMap } from '../floor/world.ts';
 import { face } from '../art/sprites.ts';
 import type { App } from './app.ts';
 import { clockText, h, money } from './dom.ts';
@@ -39,13 +40,14 @@ function statusBar(app: App): HTMLElement {
     h('button', { class: 'btn small', 'data-testid': 'pause', 'aria-pressed': ui.paused ? 'true' : 'false', onclick: toggle },
       ui.paused ? 'Resume' : 'Pause'),
     h('span', { 'data-testid': 'goal' }, `Tickets resolved ${state.today.resolved}/${scriptFor(state.day).goal}`),
-    h('button', {
-      class: 'btn small walk', 'data-testid': 'walk',
-      onclick: () => app.set(walk(state, state.place === 'computer' ? 'floor' : 'computer')),
-    }, state.place === 'computer' ? 'Walk the office floor' : 'Back to my desk'),
+    state.place === 'computer'
+      ? h('button', { class: 'btn small walk', 'data-testid': 'walk', onclick: () => app.set(walk(state, 'floor')) }, 'Walk the office floor')
+      : h('span', { class: 'where-you-are' }, state.escort
+        ? `Following ${VILLAGERS[ticketById(state.escort).who].name}`
+        : 'On the office floor'),
     h('span', {}, `Savings ${money(state.savings)}`),
     h('button', { class: 'btn small', onclick: () => { app.ui.panel = 'runbook'; app.rerender(); } }, 'Runbook'),
-    h('button', { class: 'btn small', onclick: () => app.set(goTo(state, 'desktop')) }, 'Computer'),
+    state.place === 'computer' && h('button', { class: 'btn small', onclick: () => app.set(goTo(state, 'desktop')) }, 'Inbox & jobs'),
   );
 }
 
@@ -74,32 +76,6 @@ function queueList(app: App, selected: string | undefined): HTMLElement {
   );
 }
 
-/** The office floor: whoever is flagging you down, by where they are. You only find out by walking over. */
-function floorList(app: App, selected: string | undefined): HTMLElement {
-  const { state } = app;
-  return h('nav', { class: 'queue floor', 'aria-label': 'Office floor' },
-    h('h2', { class: 'small-heading' }, 'Around the office'),
-    ...AREAS.map((area) => {
-      const here = state.floor.filter((id) => ticketById(id).where === area);
-      return h('section', { class: 'area', 'aria-label': area },
-        h('h3', { class: 'area-name' }, area),
-        ...here.map((id) => {
-          const t = ticketById(id);
-          const v = VILLAGERS[t.who];
-          const st = ticketState(state, id);
-          return h('button', {
-            class: `queue-item${id === selected ? ' selected' : ''}`, 'data-testid': `floor-${id}`,
-            'aria-current': id === selected ? 'true' : false,
-            onclick: () => { app.ui.selected = id; app.rerender(); },
-          },
-            h('img', { class: 'sprite tiny', src: face(v, st.mood), alt: '' }),
-            h('span', { class: 'queue-text' }, h('strong', {}, v.name), h('span', {}, t.title)));
-        }),
-        !here.length && h('p', { class: 'area-empty' }, 'Nobody needs you here.'));
-    }),
-  );
-}
-
 function runbookBox(s: GameState, t: Ticket): HTMLElement {
   const issue = issueOf(t);
   const status = s.runbook[issue.id];
@@ -110,7 +86,7 @@ function runbookBox(s: GameState, t: Ticket): HTMLElement {
     h('p', {}, `${issue.title}. ${text}`));
 }
 
-function ticketView(app: App, t: Ticket): HTMLElement {
+export function ticketView(app: App, t: Ticket): HTMLElement {
   const { state } = app;
   const st = ticketState(state, t.id);
   const v = VILLAGERS[t.who];
@@ -118,7 +94,9 @@ function ticketView(app: App, t: Ticket): HTMLElement {
   const bond = relation(state, t.who);
   const known = isKnown(state, t);
   const [first, ...later] = st.messages;
-  const onFloor = state.place === 'floor';
+  /** Someone who caught you on the floor with no ticket. */
+  const onFloor = state.floor.includes(t.id);
+  const following = state.escort === t.id;
   // Alphabetical, so the right answer isn't always in the same spot.
   const fixes = issue.fixes.filter((f) => !st.tried.includes(f.id)).sort((a, b) => a.label.localeCompare(b.label));
   const choice = (props: Record<string, string | boolean | (() => void)>, title: string, detail: string) =>
@@ -130,6 +108,7 @@ function ticketView(app: App, t: Ticket): HTMLElement {
       h('div', {},
         h('h2', {}, t.title),
         h('p', { class: 'meta' }, onFloor ? `Caught you in the ${t.where?.toLowerCase() ?? 'office'}. No ticket.`
+          : following ? `Walked up to your desk and took you to the ${t.where?.toLowerCase() ?? 'office'}. ${PRIORITY[t.priority]}.`
           : `${t.via === 'walkup' ? 'Walked up to your desk' : t.via === 'floor' ? 'Submitted after you asked' : 'From the tray'}. ${PRIORITY[t.priority]}.`)),
       !onFloor && h('span', { class: `status-pill ${st.status}`, 'data-testid': 'status' }, STATUS[st.status])),
     h('div', { class: 'who' },
@@ -141,6 +120,7 @@ function ticketView(app: App, t: Ticket): HTMLElement {
           bond !== 'neutral' && h('span', { class: `bond ${bond}`, 'data-testid': 'bond' }, bond === 'friend' ? '♥ Friend' : 'Nemesis')),
         onFloor
           ? h('p', { class: 'due' }, 'Waiting for help. No ticket, so no reply-by time: just their patience.')
+          : following ? h('p', { class: 'due' }, 'They\u2019re right here with you.')
           : h('p', { class: `due${urgent(state, t.id) ? ' urgent' : ''}`, 'data-due': t.id, 'data-testid': 'due' }, dueText(state, t.id)))),
     first && h('p', { class: 'opening msg them', 'data-testid': 'opening' },
       h('span', { class: 'msg-meta' }, `${v.name}, ${clockText(first.at)}`), h('span', {}, first.text)),
@@ -154,7 +134,7 @@ function ticketView(app: App, t: Ticket): HTMLElement {
     ),
     h('section', { class: 'decide', 'aria-label': 'What do you do?' },
       state.notice?.ticketId === t.id && h('p', { class: 'notice', role: 'alert', 'data-testid': 'notice' }, state.notice.text),
-      !onFloor && h('button', { class: 'btn primary send', 'data-testid': 'reply', 'data-autofocus': true, onclick: () => app.set(reply(state, t.id)) },
+      state.place === 'computer' && h('button', { class: 'btn primary send', 'data-testid': 'reply', 'data-autofocus': true, onclick: () => app.set(reply(state, t.id)) },
         st.status === 'new' ? 'Send first reply' : 'Send an update'),
       h('div', { class: 'fixes', role: 'group', 'aria-labelledby': 'fix-heading' },
         h('h3', { id: 'fix-heading', class: 'small-heading' }, 'Fix it'),
@@ -216,17 +196,40 @@ function outcomeCard(app: App, o: Outcome): HTMLElement {
 
 export function deskScreen(app: App): HTMLElement {
   const { state, ui } = app;
-  const here = state.place === 'computer' ? state.queue : state.floor;
-  if (!ui.selected || !here.includes(ui.selected)) ui.selected = here[0];
+  if (state.place === 'floor') return floorScreen(app);
+  if (!ui.selected || !state.queue.includes(ui.selected)) ui.selected = state.queue[0];
   const t = ui.selected ? ticketById(ui.selected) : undefined;
   const outcome = state.outcomes[0];
   return h('main', { class: 'screen desk', 'data-testid': 'desk' },
     statusBar(app),
     h('div', { class: 'desk-body' },
-      state.place === 'computer' ? queueList(app, ui.selected) : floorList(app, ui.selected),
-      t ? ticketView(app, t) : h('section', { class: 'ticket-view empty-view' }, h('p', {}, state.place === 'computer'
-        ? 'Your queue is empty. Check back soon, or walk the office floor.'
-        : 'Nobody is flagging you down right now.'))),
+      queueList(app, ui.selected),
+      t ? ticketView(app, t) : h('section', { class: 'ticket-view empty-view' }, h('p', {}, 'Your queue is empty. Check back soon, or walk the office floor.'))),
+    ui.paused && !outcome && h('div', { class: 'overlay' },
+      h('section', { class: 'outcome', role: 'dialog', 'aria-label': 'Paused', 'data-testid': 'paused' },
+        h('h2', {}, 'Paused'),
+        h('p', {}, 'The office clock has stopped. Take your time.'),
+        h('button', { class: 'btn primary', 'data-autofocus': true, onclick: () => { ui.paused = false; app.rerender(); } }, 'Resume'))),
+    outcome && outcomeCard(app, outcome),
+    ui.panel && panel(app, ui.panel));
+}
+
+/** Away from the computer: the office map, and whoever you're dealing with beside it. */
+function floorScreen(app: App): HTMLElement {
+  const { state, ui } = app;
+  const onSite = state.escort && ticketState(state, state.escort).onSite ? state.escort : undefined;
+  if (ui.selected && !state.floor.includes(ui.selected)) ui.selected = undefined;
+  const id = onSite ?? ui.selected;
+  const outcome = state.outcomes[0];
+  return h('main', { class: 'screen desk', 'data-testid': 'desk' },
+    statusBar(app),
+    // Walking shows the map; dealing with someone switches to a full screen, like a battle screen in a handheld game.
+    id
+      ? h('div', { class: 'floor-talk' },
+        !onSite && h('button', { class: 'btn small close-ticket', 'data-testid': 'step-away', onclick: () => { ui.selected = undefined; app.rerender(); } },
+          '\u2190 Step away'),
+        ticketView(app, ticketById(id)))
+      : h('div', { class: 'floor-body' }, worldMap(app)),
     ui.paused && !outcome && h('div', { class: 'overlay' },
       h('section', { class: 'outcome', role: 'dialog', 'aria-label': 'Paused', 'data-testid': 'paused' },
         h('h2', {}, 'Paused'),

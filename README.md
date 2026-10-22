@@ -2,7 +2,7 @@
 
 You're an unpaid IT intern at a company that's falling apart. Fix their printers, survive your manager, and get hired somewhere better.
 
-A small browser game for people getting into IT. Each day your old computer boots up, your manager sends a memo, and coworkers' problems land in your ticket queue while the office clock runs from 9 to 5. Read what they say and what's on their screen, keep them updated before their reply-by time runs out, and fix it, give them a workaround, or set it to pending. You can also leave your computer to walk the office floor, where people flag you down with no ticket: help them on the spot (your manager won't count it), or ask them to submit a ticket (they won't like it). After each fix, write an internal note: the right one becomes your runbook page, so the same problem is a known issue next time. Experience fills your résumé; the job board is your way out.
+A small browser game for people getting into IT. You've inherited Sam's desk: Sam kept the whole place running for six years, then quit, leaving sticky notes and a runbook that's mostly wrong. Each morning you switch on the old computer, log in, and work the ticket queue while the office clock runs from 9 to 5. Company policy says you keep people updated. Some people don't bother with tickets at all: they walk up and lead you across the office to their problem, and you follow them on a top-down map. You can also walk the office floor yourself, where people flag you down for help your manager will never count. Fix things, write internal notes so the same problem is quicker next time, and build a résumé good enough to get out.
 
 ## Play it locally
 
@@ -24,5 +24,6 @@ pnpm build   # also type-checks
 - `src/features/game/tickets.ts`: the problems (issues) and the tickets that bring them. Add a ticket here; no code changes needed.
 - `src/features/game/data.ts`: characters, manager lines, jobs, and the clock and timer settings.
 - `src/features/game/rules.ts`: the game rules, tested in `rules.test.ts`.
-- `src/features/ui/`: the screens (boot, desktop, desk, day end, endings).
+- `src/features/ui/`: the screens (Sam's desk and login, desktop, help desk, day end, endings).
+- `src/features/floor/`: the office map you walk around (`map.ts` is the layout, `world.ts` draws it and moves people).
 - `src/features/art/sprites.ts`: the pixel-art animal faces.
