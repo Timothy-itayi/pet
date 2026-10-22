@@ -24,7 +24,7 @@ export type Mood = 0 | 1 | 2 | 3;
 
 export type Priority = 'low' | 'normal' | 'high';
 
-export const AREAS = ['Kitchen', 'Meeting room', 'Finance corner', 'Corridor'] as const;
+export const AREAS = ['Kitchen', 'Meeting room', 'Finance corner', 'Open office'] as const;
 export type Area = (typeof AREAS)[number];
 
 export interface Fix {
@@ -65,7 +65,7 @@ export interface Ticket {
   who: VillagerId;
   /** 'floor' means they catch you in the office with no ticket; you only see them if you walk the floor. */
   via: 'tray' | 'walkup' | 'floor';
-  /** Where in the office a floor request waits. */
+  /** Where in the office the problem is: where a floor request waits, or where a walk-up leads you. */
   where?: Area;
   priority: Priority;
   issue: string;
@@ -90,4 +90,21 @@ export interface DayScript {
   rule?: string;
   metGoal: string;
   missedGoal: string;
+}
+
+/**
+ * Loot: something left on your desk that gives you a faster fix for one kind of problem.
+ * It isn't in the runbook: after you first use it, you write its page.
+ */
+export interface Tool {
+  id: string;
+  /** Who leaves it. 'sam' means it was in Sam's bottom drawer: what you get with no friends. */
+  from: VillagerId | 'sam';
+  name: string;
+  /** The note it comes with, read on your desk the morning it arrives. */
+  gift: string;
+  issue: string;
+  fixLabel: string;
+  /** Choices for its runbook page after you first use it. Exactly one is right. */
+  notes: { text: string; right?: true }[];
 }

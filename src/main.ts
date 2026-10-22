@@ -14,10 +14,11 @@ const saved = loadGame();
 
 const app: App = {
   state: saved ?? newGame(),
-  ui: { booted: false, paused: false },
+  ui: { booted: false, atDesk: true, paused: false },
   hasSave: saved !== undefined,
   set(next) {
     if (next.phase !== app.state.phase) app.ui.panel = undefined;
+    if (next.phase === 'boot' && app.state.phase !== 'boot') app.ui.atDesk = true; // a new day starts at your desk
     app.state = next;
     saveGame(next);
     app.rerender();
@@ -45,7 +46,7 @@ const app: App = {
 /** Did this tick change more than the clock? Then redraw; otherwise just move the times on. */
 const bigChange = (a: GameState, b: GameState) =>
   a.phase !== b.phase || a.outcomes.length !== b.outcomes.length || a.queue.join() !== b.queue.join() ||
-  a.floor.join() !== b.floor.join() || a.today.missed !== b.today.missed;
+  a.floor.join() !== b.floor.join() || a.today.missed !== b.today.missed || a.place !== b.place || a.escort !== b.escort;
 
 // The office clock: it only runs at the desk, and stops while paused, reading a window, or in another tab.
 setInterval(() => {

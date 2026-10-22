@@ -207,7 +207,8 @@ img.sprite.tiny { width: 40px; height: 40px; }
 .fixes { display: grid; gap: 6px; }
 .btn.fix { background: #fff3a8; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
 .btn.fix.from-note { border-color: var(--leaf-dark); box-shadow: 0 4px 0 var(--leaf-dark); }
-.from-note-tag { font: 0.8rem var(--pixel); background: #e4f5d6; border: 2px solid var(--leaf-dark); border-radius: 6px; padding: 0 6px; white-space: nowrap; }
+.from-note-tag { font: 0.8rem var(--pixel); background: #e4f5d6; border: 2px solid var(--leaf-dark); border-radius: 6px; padding: 0 6px; }
+.fixes > .btn { min-width: 0; overflow-wrap: anywhere; }
 .decide .row { display: grid; gap: 10px; }
 .btn.choice { display: flex; flex-direction: column; gap: 2px; }
 .btn.choice span { font-size: 0.92rem; color: var(--muted); }
@@ -274,3 +275,56 @@ img.sprite.tiny { width: 40px; height: 40px; }
 .area-name { font: 1rem var(--pixel); margin: 0; }
 .area-empty { margin: 0; color: var(--muted); font-size: 0.95rem; }
 .btn.walk { background: var(--manila); }
+
+/* The office map */
+.floor-body { flex: 1; min-height: 0; padding: 12px; overflow-y: auto; }
+.map { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.map-frame { border: 4px solid var(--ink); border-radius: 8px; background: var(--ink); line-height: 0; }
+.map-frame:focus-visible { outline: 4px dashed var(--focus); outline-offset: 3px; }
+.map-canvas { width: 100%; height: auto; image-rendering: pixelated; display: block; border-radius: 4px; }
+/* A classic handheld-game text box. */
+.map-prompt {
+  margin: 0; padding: 10px 14px; min-height: 2.9em; font: 1.05rem/1.4 var(--pixel);
+  background: #fff; border: 4px double var(--ink); border-radius: 8px; box-shadow: 0 3px 0 var(--ink);
+}
+.map-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.map-help { margin: 0; color: #fff; }
+.where-you-are { font-family: var(--pixel); background: var(--manila); border: 2px solid var(--ink); border-radius: 6px; padding: 0 8px; }
+.floor-talk { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.floor-talk .ticket-view { flex: 1; }
+.close-ticket { align-self: flex-start; margin: 12px 14px 0; }
+
+.caption {
+  margin: 0; padding: 12px 16px; min-height: 3.2em; font: 1.05rem/1.4 var(--pixel);
+  background: #fff; border-top: 4px double var(--ink);
+}
+
+/* Login */
+.login label { display: flex; gap: 10px; align-items: center; margin: 0 0 8px; font-size: 1.2rem; }
+.login input { font: 1.2rem var(--term); background: #0b1a10; color: var(--crt-text); border: 2px solid var(--crt-text); border-radius: 4px; padding: 2px 8px; }
+.login .hint { margin: 4px 0 10px; }
+
+/* Sam's desk, as a picture you can click on */
+.room { background: #1f1712; }
+.desk-art { position: relative; line-height: 0; }
+.desk-canvas { width: 100%; height: auto; image-rendering: pixelated; display: block; }
+.hotspot { position: absolute; padding: 0; background: none; border: 2px solid transparent; border-radius: 4px; cursor: pointer; }
+.hotspot:hover, .hotspot:focus-visible { border-color: #fff3a8; background: #fff3a822; outline: none; }
+.hotspot-label {
+  position: absolute; left: 50%; bottom: calc(100% + 4px); transform: translateX(-50%); white-space: nowrap;
+  font: 0.85rem/1.4 var(--pixel); color: var(--ink); background: var(--paper); border: 2px solid var(--ink); border-radius: 6px; padding: 0 6px;
+  opacity: 0; pointer-events: none;
+}
+.hotspot:hover .hotspot-label, .hotspot:focus-visible .hotspot-label { opacity: 1; }
+.room-bar { display: flex; gap: 12px; align-items: stretch; background: #fff; border-top: 4px double var(--ink); }
+.room-bar .caption { flex: 1; border-top: 0; }
+.room-bar .btn { margin: 10px 12px 10px 0; align-self: center; }
+@media (max-width: 640px) {
+  .room-bar { flex-direction: column; gap: 0; }
+  .room-bar .btn { margin: 0 12px 12px; align-self: stretch; text-align: center; }
+}
+
+/* Loot */
+.btn.fix.from-tool { background: #e4f5d6; border-color: var(--leaf-dark); box-shadow: 0 4px 0 var(--leaf-dark); }
+.new-drop [data-testid='item-tool'] { border-color: #fff3a8; background: #fff3a822; }
+.new-drop [data-testid='item-tool'] .hotspot-label { opacity: 1; }

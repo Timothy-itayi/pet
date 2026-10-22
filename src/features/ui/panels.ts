@@ -1,4 +1,4 @@
-import { ISSUES, JOBS, MANAGER, VILLAGERS } from '../game/data.ts';
+import { ISSUES, JOBS, MANAGER, TOOLS, VILLAGERS } from '../game/data.ts';
 import { apply, isWeekOver, missingFor, peopleWho, scriptFor } from '../game/rules.ts';
 import { SKILLS, type Skill } from '../game/types.ts';
 import type { App, Panel } from './app.ts';
@@ -26,6 +26,12 @@ function runbook(app: App): HTMLElement {
       h('p', {}, yours ? issue.notes.find((n) => n.right)?.text : issue.page.text),
       yours && h('p', { class: 'stamp' }, '\u270E Your note'),
     );
+  }), ...TOOLS.filter((tool) => app.state.tools.includes(tool.id)).map((tool) => {
+    const yours = app.state.runbook[`tool:${tool.id}`] === 'yours';
+    return h('li', { class: `page ${yours ? 'yours' : 'missing'}`, 'data-testid': `page-tool-${tool.id}` },
+      h('h3', {}, tool.name),
+      h('p', {}, yours ? tool.notes.find((n) => n.right)?.text : '(No page yet. Use it once, then write it up.)'),
+      yours && h('p', { class: 'stamp' }, '\u270E Your page'));
   }));
 }
 

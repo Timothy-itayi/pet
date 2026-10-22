@@ -5,6 +5,8 @@ export type Panel = 'inbox' | 'runbook' | 'resume' | 'jobs';
 /** Screen-only state that isn't worth saving. */
 export interface Ui {
   booted: boolean;
+  /** Looking at the desk before switching the computer on, at the start of each day. */
+  atDesk: boolean;
   panel?: Panel;
   /** The ticket open on the right of the desk. */
   selected?: string;
