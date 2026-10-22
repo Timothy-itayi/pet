@@ -1,6 +1,6 @@
 import { ISSUES, JOBS, MANAGER, TOOLS, VILLAGERS } from '../game/data.ts';
-import { apply, isWeekOver, missingFor, peopleWho, scriptFor } from '../game/rules.ts';
-import { SKILLS, type Skill } from '../game/types.ts';
+import { apply, isWeekOver, missingFor, peopleWho, scriptFor, type GameState } from '../game/rules.ts';
+import { SKILLS, type PageStatus, type Skill } from '../game/types.ts';
 import type { App, Panel } from './app.ts';
 import { h } from './dom.ts';
 
@@ -18,21 +18,40 @@ function inbox(app: App): HTMLElement {
   );
 }
 
+/** One page of the runbook as it stands now: the old page, or yours if you've rewritten it. */
+export interface RunbookPage {
+  title: string;
+  status: PageStatus;
+  text: string;
+  /** What the old runbook said, before your note replaced it. */
+  old?: string;
+  /** A page for one of your tools (it starts blank), not one of the old problems. */
+  tool?: string;
+}
+
+/** Every page, in order: the old problems first, then a page for each tool you've been given. It grows as you go. */
+export function runbookPages(state: GameState): RunbookPage[] {
+  const right = (notes: { text: string; right?: true }[]) => notes.find((n) => n.right)?.text ?? '';
+  return [
+    ...ISSUES.map((issue) => {
+      const status = state.runbook[issue.id] ?? issue.page.status;
+      return { title: issue.title, status, text: status === 'yours' ? right(issue.notes) : issue.page.text, old: issue.page.text };
+    }),
+    ...TOOLS.filter((tool) => state.tools.includes(tool.id)).map((tool): RunbookPage => {
+      const yours = state.runbook[`tool:${tool.id}`] === 'yours';
+      return { title: tool.name, status: yours ? 'yours' : 'missing', text: yours ? right(tool.notes) : '(No page yet. Use it once, then write it up.)', tool: tool.id };
+    }),
+  ];
+}
+
 function runbook(app: App): HTMLElement {
-  return h('ol', { class: 'runbook' }, ...ISSUES.map((issue) => {
-    const yours = app.state.runbook[issue.id] === 'yours';
-    return h('li', { class: `page ${app.state.runbook[issue.id] ?? issue.page.status}` },
-      h('h3', {}, issue.title),
-      h('p', {}, yours ? issue.notes.find((n) => n.right)?.text : issue.page.text),
-      yours && h('p', { class: 'stamp' }, '\u270E Your note'),
-    );
-  }), ...TOOLS.filter((tool) => app.state.tools.includes(tool.id)).map((tool) => {
-    const yours = app.state.runbook[`tool:${tool.id}`] === 'yours';
-    return h('li', { class: `page ${yours ? 'yours' : 'missing'}`, 'data-testid': `page-tool-${tool.id}` },
-      h('h3', {}, tool.name),
-      h('p', {}, yours ? tool.notes.find((n) => n.right)?.text : '(No page yet. Use it once, then write it up.)'),
-      yours && h('p', { class: 'stamp' }, '\u270E Your page'));
-  }));
+  return h('ol', { class: 'runbook' }, ...runbookPages(app.state).map((page) => h('li', {
+    class: `page ${page.status}`, 'data-testid': page.tool && `page-tool-${page.tool}`,
+  },
+    h('h3', {}, page.title),
+    h('p', {}, page.text),
+    page.status === 'yours' && h('p', { class: 'stamp' }, page.tool ? '\u270E Your page' : '\u270E Your note'),
+  )));
 }
 
 const names = (ids: (keyof typeof VILLAGERS)[]) => ids.length ? ids.map((id) => VILLAGERS[id].name).join(', ') : undefined;

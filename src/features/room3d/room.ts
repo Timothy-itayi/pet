@@ -1,26 +1,32 @@
 import {
   BoxGeometry, CanvasTexture, Color, CylinderGeometry, DirectionalLight, EdgesGeometry, Fog, Group, HemisphereLight, LineBasicMaterial,
-  LineSegments, Mesh, MeshBasicMaterial, MeshStandardMaterial, NoBlending, PlaneGeometry, PointLight, RepeatWrapping, Scene,
+  LineSegments, Mesh, MeshBasicMaterial, MeshStandardMaterial, PlaneGeometry, PointLight, RepeatWrapping, Scene,
   SRGBColorSpace, TorusGeometry,
   type Material, type Object3D,
 } from 'three';
+import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 import { mess } from './mess.ts';
+import { COMPUTER_Z, computerSet } from './computer.ts';
+import { desk, wood } from './desk.ts';
+import { cardboardBox, filingCabinet, officeChair, snakePlant, wasteBin } from './furniture.ts';
 import { deskLamp } from './lamp.ts';
-import { binders, monitorNote as samsNote, noteCollage } from './notes.ts';
+import { mug } from './mug.ts';
+import { runbook } from './runbook.ts';
+import { binders, noteCollage } from './notes.ts';
 import { keyboard, lead, mouse, mouseMat, onDesk } from './peripherals.ts';
 import { moneyPlant } from './plant.ts';
-import { model, type ModelName } from './models.ts';
 
-/** Kenney's models are about half real size; this makes the desk 1.5 m wide and 77 cm high. */
-const SCALE = 2;
-export const DESK_TOP = 0.384 * SCALE;
+/** The desk top's height: 77 cm. */
+export const DESK_TOP = 0.768;
 const WALL_Z = -0.82;
+export { COMPUTER_Z, GLASS } from './computer.ts';
 
 const mat = (color: string, extra: Partial<{ roughness: number; metalness: number; transparent: boolean; opacity: number }> = {}) =>
   new MeshStandardMaterial({ color: new Color(color), roughness: 0.8, ...extra });
 
+/** A box with softly rounded edges, so nothing in the room has a razor-sharp corner. */
 function box(w: number, h: number, d: number, color: string, at: [number, number, number]): Mesh {
-  const m = new Mesh(new BoxGeometry(w, h, d), mat(color));
+  const m = new Mesh(new RoundedBoxGeometry(w, h, d, 3, Math.min(0.004, Math.min(w, h, d) * 0.45)), mat(color));
   m.position.set(...at);
   m.castShadow = true;
   m.receiveShadow = true;
@@ -46,14 +52,6 @@ function shadows(object: Object3D): Object3D {
   return object;
 }
 
-async function place(name: ModelName, at: [number, number, number], { scale = SCALE, turn = 0 } = {}): Promise<Object3D> {
-  const m = shadows(await model(name));
-  m.scale.setScalar(scale);
-  m.position.set(...at);
-  m.rotation.y = turn;
-  return m;
-}
-
 /** An outline of an empty spot: where something you're given will go. */
 function emptySpot(w: number, h: number, d: number, at: [number, number, number]): LineSegments {
   const lines = new LineSegments(new EdgesGeometry(new BoxGeometry(w, h, d)), new LineBasicMaterial({ color: '#e8dcc0', transparent: true, opacity: 0.1 }));
@@ -76,7 +74,7 @@ function wall(): { wall: Object3D; floor: Object3D } {
   });
   pegboard.wrapS = pegboard.wrapT = RepeatWrapping;
   pegboard.repeat.set(16, 10);
-  const back = new Mesh(new PlaneGeometry(5, 3), new MeshStandardMaterial({ map: pegboard, roughness: 0.95 }));
+  const back = new Mesh(new PlaneGeometry(5, 3), new MeshStandardMaterial({ map: pegboard, bumpMap: pegboard, bumpScale: 2, roughness: 0.95 }));
   back.position.set(0, 1.5, WALL_Z);
   back.receiveShadow = true;
   // Clicking the wall only counts above the desk (see `reach` below), never through the desk or under it.
@@ -97,13 +95,15 @@ function wall(): { wall: Object3D; floor: Object3D } {
   });
   carpet.wrapS = carpet.wrapT = RepeatWrapping;
   carpet.repeat.set(10, 7);
-  const floor = new Mesh(new PlaneGeometry(6, 4), new MeshStandardMaterial({ map: carpet, roughness: 1 }));
+  const floor = new Mesh(new PlaneGeometry(6, 4), new MeshStandardMaterial({ map: carpet, bumpMap: carpet, bumpScale: 3, roughness: 1 }));
   floor.rotation.x = -Math.PI / 2;
   floor.position.set(0, 0, 1);
   floor.receiveShadow = true;
   // Shelves on brackets, with Sam's dusty binders on the left one.
   for (const x of [-0.75, 0.75]) {
-    g.add(box(0.9, 0.03, 0.22, '#9c6b3f', [x, 1.62, WALL_Z + 0.11]));
+    const board = box(0.9, 0.03, 0.22, '#9c6b3f', [x, 1.62, WALL_Z + 0.11]);
+    board.material = wood(31 + Math.round(x * 10), 'x', [0.6, 0.3]);
+    g.add(board);
     g.add(box(0.02, 0.1, 0.18, '#6b4527', [x - 0.38, 1.56, WALL_Z + 0.1]));
     g.add(box(0.02, 0.1, 0.18, '#6b4527', [x + 0.38, 1.56, WALL_Z + 0.1]));
   }
@@ -151,63 +151,12 @@ function wallBits(): { notes: Object3D; calendar: Object3D; binders: Object3D } 
   const card = new MeshStandardMaterial({ color: new Color('#e8e2d2'), roughness: 1 });
   const calendar = new Mesh(new BoxGeometry(0.36, 0.3, 0.004), [card, card, card, card, new MeshStandardMaterial({ map: calTex, roughness: 1 }), card]);
   calendar.position.set(0.36, 1.27, WALL_Z + 0.005);
-  const pin = new Mesh(new CylinderGeometry(0.008, 0.008, 0.012, 12), mat('#c8453b', { roughness: 0.4 }));
+  const pin = new Mesh(new CylinderGeometry(0.008, 0.008, 0.012, 32), mat('#c8453b', { roughness: 0.4 }));
   pin.rotation.x = Math.PI / 2;
   calendar.add(pin);
   pin.position.set(0, 0.14, 0.007);
   const shelves = binders(1.635, WALL_Z + 0.11);
   return { notes, calendar, binders: shelves };
-}
-
-/** The CRT's glass: where the game's computer screen shows through. Width and height in metres. */
-export const GLASS = { w: 0.32, h: 0.24 } as const;
-/** How far back from its old spot the computer sits, to leave room for the keyboard. */
-export const COMPUTER_Z = -0.07;
-
-/**
- * Sam's computer, built to measure: a beige desktop case with a power button and a light,
- * and a chunky CRT monitor on top. The glass is a "hole": it draws nothing, so the real
- * screen (a web page, placed in 3D behind the canvas) shows through exactly there.
- */
-function computerSet(top: number): { group: Group; glass: Mesh; powerButton: Mesh; led: MeshStandardMaterial; note: Mesh } {
-  const group = new Group();
-  const beige = '#d8cdb3';
-  const shade = '#bdb194';
-  // Pushed back far enough for a full-size keyboard in front of it.
-  const z = COMPUTER_Z;
-  // The desktop case, lying flat, with a floppy slot, a power button and a light.
-  const caseBox = box(0.48, 0.1, 0.4, beige, [0, top + 0.05, z - 0.32]);
-  const slot = box(0.12, 0.01, 0.005, '#3b3427', [-0.1, top + 0.06, z - 0.118]);
-  const powerButton = new Mesh(new CylinderGeometry(0.016, 0.016, 0.012, 20), mat('#a8a08c', { roughness: 0.5 }));
-  powerButton.rotation.x = Math.PI / 2;
-  powerButton.position.set(0.17, top + 0.05, z - 0.116);
-  const led = new MeshStandardMaterial({ color: new Color('#203a24'), emissive: new Color('#7fdc7f'), emissiveIntensity: 0 });
-  const ledMesh = new Mesh(new BoxGeometry(0.012, 0.006, 0.004), led);
-  ledMesh.position.set(0.12, top + 0.05, z - 0.118);
-  group.add(caseBox, slot, powerButton, ledMesh);
-  // The monitor: a deep back, a thick bezel, and the glass set into it.
-  const base = top + 0.1;
-  group.add(box(0.2, 0.03, 0.18, shade, [0, base + 0.015, z - 0.33]));
-  group.add(box(0.34, 0.3, 0.26, shade, [0, base + 0.2, z - 0.38]));
-  const bezelW = GLASS.w + 0.08;
-  const bezelH = GLASS.h + 0.08;
-  const bezelZ = z - 0.22;
-  const cy = base + 0.03 + bezelH / 2;
-  for (const [w, h, x, y] of [
-    [bezelW, 0.04, 0, cy + GLASS.h / 2 + 0.02], [bezelW, 0.04, 0, cy - GLASS.h / 2 - 0.02],
-    [0.04, GLASS.h, -GLASS.w / 2 - 0.02, cy], [0.04, GLASS.h, GLASS.w / 2 + 0.02, cy],
-  ] as const) group.add(box(w, h, 0.05, beige, [x, y, bezelZ]));
-  group.add(box(GLASS.w, GLASS.h, 0.02, '#050505', [0, cy, bezelZ - 0.03]));
-  // The hole: writes "see-through" into the picture, so the page behind it is the screen.
-  const glass = new Mesh(new PlaneGeometry(GLASS.w, GLASS.h), new MeshBasicMaterial({ color: new Color('#000000'), opacity: 0, blending: NoBlending }));
-  glass.position.set(0, cy, bezelZ - 0.005);
-  group.add(glass);
-  // Sam's note, stuck to the top corner of the bezel.
-  const monitorNote = samsNote();
-  monitorNote.position.set(bezelW / 2 - 0.05, cy + bezelH / 2 - 0.02, bezelZ + 0.027);
-  monitorNote.rotation.z = -0.12;
-  group.add(monitorNote);
-  return { group, glass, powerButton, led, note: monitorNote };
 }
 
 /** A four-socket power board lying on the carpet, with an illuminated switch and two plugs in it. */
@@ -219,19 +168,6 @@ function powerBoard(): Object3D {
   const lit = new Mesh(new BoxGeometry(0.03, 0.012, 0.022), new MeshStandardMaterial({ color: '#ff8a3d', emissive: new Color('#ff6a1a'), emissiveIntensity: 1.2 }));
   lit.position.set(-0.125, 0.04, 0);
   g.add(lit);
-  return shadows(g);
-}
-
-function mug(): Object3D {
-  const g = new Group();
-  const body = new Mesh(new CylinderGeometry(0.04, 0.038, 0.1, 20), mat('#efe9dc', { roughness: 0.5 }));
-  body.position.y = 0.05;
-  const band = new Mesh(new CylinderGeometry(0.0405, 0.0405, 0.02, 20), mat('#c8453b'));
-  band.position.y = 0.06;
-  const handle = new Mesh(new TorusGeometry(0.025, 0.007, 8, 16, Math.PI), mat('#efe9dc'));
-  handle.position.set(0.04, 0.05, 0);
-  handle.rotation.z = -Math.PI / 2;
-  g.add(body, band, handle);
   return shadows(g);
 }
 
@@ -261,7 +197,7 @@ export function toolObject(id: string): Object3D {
     }
     case 'hdmi-labels':
       for (const [x, label] of [[-0.04, '#f2b8c6'], [0.04, '#f7e27a']] as const) {
-        const coil = new Mesh(new TorusGeometry(0.035, 0.006, 8, 24), mat('#1f1712'));
+        const coil = new Mesh(new TorusGeometry(0.035, 0.006, 16, 64), mat('#1f1712'));
         coil.rotation.x = Math.PI / 2;
         coil.position.set(x, 0.01, 0);
         g.add(coil, box(0.02, 0.012, 0.012, label, [x + 0.035, 0.015, 0]));
@@ -272,17 +208,17 @@ export function toolObject(id: string): Object3D {
       for (const [x, c] of [[-0.02, '#7fdc7f'], [0, '#7fdc7f'], [0.02, '#c8453b']] as const) g.add(box(0.008, 0.004, 0.008, c, [x, 0.036, 0]));
       break;
     case 'restart-stickers': {
-      const roll = new Mesh(new CylinderGeometry(0.03, 0.03, 0.03, 20), mat('#c8453b'));
+      const roll = new Mesh(new CylinderGeometry(0.03, 0.03, 0.03, 48), mat('#c8453b'));
       roll.position.y = 0.02;
       g.add(roll);
       break;
     }
     case 'batteries': {
-      const jar = new Mesh(new CylinderGeometry(0.04, 0.04, 0.1, 20), mat('#cfe6f5', { transparent: true, opacity: 0.35, roughness: 0.1 }));
+      const jar = new Mesh(new CylinderGeometry(0.04, 0.04, 0.1, 48), mat('#cfe6f5', { transparent: true, opacity: 0.35, roughness: 0.1 }));
       jar.position.y = 0.05;
       g.add(jar);
       for (let i = 0; i < 5; i++) {
-        const cell = new Mesh(new CylinderGeometry(0.007, 0.007, 0.05, 8), mat(i % 2 ? '#c8453b' : '#3b2f2a'));
+        const cell = new Mesh(new CylinderGeometry(0.007, 0.007, 0.05, 24), mat(i % 2 ? '#c8453b' : '#3b2f2a'));
         cell.position.set(Math.cos(i) * 0.02, 0.03, Math.sin(i) * 0.02);
         g.add(cell);
       }
@@ -347,7 +283,7 @@ export async function buildRoom(): Promise<Room> {
   scene.add(emptySpot(0.45, 0.32, 0.02, [-0.42, 1.25, WALL_Z + 0.02]));
 
   // The desk, centred, with its front edge at z = 0.
-  add(undefined, await place('desk', [-0.72, 0, 0]));
+  add(undefined, desk(DESK_TOP));
   const top = DESK_TOP;
   // Sam's CRT, a little off-centre, with its glass facing you.
   const set = computerSet(top);
@@ -382,12 +318,16 @@ export async function buildRoom(): Promise<Room> {
   const lampObj = deskLamp();
   lampObj.group.position.set(-0.6, top, -0.56);
   lampObj.group.rotation.y = 0.75;
-  add(undefined, lampObj.group);
+  add('lamp', lampObj.group);
 
-  const runbook = box(0.05, 0.28, 0.22, '#3f63a0', [-0.38, top + 0.14, -0.6]);
-  add('runbook', runbook);
+  // The runbook, lying in the lamp's pool of light where Sam left it.
+  const book = runbook();
+  book.position.set(-0.43, top, -0.38);
+  book.rotation.y = 0.22;
+  add('runbook', book);
   const mugObj = mug();
-  mugObj.position.set(0.4, top, -0.38);
+  mugObj.position.set(0.41, top, -0.38);
+  mugObj.rotation.y = -0.35;
   add('mug', mugObj);
   const trayObj = tray();
   trayObj.position.set(0.6, top, -0.22);
@@ -395,8 +335,15 @@ export async function buildRoom(): Promise<Room> {
   const traySpot = new Group();
   traySpot.position.set(0.6, top + 0.01, -0.22);
   scene.add(traySpot);
-  const stickies = box(0.08, 0.012, 0.08, '#f7e27a', [-0.55, top + 0.006, -0.05]);
-  scene.add(stickies);
+  // A pad of sticky notes, the top sheet curling up.
+  const stickies = new Group();
+  for (let i = 0; i < 6; i++) stickies.add(box(0.076, 0.002, 0.076, i % 2 ? '#f3dc6e' : '#f7e27a', [0, 0.001 + i * 0.002, 0]));
+  const curl = box(0.076, 0.0015, 0.03, '#f7e27a', [0, 0.014, 0.025]);
+  curl.rotation.x = -0.35;
+  stickies.add(curl);
+  stickies.position.set(-0.55, top, -0.05);
+  stickies.rotation.y = 0.2;
+  scene.add(shadows(stickies));
   // A clean rectangle in the dust where the phone used to be.
   const dust = new Mesh(new PlaneGeometry(0.2, 0.14), mat('#b07a48', { roughness: 1 }));
   dust.rotation.x = -Math.PI / 2;
@@ -407,11 +354,10 @@ export async function buildRoom(): Promise<Room> {
   plant.position.set(0.62, top, -0.52);
   add('plant', plant);
 
-  // Sam's chair, pushed out to the side as if someone just stood up, darkened like a worn mesh office chair.
-  const chair = await place('chairDesk', [0.95, 0, 0.55], { turn: Math.PI + 0.6 });
-  chair.traverse((o) => {
-    if (o instanceof Mesh && o.material instanceof MeshStandardMaterial) { o.material = o.material.clone(); o.material.color.multiplyScalar(0.28); }
-  });
+  // Sam's chair, pushed out to the side as if someone just stood up.
+  const chair = officeChair();
+  chair.position.set(0.95, 0, 0.55);
+  chair.rotation.y = -0.9;
   add('chair', chair);
   scene.add(mess(top, WALL_Z));
   // The lamp's flex, off the back of the desk to join the rest of the wiring behind it.
@@ -425,10 +371,21 @@ export async function buildRoom(): Promise<Room> {
   const switchGlow = new PointLight('#ff7a2e', 0.04, 0.35, 2);
   switchGlow.position.set(0.195, 0.05, -0.49);
   scene.add(switchGlow);
-  add(undefined, await place('sideTableDrawers', [0.78, 0, -0.02], { scale: 1.4 }));
-  add(undefined, await place('trashcan', [-1.05, 0, -0.2], { scale: 1.3 }));
-  add(undefined, await place('pottedPlant', [1.45, 0, -0.62], { scale: 1.9 }));
-  add(undefined, await place('cardboardBoxClosed', [-1.6, 0, -0.55], { scale: 1.6 }));
+  const cabinet = filingCabinet();
+  cabinet.position.set(1.0, 0, -0.04);
+  add(undefined, cabinet);
+  // Sam's box of things, pushed up against the desk, with the bin balanced on top of it.
+  const carton = cardboardBox();
+  carton.position.set(-1.06, 0, -0.42);
+  carton.rotation.y = 0.08;
+  add(undefined, carton);
+  const bin = wasteBin();
+  bin.position.set(-1.06, 0.36, -0.44);
+  add(undefined, bin);
+  const tallPlant = snakePlant();
+  tallPlant.position.set(1.45, 0, -0.62);
+  add(undefined, tallPlant);
+
 
   return { scene, pickables, glass: set.glass, led: set.led, screenLight, traySpot, mouseButton: rodent.leftButton };
 }
@@ -441,7 +398,8 @@ export function materialsOf(object: Object3D): MeshStandardMaterial[] {
     // Give each clickable thing its own materials, so highlighting one doesn't light up another.
     const own = (Array.isArray(o.material) ? o.material : [o.material]).map((m: Material) => m.clone());
     o.material = own.length === 1 ? own[0] : own;
-    for (const m of own) if (m instanceof MeshStandardMaterial) found.push(m);
+    // Parts that glow by themselves (a bulb, a power light) keep their own glow, not the highlight.
+    for (const m of own) if (m instanceof MeshStandardMaterial && m.emissive.getHex() === 0) found.push(m);
   });
   return found;
 }

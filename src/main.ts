@@ -1,8 +1,8 @@
 import './style.css';
 import { GAME_MINUTES_PER_SECOND } from './features/game/data.ts';
 import { newGame, tick, type GameState } from './features/game/rules.ts';
-import { ROOM_ITEMS } from './features/room3d/items.ts';
-import { goTo, mountRoom, screenElement, setAtComputer, setScreen, setTools, showRoom, snapTo } from './features/room3d/view.ts';
+import { ROOM_ITEMS, SIPS } from './features/room3d/items.ts';
+import { goTo, mountRoom, screenElement, setAtComputer, setLamp, setMug, setScreen, setTools, showRoom, snapTo } from './features/room3d/view.ts';
 import { loadGame, saveGame } from './features/save/save.ts';
 import type { App } from './features/ui/app.ts';
 import { asleepScreen, computerScreen, darkScreen } from './features/ui/boot.ts';
@@ -83,6 +83,8 @@ const app: App = {
     void goTo(atComputer ? 'computer' : ui.shot);
     setScreen(p === 'off' ? 'off' : p === 'asleep' ? 'asleep' : 'on');
     setTools(app.state.tools);
+    setLamp(!ui.lampOff);
+    setMug(1 - (ui.sips ?? 0) / SIPS.length);
   },
   refreshTimes() {
     refreshTimes(screenElement(), app.state);

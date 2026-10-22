@@ -80,18 +80,24 @@ export function moneyPlant(): Object3D {
   const leafMat = new MeshStandardMaterial({ map: leafTexture(), roughness: 0.6, side: DoubleSide });
   const stemMat = new MeshStandardMaterial({ color: new Color('#6f9a4a'), roughness: 0.7 });
   const base = new Vector3(0, potH - 0.012, 0);
+  // Stems and leaves in one group, so the whole plant can sway when you touch it.
+  const foliage = new Group();
+  foliage.name = 'foliage';
+  g.add(foliage);
   for (let i = 0; i < 16; i++) {
     const a = (i / 16) * Math.PI * 2 + rand() * 0.4;
     const reach = 0.05 + rand() * 0.09;
     const rise = 0.07 + rand() * 0.12;
     const tip = new Vector3(Math.cos(a) * reach, potH + rise, Math.sin(a) * reach);
     const mid = new Vector3(Math.cos(a) * reach * 0.35, potH + rise * 0.8, Math.sin(a) * reach * 0.35);
-    g.add(new Mesh(new TubeGeometry(new CatmullRomCurve3([base, mid, tip]), 12, 0.0018, 5, false), stemMat));
+    foliage.add(new Mesh(new TubeGeometry(new CatmullRomCurve3([base, mid, tip]), 24, 0.0018, 8, false), stemMat));
     const leaf = new Mesh(new CircleGeometry(0.018 + rand() * 0.016, 20), leafMat);
     leaf.position.copy(tip);
     // Face mostly up, tipped outward a little, like it's reaching for the lamp.
     leaf.rotation.set(-Math.PI / 2 + Math.sin(a) * 0.5, Math.cos(a) * 0.5, rand() * Math.PI);
-    g.add(leaf);
+    leaf.name = 'leaf';
+    leaf.userData.rest = leaf.rotation.x;
+    foliage.add(leaf);
   }
   g.traverse((o) => { o.castShadow = true; o.receiveShadow = true; });
   return g;

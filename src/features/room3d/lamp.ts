@@ -1,6 +1,6 @@
 import {
   BackSide, BoxGeometry, CanvasTexture, Color, ConeGeometry, CylinderGeometry, Group, Mesh, MeshStandardMaterial, PointLight, Quaternion,
-  SphereGeometry, SpotLight, SRGBColorSpace, Vector3,
+  SphereGeometry, SpotLight, SRGBColorSpace, Vector3, type Object3D,
 } from 'three';
 
 /**
@@ -97,6 +97,8 @@ export function deskLamp(): DeskLamp {
   const inside = new Mesh(new ConeGeometry(0.07, depth * 0.98, 40, 1, true), new MeshStandardMaterial({
     color: new Color('#f3e2bd'), emissive: new Color('#ffd79a'), emissiveIntensity: 0.7, side: BackSide,
   }));
+  outside.name = 'shade-out';
+  inside.name = 'shade-in';
   const shade = new Group();
   shade.add(outside, inside);
   // A cone's point is up (+y); turn it so the point is at the wrist and the opening faces `aim`.
@@ -109,6 +111,7 @@ export function deskLamp(): DeskLamp {
     color: new Color('#fff4dc'), emissive: new Color('#ffe2b0'), emissiveIntensity: 3,
   }));
   bulb.position.copy(bulbAt);
+  bulb.name = 'bulb';
   g.add(bulb);
 
   g.traverse((o) => { o.castShadow = true; o.receiveShadow = true; });
@@ -128,7 +131,24 @@ export function deskLamp(): DeskLamp {
   // The warm light bouncing back up off the pool on the desk, onto the pegboard and the shade's underside.
   const bounce = new PointLight('#ffb866', 0.3, 1.0, 1.8);
   bounce.position.copy(bulbAt).add(new Vector3(0, -0.12, 0.05));
+  spot.name = 'lamp-spot';
+  bounce.name = 'lamp-bounce';
   g.add(spot, spot.target, bounce);
 
   return { group: g, cableFrom: new Vector3(0, 0.008, -0.07) };
+}
+
+/** How brightly each glowing part shines when the lamp is on. */
+const GLOW: [string, number][] = [['bulb', 3], ['shade-out', 2], ['shade-in', 0.7]];
+
+/** Switch the lamp on or off: its light, its bounce, and the glow of the bulb and shade. Looked up by name, so it still works on copies. */
+export function setLampOn(lamp: Object3D, on: boolean): void {
+  for (const [name, glow] of GLOW) {
+    const part = lamp.getObjectByName(name);
+    if (part instanceof Mesh && part.material instanceof MeshStandardMaterial) part.material.emissiveIntensity = on ? glow : 0;
+  }
+  for (const name of ['lamp-spot', 'lamp-bounce']) {
+    const light = lamp.getObjectByName(name);
+    if (light) light.visible = on;
+  }
 }

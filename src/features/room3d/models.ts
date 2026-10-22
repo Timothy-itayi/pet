@@ -3,7 +3,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
 /** Low-poly furniture from Kenney's Furniture Kit (CC0), in public/models. */
 export const MODELS = [
-  'desk', 'chairDesk', 'books', 'pottedPlant',
+  'chairDesk', 'books', 'pottedPlant',
   'sideTableDrawers', 'televisionVintage', 'trashcan', 'cardboardBoxClosed', 'radio', 'speakerSmall',
 ] as const;
 export type ModelName = (typeof MODELS)[number];

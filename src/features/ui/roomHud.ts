@@ -1,7 +1,8 @@
 import { COMPANY, DAYS, TOOLS } from '../game/data.ts';
-import { ROOM_ITEMS } from '../room3d/items.ts';
-import { closeInspect, goTo, inspectItem, isInspecting, pressMouse, turnInspected } from '../room3d/view.ts';
+import { ON_THE_WALL, ROOM_ITEMS, SIPS } from '../room3d/items.ts';
+import { closeInspect, goTo, inspectItem, isInspecting, pressMouse, sipMug, spinChair, swayPlant, turnInspected } from '../room3d/view.ts';
 import type { App } from './app.ts';
+import { closeBook, flipBook, openBook } from './book.ts';
 import { clockText, h } from './dom.ts';
 import { powerAway } from './power.ts';
 
@@ -74,23 +75,48 @@ export function tapMouse(app: App): void {
   app.rerender();
 }
 
+/** A sip of Sam's cold coffee, until there's none left. */
+function sip(app: App): string {
+  const { ui } = app;
+  const taken = ui.sips ?? 0;
+  if (taken >= SIPS.length) return 'Empty. Just a brown ring at the bottom.';
+  sipMug();
+  ui.sips = taken + 1;
+  return SIPS[taken] ?? '';
+}
+
+/** Click something in the room. Some things you pick up; most you use where they are. */
 export function pickInRoom(app: App, id: string): void {
   const { ui } = app;
   ui.note = undefined;
   const item = ROOM_ITEMS.find((i) => i.id === id);
-  if (id === 'computer') return sitAtComputer(app);
-  if (id === 'power') return pressPower(app);
-  if (id === 'mouse') return tapMouse(app);
-  if (id === 'wall' || item?.kind === 'wall') { ui.shot = 'wall'; app.rerender(); return; }
-  if (!describe(app, id)) return;
-  ui.inspecting = id;
-  inspectItem(id);
+  const says = item?.says(app.state.day);
+  switch (item?.kind) {
+    case 'computer': return sitAtComputer(app);
+    case 'power': return pressPower(app);
+    case 'mouse': return tapMouse(app);
+    case 'wall': ui.shot = 'wall'; break;
+    case 'look': ui.note = says; break;
+    case 'spin': spinChair(); ui.note = says; break;
+    case 'sway': swayPlant(); ui.note = says; break;
+    case 'lamp':
+      ui.lampOff = !ui.lampOff;
+      ui.note = ui.lampOff ? 'Click. The lamp goes off.' : 'Click. Warm light pools on the desk again.';
+      break;
+    case 'sip': ui.note = sip(app); break;
+    default:
+      // Things you pick up and turn over, including whatever's turned up in the ticket tray.
+      if (!describe(app, id)) return;
+      ui.inspecting = id;
+      inspectItem(id);
+  }
   app.rerender();
 }
 
 function putBack(app: App): void {
   closeInspect();
   app.ui.inspecting = undefined;
+  app.ui.book = undefined;
   app.rerender();
 }
 
@@ -104,6 +130,12 @@ export function computerHud(app: App): HTMLElement {
 export function roomKeys(app: App, e: KeyboardEvent): void {
   const { ui } = app;
   if (ui.view !== 'room' || ui.panel) return;
+  // Reading the runbook: arrows turn the pages, Esc closes it (you're still holding it).
+  if (ui.book !== undefined) {
+    if (e.key === 'Escape') closeBook(app);
+    else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') { e.preventDefault(); flipBook(app, e.key === 'ArrowLeft' ? -1 : 1); }
+    return;
+  }
   if (e.key === 'Escape') {
     if (isInspecting()) putBack(app);
     else if (ui.shot !== 'overview') { ui.shot = 'overview'; app.rerender(); }
@@ -127,9 +159,7 @@ export function roomHud(app: App): HTMLElement {
   const intro = ui.note ?? (dropped ? `Something new in your ticket tray. ${dropped.gift}`
     : state.day === 1 && state.phase === 'boot' ? 'Your first day. This was Sam\u2019s desk. Sam left notes.'
     : 'Sam\u2019s desk. Well, yours now.');
-  const here = ROOM_ITEMS.filter((i) => (ui.shot === 'wall'
-    ? ['notes', 'calendar', 'binders'].includes(i.id)
-    : i.kind !== 'inspect' || !['notes', 'calendar', 'binders'].includes(i.id)));
+  const here = ROOM_ITEMS.filter((i) => ON_THE_WALL.includes(i.id) === (ui.shot === 'wall'));
   const things = [...here, ...(state.tools.length && ui.shot === 'overview' ? [{ id: 'tool', label: describe(app, 'tool')?.label ?? 'Tool' }] : [])];
   return h('main', { class: 'room-hud', 'data-testid': 'room' },
     h('header', { class: 'room-top' },
@@ -138,10 +168,13 @@ export function roomHud(app: App): HTMLElement {
     h('nav', { class: 'skip-list', 'aria-label': 'Things you can look at' }, ...things.map((t) => h('button', {
       class: 'skip-item', 'data-testid': `item-${t.id}`, onclick: () => pickInRoom(app, t.id),
     }, t.label))),
-    held && h('section', { class: 'inspect-panel', role: 'dialog', 'aria-labelledby': 'held-name', 'data-testid': 'inspect' },
+    held && ui.inspecting === 'runbook' && ui.book !== undefined ? openBook(app) : held && h('section', { class: 'inspect-panel', role: 'dialog', 'aria-labelledby': 'held-name', 'data-testid': 'inspect' },
       h('h2', { id: 'held-name' }, held.label),
       h('p', {}, held.says),
-      h('p', { class: 'meta' }, 'Drag to turn it over. Esc to put it back.'),
+      h('p', { class: 'meta' }, ui.inspecting === 'runbook' ? 'Drag to turn it over. Open it to read it. Esc to put it back.' : 'Drag to turn it over. Esc to put it back.'),
+      ui.inspecting === 'runbook' && h('button', {
+        class: 'btn primary', 'data-testid': 'open-book', 'data-autofocus': true, onclick: () => { ui.book = 0; app.rerender(); },
+      }, 'Open it'),
       h('button', { class: 'back-chip', 'data-testid': 'put-back', 'data-autofocus': true, 'aria-label': 'Put it back', onclick: () => putBack(app) }, '\u2190')),
     !held && ui.shot !== 'overview' && h('button', {
       class: 'back-chip corner', 'data-testid': 'step-back', 'aria-label': 'Step back', onclick: () => { ui.shot = 'overview'; app.rerender(); },
