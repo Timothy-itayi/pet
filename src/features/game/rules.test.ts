@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { CLOSE, DAILY_COST, DAYS, GOAL_VOUCHER, REPLIES, START_SAVINGS } from './data.ts';
+import { CHAT_LATER, CLOSE, DAILY_COST, DAYS, GOAL_VOUCHER, REPLIES, START_SAVINGS, VILLAGERS } from './data.ts';
 import {
-  acceptOffer, apply, arriveOnSite, askForTicket, clockTime, fix, goHome, goTo, issueOf, newGame, next, parseSave,
-  noteTarget, pushBack, relation, reply, tick, ticketById, ticketState, wait, walk, workaround, writeNote, type GameState,
+  acceptOffer, apply, askForTicket, clockTime, fix, goHome, goNow, goTo, issueOf, later, newGame, next, noteTarget, parseSave,
+  pushBack, relation, reply, tick, ticketById, ticketState, workaround, writeNote, type GameState,
 } from './rules.ts';
 
 type Act = (s: GameState, id: string) => GameState;
@@ -10,38 +10,51 @@ const atDesk = () => goTo(newGame(), 'desk');
 /** Let the office clock run to a given time. */
 const until = (s: GameState, hm: string) => tick(s, clockTime(hm) - s.clock);
 const correct = (id: string) => issueOf(ticketById(id)).correctFix;
-/** Do something about a ticket: follow a walk-up to the problem first, and head back to the desk afterwards. */
+/** Do something about a ticket or chat: for a chat, say "on my way" first and go over in person. */
 function handle(s: GameState, id: string, act: Act): GameState {
-  if (s.escort === id) s = arriveOnSite(s);
-  s = next(act(s, id));
-  return s.escort ? s : walk(s, 'computer');
+  if (s.chats.includes(id)) s = goNow(s, id);
+  return next(act(s, id));
 }
 const solve = (s: GameState, id: string) => handle(s, id, (x, i) => fix(x, i, correct(i)));
-/** Run the clock to a time, fixing every ticket that turns up on the way except the one under test. */
+/** Run the clock to a time, dealing with everything that turns up on the way except the one under test. */
 function serveUntil(s: GameState, hm: string, except?: string): GameState {
   const target = clockTime(hm);
   while (s.phase === 'desk' && s.clock < target) {
-    const id = s.escort ?? s.queue.find((x) => x !== except);
+    const id = s.escort ?? s.queue.find((x) => x !== except) ?? s.chats.find((x) => x !== except);
     s = s.outcomes.length ? next(s) : id ? solve(s, id) : tick(s, Math.min(1, target - s.clock));
   }
   return s;
 }
-/** Deal with everyone the moment they arrive, then go home and come back for the next day. */
+/** Deal with everyone the moment they turn up, then go home and come back for the next day. */
 function playDay(s: GameState, each: Act = solve): GameState {
   s = goTo(s, 'desk');
   while (s.phase === 'desk') {
-    const id = s.escort ?? s.queue[0];
-    s = id ? each(s, id) : s.place === 'floor' ? walk(s, 'computer') : wait(s);
+    const id = s.escort ?? s.queue[0] ?? s.chats[0];
+    s = s.outcomes.length ? next(s) : id ? each(s, id) : tick(s, 5);
   }
   return goHome(s);
 }
-/** Set everything to pending; once that's used up, a workaround; once that's used up too, fix it. */
-const pushAll: Act = (s, id) => handle(s, id, (x, i) => {
-  const pushed = pushBack(x, i);
-  if (pushed !== x) return pushed;
-  const worked = workaround(x, i);
-  return worked !== x ? worked : fix(x, i, correct(i));
-});
+/** Put everything off: pending or "can it wait?"; once that's used up, a workaround or a ticket; failing all that, fix it. */
+const pushAll: Act = (s, id) => {
+  if (s.chats.includes(id)) {
+    const waited = later(s, id);
+    if (waited !== s) return next(waited);
+    const asked = askForTicket(s, id);
+    return asked !== s ? next(asked) : solve(s, id);
+  }
+  return handle(s, id, (x, i) => {
+    const pushed = pushBack(x, i);
+    if (pushed !== x) return pushed;
+    const worked = workaround(x, i);
+    return worked !== x ? worked : fix(x, i, correct(i));
+  });
+};
+
+/** Never resolve anything: put things off while you can, otherwise just let time pass. */
+const lazy: Act = (s, id) => {
+  const off = s.chats.includes(id) ? later(s, id) : pushBack(s, id);
+  return off !== s ? next(off) : tick(s, 5);
+};
 
 describe('the queue and the clock', () => {
   it('opens at 9am, and tickets arrive at their time without warning', () => {
@@ -72,13 +85,13 @@ describe('the queue and the clock', () => {
   });
 
   it('stops the clock while a card is up', () => {
-    const s = fix(arriveOnSite(until(atDesk(), '9:05')), 't101', 'jam');
+    const s = fix(goNow(until(atDesk(), '9:05'), 't101'), 't101', 'jam');
     expect(tick(s, 30)).toBe(s);
   });
 
-  it('ends the day at 5pm and carries unresolved tickets over, a step grumpier', () => {
+  it('ends the day at 5pm and carries anything unresolved over, a step grumpier', () => {
     let s = reply(serveUntil(atDesk(), '9:50'), 't102');
-    while (s.phase === 'desk') s = tick(reply(s, 't102'), 50); // keep her updated all day
+    while (s.phase === 'desk') s = s.outcomes.length ? next(s) : tick(reply(s, 't102'), 50); // keep her updated all day
     expect(s.clock).toBe(CLOSE);
     s = goTo(goHome(s), 'desk');
     expect(s.queue[0]).toBe('t102');
@@ -86,88 +99,81 @@ describe('the queue and the clock', () => {
   });
 });
 
-describe('walk-ups', () => {
-  it('lead you away from your desk; you can only fix it once you’ve followed them there', () => {
-    let s = until(atDesk(), '9:05');
-    expect(s).toMatchObject({ escort: 't101', place: 'floor' });
-    expect(fix(s, 't101', 'jam')).toBe(s);
-    expect(walk(s, 'computer')).toBe(s);
+describe('chat', () => {
+  it('is how people skip the ticket system: friendly first, then the real reason', () => {
+    const s = until(atDesk(), '9:05');
+    expect(s.chats).toEqual(['t101']);
+    expect(s.queue).toEqual([]);
+    expect(ticketState(s, 't101').messages.map((m) => m.text)).toEqual([VILLAGERS.dot.opener, ticketById('t101').message]);
+    expect(fix(s, 't101', 'jam')).toBe(s); // you can't fix it from your desk
+  });
+
+  it('"On my way" takes you to them; fixing it helps, but the manager doesn’t count it', () => {
+    let s = goNow(until(atDesk(), '9:05'), 't101');
+    expect(s).toMatchObject({ escort: 't101', place: 'floor', chats: [] });
+    expect(s.clock).toBe(clockTime('9:10'));
     s = until(s, '10:00');
     expect(ticketState(s, 't101').mood).toBe(1); // they're with you, so no reply-by time
-    s = next(fix(arriveOnSite(s), 't101', 'jam'));
-    expect(s).toMatchObject({ escort: undefined, place: 'floor' });
-    expect(walk(s, 'computer').place).toBe('computer');
+    s = next(fix(s, 't101', 'jam'));
+    expect(s).toMatchObject({ escort: undefined, place: 'computer' });
+    expect(s.today).toMatchObject({ helped: 1, resolved: 0 });
+    expect(relation(s, 'dot')).toBe('friend');
   });
 
-  it('wait at your desk if you’re out on the floor, and grab you when you get back', () => {
-    let s = until(walk(atDesk(), 'floor'), '9:10');
-    expect(s.escort).toBeUndefined();
-    expect(s.queue).toEqual(['t101']);
-    s = walk(s, 'computer');
-    expect(s).toMatchObject({ escort: 't101', place: 'floor' });
-  });
-});
-
-describe('the office floor', () => {
-  it('has people with no ticket, who you only see if you walk over, and who give up after an hour', () => {
-    let s = serveUntil(atDesk(), '11:30');
-    expect(s.queue).not.toContain('f101');
-    expect(s.floor).toEqual(['f101']);
-    expect(fix(s, 'f101', 'battery')).toBe(s); // you're at your computer
-    s = until(s, '12:30');
-    expect(s.floor).toEqual([]);
-    expect(s.today.gaveUp).toBe(1);
+  it('"Can it wait?" annoys them and they ask again in an hour, at most twice', () => {
+    let s = later(until(atDesk(), '9:05'), 't101');
+    expect(ticketState(s, 't101')).toMatchObject({ mood: 2, pushes: 1, due: clockTime('9:05') + CHAT_LATER });
+    s = later(s, 't101');
+    expect(ticketState(s, 't101').pushes).toBe(2);
+    expect(later(s, 't101')).toBe(s);
   });
 
-  it('helping on the floor earns experience and friends, but the manager doesn’t count it', () => {
-    let s = walk(serveUntil(atDesk(), '11:30'), 'floor');
-    expect(reply(s, 'f101')).toBe(s); // no ticket system on the floor
-    s = next(fix(s, 'f101', 'battery'));
-    expect(s.today).toMatchObject({ helped: 1, resolved: 2 }); // the morning's two tickets, not Biscuit
-    expect(relation(s, 'biscuit')).toBe('friend');
+  it('"Please log a ticket" annoys them once, then it lands in your queue and counts', () => {
+    let s = next(askForTicket(until(atDesk(), '9:05'), 't101'));
+    expect(s.chats).toEqual([]);
+    s = until(s, '9:40');
+    expect(s.queue).toContain('t101');
+    expect(ticketState(s, 't101')).toMatchObject({ mood: 2, logged: true });
+    expect(ticketState(s, 't101').messages[0]?.text).toMatch(/ticket you asked for/);
+    s = next(fix(s, 't101', 'jam'));
+    expect(s.today).toMatchObject({ resolved: 1, helped: 0 });
   });
 
-  it('asking for a ticket annoys them once, then it lands in your queue and counts', () => {
-    let s = walk(serveUntil(atDesk(), '11:30'), 'floor');
-    s = walk(next(askForTicket(s, 'f101')), 'computer');
-    expect(s.floor).toEqual([]);
-    s = until(s, '12:10');
-    expect(s.queue).toContain('f101');
-    expect(ticketState(s, 'f101')).toMatchObject({ mood: 1, logged: true });
-    expect(ticketState(s, 'f101').messages[0]?.text).toMatch(/ticket you asked for/);
-    s = next(fix(s, 'f101', 'battery'));
-    expect(s.today).toMatchObject({ resolved: 3, helped: 0 });
+  it('left unanswered, they get upset and eventually storm off', () => {
+    let s = until(atDesk(), '9:20'); // Dot expects an answer within 15 minutes
+    expect(ticketState(s, 't101').mood).toBe(2);
+    s = until(s, '10:20');
+    expect(s.outcomes).toEqual([{ ticketId: 't101', kind: 'storm', xp: 0 }]);
+    expect(relation(s, 'dot')).toBe('nemesis');
   });
 
-  it('can’t work your queue while you’re away from the computer, and its clock keeps running', () => {
-    let s = walk(serveUntil(atDesk(), '9:50'), 'floor');
-    expect(reply(s, 't102')).toBe(s);
-    s = until(s, '10:10');
-    expect(ticketState(s, 't102').mood).toBe(3);
+  it('can’t be answered while you’re off helping someone else', () => {
+    const s = goNow(serveUntil(atDesk(), '11:30', 'f101'), 'f101');
+    const busy = { ...s, chats: ['t101'] };
+    expect(goNow(busy, 't101')).toBe(busy);
   });
 });
 
 describe('fixing', () => {
   it('resolves on the right fix and earns experience', () => {
-    const s = fix(arriveOnSite(until(atDesk(), '9:05')), 't101', 'jam');
-    expect(s.queue).toEqual([]);
+    const s = fix(goNow(until(atDesk(), '9:05'), 't101'), 't101', 'jam');
     expect(s.xp.devices).toBe(2);
     expect(s.outcomes[0]).toMatchObject({ ticketId: 't101', kind: 'fix', xp: 2 });
-    expect(s.clock).toBe(clockTime('9:20'));
+    expect(s.clock).toBe(clockTime('9:25'));
   });
 
   it('costs patience for a wrong fix', () => {
-    const s = fix(arriveOnSite(until(atDesk(), '9:05')), 't101', 'ink');
+    const s = fix(goNow(until(atDesk(), '9:05'), 't101'), 't101', 'ink');
     expect(s.notice?.text).toMatch(/still jammed/);
     expect(ticketState(s, 't101')).toMatchObject({ mood: 2, tried: ['ink'] });
   });
 
   it('turns the right internal note into a runbook page that makes the same problem quicker next time', () => {
-    let s = fix(arriveOnSite(until(atDesk(), '9:05')), 't101', 'jam');
+    let s = fix(goNow(until(atDesk(), '9:05'), 't101'), 't101', 'jam');
     s = writeNote(s, 1);
     expect(s.outcomes[0]?.wrongNote).toBe(1);
     expect(s.runbook['paper-jam']).toBe('ok');
-    s = walk(next(writeNote(s, 0)), 'computer');
+    s = next(writeNote(s, 0));
     expect(s.runbook['paper-jam']).toBe('yours');
     expect(s.xp.devices).toBe(3);
     s = playDay(s);
@@ -195,28 +201,28 @@ describe('workarounds and pending', () => {
     expect(s.xp.devices).toBe(1);
     expect(s.returning).toEqual([{ id: 't101', day: 3 }]);
     s = goTo(playDay(playDay(s)), 'desk');
-    expect(s.escort).toBe('t101'); // Dot's back first thing
-    s = arriveOnSite(s);
+    expect(s.chats[0]).toBe('t101'); // Dot's back on chat first thing
+    s = goNow(s, 't101');
     expect(workaround(s, 't101')).toBe(s);
   });
 
   it('pending sends them away until tomorrow, at most twice', () => {
     let s = handle(until(atDesk(), '9:05'), 't101', pushBack);
     expect(ticketState(s, 't101').status).toBe('pending');
-    const pushDot: Act = (x, id) => (id === 't101' ? pushAll(x, id) : solve(x, id));
+    const pushDot: Act = (x, id) => (id === 't101' ? handle(x, id, pushBack) : solve(x, id));
     s = goTo(playDay(playDay(s), pushDot), 'desk');
-    expect(s.escort).toBe('t101');
-    s = arriveOnSite(s);
+    expect(s.chats[0]).toBe('t101');
+    s = goNow(s, 't101');
     expect(pushBack(s, 't101')).toBe(s);
   });
 });
 
 describe('the day-3 loot drop', () => {
-  /** Fix only these people's tickets; set everyone else's to pending. */
+  /** Fix only these people's tickets and chats; put off everyone else. */
   const onlyHelp = (...who: string[]): Act => (s, id) => (who.includes(ticketById(id).who) ? solve(s, id) : pushAll(s, id));
   const toDay3 = (s: GameState, each: Act) => goTo(playDay(playDay(s, each), pushAll), 'desk');
 
-  it('with no friends, you find Sam\u2019s cheat sheet in the drawer', () => {
+  it('with no friends, you find Sam’s cheat sheet in the drawer', () => {
     const s = toDay3(newGame(0), pushAll);
     expect(s).toMatchObject({ tools: ['cheat-sheet'], drop: 'cheat-sheet' });
     expect(s.runbook['tool:cheat-sheet']).toBe('missing');
@@ -235,9 +241,9 @@ describe('the day-3 loot drop', () => {
     expect(s).toMatchObject({ day: 4, tools: ['cheat-sheet'], drop: undefined });
   });
 
-  it('gives a faster fix that isn\u2019t in the runbook, until you write its page', () => {
+  it('gives a faster fix that isn’t in the runbook, until you write its page', () => {
     let s: GameState = { ...atDesk(), tools: ['tweezers'], runbook: { ...atDesk().runbook, 'tool:tweezers': 'missing' } };
-    s = arriveOnSite(until(s, '9:05'));
+    s = goNow(until(s, '9:05'), 't101');
     const before = s.clock;
     s = fix(s, 't101', 'tool');
     expect(s.clock - before).toBe(5);
@@ -253,11 +259,11 @@ describe('the day-3 loot drop', () => {
 describe('money and endings', () => {
   it('pays a voucher only when the goal is met, and always costs bus fare and food', () => {
     expect(playDay(newGame()).savings).toBe(START_SAVINGS + GOAL_VOUCHER - DAILY_COST);
-    expect(playDay(newGame(), pushAll).savings).toBe(START_SAVINGS - DAILY_COST);
+    expect(playDay(newGame(), lazy).savings).toBe(START_SAVINGS - DAILY_COST);
   });
 
   it('burns out when savings run out', () => {
-    expect(playDay({ ...newGame(), savings: DAILY_COST }, pushAll).ending).toBe('burnout');
+    expect(playDay({ ...newGame(), savings: DAILY_COST }, lazy).ending).toBe('burnout');
   });
 
   it('a good week can get you hired by the library, but not Big Ocean yet', () => {
@@ -275,7 +281,7 @@ describe('saves', () => {
     const s = solve(until(atDesk(), '9:05'), 't101');
     expect(parseSave(JSON.stringify(s))).toEqual(s);
     expect(parseSave('{nope')).toBeUndefined();
-    expect(parseSave(JSON.stringify({ ...s, version: 5 }))).toBeUndefined();
+    expect(parseSave(JSON.stringify({ ...s, version: 7 }))).toBeUndefined();
     expect(parseSave(JSON.stringify({ ...s, queue: ['not-a-ticket'] }))).toBeUndefined();
   });
 });

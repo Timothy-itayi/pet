@@ -138,6 +138,7 @@ meter { width: 100%; height: 18px; }
 
 /* Desk: your queue on the left, the open ticket on the right */
 .desk { background: var(--wood); height: min(780px, calc(100vh - 32px)); }
+.crt-screen .desk { height: 100%; }
 .status {
   display: flex; flex-wrap: wrap; gap: 6px 18px; align-items: center;
   padding: 8px 16px; background: var(--paper); border-bottom: 4px solid var(--ink);
@@ -276,12 +277,6 @@ img.sprite.tiny { width: 40px; height: 40px; }
 .area-empty { margin: 0; color: var(--muted); font-size: 0.95rem; }
 .btn.walk { background: var(--manila); }
 
-/* The office map */
-.floor-body { flex: 1; min-height: 0; padding: 12px; overflow-y: auto; }
-.map { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
-.map-frame { border: 4px solid var(--ink); border-radius: 8px; background: var(--ink); line-height: 0; }
-.map-frame:focus-visible { outline: 4px dashed var(--focus); outline-offset: 3px; }
-.map-canvas { width: 100%; height: auto; image-rendering: pixelated; display: block; border-radius: 4px; }
 /* A classic handheld-game text box. */
 .map-prompt {
   margin: 0; padding: 10px 14px; min-height: 2.9em; font: 1.05rem/1.4 var(--pixel);
@@ -304,27 +299,259 @@ img.sprite.tiny { width: 40px; height: 40px; }
 .login input { font: 1.2rem var(--term); background: #0b1a10; color: var(--crt-text); border: 2px solid var(--crt-text); border-radius: 4px; padding: 2px 8px; }
 .login .hint { margin: 4px 0 10px; }
 
-/* Sam's desk, as a picture you can click on */
-.room { background: #1f1712; }
-.desk-art { position: relative; line-height: 0; }
-.desk-canvas { width: 100%; height: auto; image-rendering: pixelated; display: block; }
-.hotspot { position: absolute; padding: 0; background: none; border: 2px solid transparent; border-radius: 4px; cursor: pointer; }
-.hotspot:hover, .hotspot:focus-visible { border-color: #fff3a8; background: #fff3a822; outline: none; }
-.hotspot-label {
-  position: absolute; left: 50%; bottom: calc(100% + 4px); transform: translateX(-50%); white-space: nowrap;
-  font: 0.85rem/1.4 var(--pixel); color: var(--ink); background: var(--paper); border: 2px solid var(--ink); border-radius: 6px; padding: 0 6px;
-  opacity: 0; pointer-events: none;
-}
-.hotspot:hover .hotspot-label, .hotspot:focus-visible .hotspot-label { opacity: 1; }
-.room-bar { display: flex; gap: 12px; align-items: stretch; background: #fff; border-top: 4px double var(--ink); }
-.room-bar .caption { flex: 1; border-top: 0; }
-.room-bar .btn { margin: 10px 12px 10px 0; align-self: center; }
-@media (max-width: 640px) {
-  .room-bar { flex-direction: column; gap: 0; }
-  .room-bar .btn { margin: 0 12px 12px; align-self: stretch; text-align: center; }
-}
-
 /* Loot */
 .btn.fix.from-tool { background: #e4f5d6; border-color: var(--leaf-dark); box-shadow: 0 4px 0 var(--leaf-dark); }
-.new-drop [data-testid='item-tool'] { border-color: #fff3a8; background: #fff3a822; }
-.new-drop [data-testid='item-tool'] .hotspot-label { opacity: 1; }
+
+/* The 3D room behind everything */
+body:has(.room-canvas:not([hidden])) { background: #120d0a; }
+.room-canvas { position: fixed; inset: 0; z-index: 1; display: block; transition: filter 0.4s ease; }
+.room-canvas.blurred { filter: blur(6px) brightness(0.4) saturate(0.8); }
+.inspect-canvas { position: fixed; inset: 0; z-index: 2; display: block; cursor: grab; }
+.inspect-canvas:active { cursor: grabbing; }
+#app { position: relative; z-index: 3; }
+body.in-room #app { pointer-events: none; }
+body.in-room #app .room-hud > * { pointer-events: auto; }
+
+.room-hud { position: fixed; inset: 0; display: flex; flex-direction: column; justify-content: space-between; padding: 16px; pointer-events: none; }
+.room-top { display: flex; justify-content: space-between; gap: 12px; align-self: stretch; }
+.room-top p { margin: 0; padding: 4px 12px; font-family: var(--pixel); color: var(--paper); background: #120d0acc; border-radius: 6px; }
+.room-bottom { display: flex; flex-direction: column; gap: 10px; max-width: 760px; width: 100%; margin: 0 auto; }
+.room-bottom .caption { border: 4px double var(--ink); border-radius: 8px; box-shadow: 0 3px 0 var(--ink); }
+.hover-label { margin: 0; min-height: 1.6em; text-align: center; font-family: var(--pixel); color: #fff3a8; text-shadow: 0 2px 0 #000; }
+.room-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.room-actions .btn.new { background: #fff3a8; border-color: var(--leaf-dark); }
+.inspect-panel {
+  position: absolute; left: 4vw; top: 50%; transform: translateY(-50%); max-width: min(420px, 40vw);
+  color: var(--paper); text-shadow: 0 2px 6px #000;
+}
+.inspect-panel h2 { font-size: clamp(1.6rem, 3vw, 2.4rem); margin-bottom: 12px; }
+.inspect-panel p { font-size: 1.15rem; line-height: 1.6; }
+.inspect-panel .meta { color: #e8dcc0; }
+.inspect-panel .btn { text-shadow: none; }
+.screen.boot.waking { animation: wake 1.4s ease-out; }
+@keyframes wake { from { filter: brightness(0); } to { filter: brightness(1); } }
+@media (max-width: 640px) {
+  .inspect-panel { left: 16px; right: 16px; top: auto; bottom: 16px; transform: none; max-width: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .room-canvas { transition: none; }
+  .screen.boot.waking { animation: none; }
+}
+
+/* The monitor's screen: a page placed in 3D behind the glass. Scanlines, a little static, a slow flicker, dark corners. */
+.screen-layer { position: fixed !important; inset: 0; z-index: 0; }
+.crt-screen { position: relative; overflow: hidden; border-radius: 22px; background: #0d1a12; color: var(--ink); font: 500 18px/1.55 var(--read); }
+.crt-screen > .screen {
+  width: 100%; height: 100%; min-height: 0; margin: 0; border: 0; border-radius: 0; box-shadow: none;
+  filter: sepia(0.12) saturate(0.95) brightness(0.96);
+}
+.crt-screen::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 10;
+  background:
+    radial-gradient(ellipse at center, transparent 58%, #0a0705b3 100%),
+    repeating-linear-gradient(to bottom, #00000018 0 1px, transparent 1px 3px),
+    var(--static);
+  animation: static-shift 0.35s steps(4) infinite, flicker 6s ease-in-out infinite;
+}
+/* Switched off: plain dark glass, no static. */
+.crt-screen:has([data-testid='screen-off'])::after { animation: none; background: radial-gradient(ellipse at 30% 25%, #ffffff0d, transparent 40%), radial-gradient(ellipse at center, transparent 58%, #000000 100%); }
+@keyframes static-shift { 0% { background-position: 0 0, 0 0, 0 0; } 25% { background-position: 0 0, 0 1px, 31px 17px; } 50% { background-position: 0 0, 0 0, -23px 41px; } 75% { background-position: 0 0, 0 1px, 57px -11px; } }
+@keyframes flicker { 0%, 100% { opacity: 1; } 48% { opacity: 0.9; } 50% { opacity: 1; } 52% { opacity: 0.94; } }
+.computer-hud { justify-content: flex-start; align-items: flex-start; }
+.stand-up { background: #120d0acc; color: var(--paper); border-color: var(--paper); }
+
+/* The computer switched off, or asleep. */
+.screen.boot.dark { background: #050505; align-items: center; justify-content: center; }
+.dark-centre { display: flex; flex-direction: column; align-items: center; gap: 18px; text-align: center; margin: auto; }
+.dark-hint { margin: 0; color: #9be39b88; font: 1.25rem var(--term); }
+.dark-hint.small { font-size: 1rem; }
+.power-button {
+  width: 88px; height: 88px; border-radius: 50%; cursor: pointer;
+  font-size: 2.6rem; line-height: 1; color: #9be39b; background: radial-gradient(circle at 40% 35%, #2a3a2e, #0d150f);
+  border: 4px solid #3b4a3e; box-shadow: 0 0 0 4px #050505, 0 0 24px #9be39b33;
+}
+.power-button:hover { box-shadow: 0 0 0 4px #050505, 0 0 36px #9be39b66; }
+.sleep-z { margin: 0; color: #9be39b44; font: 2rem var(--term); letter-spacing: 0.3em; }
+
+@media (prefers-reduced-motion: reduce) {
+  .crt-screen::after { animation: none; }
+}
+
+/* The room's overlay: no buttons, just a way back and a list that only appears when you Tab to it. */
+.skip-list { position: absolute; left: 16px; top: 56px; display: flex; flex-direction: column; gap: 4px; }
+.skip-item {
+  position: absolute; left: -9999px; font: 0.9rem var(--pixel); color: var(--paper);
+  background: #120d0ae6; border: 2px solid var(--paper); border-radius: 6px; padding: 2px 10px; cursor: pointer;
+}
+.skip-item:focus { position: static; outline: 3px dashed #fff3a8; outline-offset: 2px; }
+.back-chip {
+  width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; cursor: pointer;
+  font-size: 1.2rem; color: var(--paper); background: #120d0aaa; border: 1px solid #e8dcc066;
+}
+.back-chip:hover, .back-chip:focus-visible { background: #120d0aee; border-color: var(--paper); }
+.back-chip.corner { position: absolute; left: 16px; bottom: 24px; }
+.inspect-panel .back-chip { margin-top: 8px; }
+
+/* Tickets and chat tabs */
+.tabs { display: flex; gap: 4px; margin-bottom: 4px; }
+.tab { flex: 1; font: 0.95rem var(--pixel); padding: 4px 8px; cursor: pointer; background: #e9e2cf; border: 2px solid var(--ink); border-radius: 8px 8px 0 0; color: var(--muted); }
+.tab.on { background: var(--paper); color: var(--ink); }
+.unread { display: inline-block; margin-left: 6px; min-width: 1.4em; padding: 0 5px; border-radius: 999px; background: var(--honk); color: #fff; font-size: 0.8rem; }
+.chat-item .preview { color: var(--muted); font-size: 0.9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* A chat: their face, DOOM-style, getting crosser the longer you leave them */
+.chat-head { display: flex; gap: 16px; align-items: center; }
+.chat-head h2 { margin: 0; }
+.chat-face { margin: 0; padding: 6px; display: flex; flex-direction: column; align-items: center; gap: 4px; background: #1f1712; border: 3px solid var(--ink); border-radius: 6px; }
+.chat-face .sprite { width: 112px; height: 112px; }
+.chat-face figcaption { font: 0.85rem var(--pixel); color: #fff; }
+.chat-face.mood-2 { box-shadow: 0 0 0 3px #f8c79a; }
+.chat-face.mood-3 { box-shadow: 0 0 0 3px var(--honk); animation: fume 0.6s ease-in-out infinite alternate; }
+@keyframes fume { from { transform: translateX(-1px); } to { transform: translateX(1px); } }
+
+/* Helping someone in person: a beat of walking over, then their problem */
+.screen.on-site { position: relative; }
+.walk-over {
+  position: absolute; inset: 0; z-index: 5; display: grid; place-items: center; pointer-events: none;
+  background: #120d0a; color: var(--paper); font: 1.4rem var(--pixel);
+  animation: walk-over 1.8s ease-in forwards;
+}
+@keyframes walk-over { 0%, 55% { opacity: 1; } 100% { opacity: 0; visibility: hidden; } }
+@media (prefers-reduced-motion: reduce) {
+  .walk-over { animation: none; display: none; }
+  .chat-face.mood-3 { animation: none; }
+}
+
+/* ---------------------------------------------------------------
+   BurrowOS 2000: everything on the monitor. Windows 2000 chrome
+   (grey bevels, blue gradient title bars, Tahoma) with an Azure-blue
+   service desk inside. Only applies on the glass; the room keeps its look.
+   --------------------------------------------------------------- */
+.crt-screen {
+  --os-face: #d4d0c8; --os-light: #ffffff; --os-mid: #808080; --os-dark: #404040;
+  --os-title: linear-gradient(90deg, #0a246a, #3a6ea5 60%, #a6caf0);
+  --os-blue: #0078d4; --os-blue-dark: #005a9e; --os-bg: #f3f2f1; --os-line: #c8c6c4; --os-text: #1b1a19;
+  --read: Tahoma, Verdana, 'Segoe UI', sans-serif; --pixel: Tahoma, Verdana, 'Segoe UI', sans-serif;
+  font: 14px/1.45 var(--read); color: var(--os-text);
+}
+.crt-screen h1, .crt-screen h2, .crt-screen h3 { font-family: var(--read); font-weight: bold; }
+.crt-screen h2 { font-size: 1.15rem; }
+.crt-screen h3 { font-size: 1rem; }
+.crt-screen .small-heading, .crt-screen .meta, .crt-screen .msg-meta, .crt-screen .card-label { font-family: var(--read); color: #605e5c; font-size: 0.8rem; }
+.crt-screen .small-heading { font-weight: bold; }
+
+/* Bevelled grey buttons; the main action in Azure blue. */
+.crt-screen .btn, .crt-screen .close {
+  font: 13px var(--read); color: var(--os-text); background: var(--os-face); border-radius: 0; padding: 4px 14px;
+  border: 1px solid; border-color: var(--os-light) var(--os-dark) var(--os-dark) var(--os-light);
+  box-shadow: inset -1px -1px var(--os-mid), inset 1px 1px #dfdfdf; text-align: center;
+}
+.crt-screen .btn:hover:not(:disabled) { background: var(--os-face); }
+.crt-screen .btn:active:not(:disabled) { transform: none; border-color: var(--os-dark) var(--os-light) var(--os-light) var(--os-dark); box-shadow: inset 1px 1px var(--os-mid); }
+.crt-screen .btn:disabled { opacity: 1; color: var(--os-mid); text-shadow: 1px 1px #fff; box-shadow: inset -1px -1px var(--os-mid), inset 1px 1px #dfdfdf; }
+.crt-screen .btn.primary { background: var(--os-blue); color: #fff; border: 1px solid var(--os-blue-dark); box-shadow: none; border-radius: 2px; }
+.crt-screen .btn.primary:hover:not(:disabled) { background: var(--os-blue-dark); }
+.crt-screen .btn.small { padding: 2px 10px; font-size: 12px; }
+.crt-screen :focus-visible { outline: 1px dotted #000; outline-offset: -4px; }
+
+/* The desktop: corporate blue, icons, a balloon from the manager, and a taskbar with a Start button. */
+.crt-screen .desktop { background: radial-gradient(ellipse at 70% 40%, #4f86c2, #2a5a95 60%, #1d3f6e); }
+.crt-screen .desktop::before {
+  content: 'Burrow & Co.'; position: absolute; right: 40px; top: 40%; font: italic bold 64px Georgia, serif; color: #ffffff14; pointer-events: none;
+}
+.crt-screen .icon { font: 12px var(--read); color: #fff; text-shadow: 1px 1px 1px #000; border: 1px dotted transparent; border-radius: 0; }
+.crt-screen .icon:hover, .crt-screen .icon:focus-visible { border-color: #fff; background: #0a246a66; }
+.crt-screen .taskbar {
+  background: var(--os-face); border-top: 1px solid var(--os-light); box-shadow: inset 0 1px #dfdfdf; padding: 3px 4px; gap: 6px; font-size: 12px;
+}
+.crt-screen .taskbar .btn { margin-left: 0; }
+.crt-screen .start {
+  display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; font-weight: bold;
+  border: 1px solid; border-color: var(--os-light) var(--os-dark) var(--os-dark) var(--os-light); box-shadow: inset -1px -1px var(--os-mid);
+}
+.crt-screen .start-logo { width: 16px; height: 14px; background: conic-gradient(#f35325 0 25%, #81bc06 0 50%, #ffba08 0 75%, #05a6f0 0); transform: skewY(-6deg); }
+.crt-screen .tray {
+  margin-left: auto; display: flex; gap: 12px; padding: 2px 10px;
+  border: 1px solid; border-color: var(--os-mid) var(--os-light) var(--os-light) var(--os-mid);
+}
+.crt-screen .toast { background: #ffffe1; border: 1px solid #000; border-radius: 8px; box-shadow: 2px 2px 4px #0006; }
+.crt-screen .toast .rule { color: #a4262c; }
+
+/* Windows: grey frame, blue gradient title bar, white content. */
+.crt-screen .window {
+  background: var(--os-face); border: 2px solid; border-color: #dfdfdf var(--os-dark) var(--os-dark) #dfdfdf; border-radius: 0;
+  box-shadow: 2px 2px 0 #000; padding: 2px;
+}
+.crt-screen .titlebar, .crt-screen .app-titlebar {
+  background: var(--os-title); color: #fff; font: bold 13px var(--read); border: 0; border-radius: 0; padding: 3px 4px 3px 8px;
+}
+.crt-screen .close { width: 20px; height: 18px; padding: 0; font-size: 13px; line-height: 1; }
+.crt-screen .window-body { background: #fff; border: 1px solid; border-color: var(--os-mid) #fff #fff var(--os-mid); margin-top: 2px; }
+.crt-screen .page { border-left-width: 4px; background: #fff; border-bottom: 1px solid var(--os-line); }
+
+/* The service desk app. */
+.crt-screen .desk { background: var(--os-face); }
+.crt-screen .app-titlebar { display: flex; align-items: center; gap: 8px; }
+.crt-screen .app-icon { width: 14px; height: 14px; background: var(--os-blue); border: 1px solid #fff; }
+.crt-screen .status { background: #fff; border-bottom: 1px solid var(--os-line); padding: 6px 10px; gap: 6px 14px; font-size: 13px; }
+.crt-screen .clock { background: #0a246a; color: #fff; font: bold 13px var(--read); border-radius: 2px; padding: 1px 8px; }
+.crt-screen .where-you-are { font-family: var(--read); border-radius: 2px; border-color: var(--os-blue); background: #deecf9; }
+.crt-screen .desk-body { background: var(--os-bg); }
+.crt-screen .queue { background: #fff; border-right: 1px solid var(--os-line); padding: 8px; }
+.crt-screen .tab {
+  font: 12px var(--read); background: var(--os-face); color: var(--os-text); border-radius: 3px 3px 0 0;
+  border: 1px solid; border-color: var(--os-light) var(--os-dark) transparent var(--os-light);
+}
+.crt-screen .tab.on { background: #fff; font-weight: bold; }
+.crt-screen .queue-item { background: transparent; border: 1px solid transparent; border-radius: 0; padding: 6px; }
+.crt-screen .queue-item:hover { background: var(--os-bg); }
+.crt-screen .queue-item.selected { background: #cce4f7; border-color: var(--os-blue); box-shadow: none; }
+.crt-screen .ticket-view { background: #fff; border: 1px solid var(--os-line); border-radius: 0; box-shadow: none; margin: 8px; }
+.crt-screen .decide { background: #faf9f8; border-left: 1px solid var(--os-line); border-radius: 0; }
+.crt-screen .status-pill, .crt-screen .mood, .crt-screen .bond { font: 11px var(--read); border-radius: 2px; border-width: 1px; padding: 0 6px; }
+.crt-screen .status-pill.new { background: #fff4ce; } .crt-screen .status-pill.open { background: #deecf9; }
+.crt-screen .msg { border-radius: 2px; border-width: 1px; }
+.crt-screen .msg.them { background: #fff; border-color: var(--os-line); }
+.crt-screen .msg.you { background: #deecf9; border-color: #9cc8ef; }
+.crt-screen .details { background: var(--os-bg); border-radius: 0; }
+.crt-screen .details dt { font-family: var(--read); }
+.crt-screen .runbook-box { background: #fff8e1; border-left: 4px solid #ffb900; border-radius: 0; }
+.crt-screen .runbook-box.yours { background: #dff6dd; border-left-color: #107c10; }
+.crt-screen .notice { background: #fde7e9; border: 0; border-left: 4px solid #a4262c; border-radius: 0; }
+.crt-screen .btn.fix, .crt-screen .btn.choice, .crt-screen .btn.note {
+  background: #fff; border: 1px solid #8a8886; border-radius: 2px; box-shadow: none; text-align: left; padding: 6px 10px;
+}
+.crt-screen .btn.fix:hover:not(:disabled), .crt-screen .btn.choice:hover:not(:disabled), .crt-screen .btn.note:hover:not(:disabled) { background: var(--os-bg); }
+.crt-screen .btn.fix.from-note, .crt-screen .btn.fix.from-tool { border-left: 4px solid #107c10; box-shadow: none; }
+.crt-screen .from-note-tag { font: 11px var(--read); border-radius: 2px; border-width: 1px; border-color: #107c10; background: #dff6dd; }
+.crt-screen .due { font: 12px var(--read); }
+.crt-screen .due.urgent { color: #a4262c; font-weight: bold; }
+.crt-screen .unread { background: #a4262c; font-family: var(--read); }
+
+/* Dialog boxes: grey, bevelled, with the heading as a blue title bar. */
+.crt-screen .overlay { background: #00000055; }
+.crt-screen .outcome {
+  background: var(--os-face); border: 2px solid; border-color: #dfdfdf var(--os-dark) var(--os-dark) #dfdfdf; border-radius: 0;
+  box-shadow: 2px 2px 0 #000; padding: 0 16px 16px;
+}
+.crt-screen .outcome h2, .crt-screen .outcome.fix h2, .crt-screen .outcome.push h2, .crt-screen .outcome.storm h2 {
+  margin: 0 -16px 12px; padding: 4px 8px; background: var(--os-title); color: #fff; font-size: 13px;
+}
+.crt-screen .xp { background: var(--os-blue); color: #fff; border: 0; border-radius: 2px; font-size: 12px; }
+.crt-screen .note-pick { border-top: 1px solid var(--os-mid); }
+
+/* The log-on box, after the BIOS text. */
+.crt-screen .screen.boot { background: #000; display: flex; flex-direction: column; }
+.crt-screen .boot-log { font: 15px/1.6 'Courier New', monospace; color: #c0c0c0; }
+.crt-screen .login {
+  margin: auto; width: 420px; max-width: 90%; padding: 0 0 14px; color: var(--os-text); background: var(--os-face);
+  border: 2px solid; border-color: #dfdfdf var(--os-dark) var(--os-dark) #dfdfdf; border-radius: 0; box-shadow: 2px 2px 0 #000;
+}
+.crt-screen .login-title { margin: 0 0 14px; padding: 4px 8px; background: var(--os-title); color: #fff; font: bold 13px var(--read); }
+.crt-screen .login label { padding: 0 16px; font: 13px var(--read); justify-content: space-between; }
+.crt-screen .login input {
+  font: 13px var(--read); color: var(--os-text); background: #fff; width: 230px; border-radius: 0;
+  border: 1px solid; border-color: var(--os-mid) #fff #fff var(--os-mid); box-shadow: inset 1px 1px var(--os-dark);
+}
+.crt-screen .login .hint { padding: 0 16px; color: #605e5c; font: 12px var(--read); }
+.crt-screen .login .row { padding: 0 16px; justify-content: flex-end; }

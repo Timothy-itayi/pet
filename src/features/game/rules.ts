@@ -1,18 +1,15 @@
 import {
-  BOND, CLOSE, COST, DAILY_COST, DAYS, DAY_SCRIPTS, DROP_DAY, TOOLS, FLOOR_WAITS, GOAL_VOUCHER, GRACE_AFTER_MISS, ISSUES, JOBS, MAX_PUSHES,
+  BOND, CLOSE, COST, DAILY_COST, DAYS, DAY_SCRIPTS, DROP_DAY, TOOLS, CHAT_LATER, GOAL_VOUCHER, GRACE_AFTER_MISS, ISSUES, JOBS, MAX_PUSHES,
   MESSY_SLIPS, OPEN, PATIENCE, REPLIES, REPLY_WITHIN, START_SAVINGS, TICKET_LANDS_AFTER, TICKETS, UPDATE_EVERY, VILLAGERS,
-  WAIT_MINUTES, WORKAROUND_RETURNS_AFTER, XP, type VillagerId,
+  WORKAROUND_RETURNS_AFTER, XP, type VillagerId,
 } from './data.ts';
 import { MOODS, type Issue, type Job, type Mood, type PageStatus, type Relation, type Skill, type Ticket, type Tool } from './types.ts';
 
 export type Phase = 'boot' | 'desktop' | 'desk' | 'dayEnd' | 'ending';
 export type Ending = 'hired' | 'burnout' | 'stay';
-/**
- * A ticket's life, like a real service desk: new, open (you've replied), pending (pushed back), resolved.
- * 'gone' is someone on the office floor who gave up waiting for you.
- */
-export type Status = 'new' | 'open' | 'pending' | 'resolved' | 'gone';
-/** At your computer you see your queue; on the office floor you see who's flagging you down. */
+/** A ticket's life, like a real service desk: new, open (you've replied), pending (pushed back), resolved. */
+export type Status = 'new' | 'open' | 'pending' | 'resolved';
+/** At your computer, or away from it helping someone in person. */
 export type Place = 'computer' | 'floor';
 
 export interface Message {
@@ -32,11 +29,9 @@ export interface TicketState {
   /** Clock time by which they expect to hear from you. */
   due: number;
   messages: Message[];
-  /** A floor request you asked to submit a ticket: it now comes through your queue. */
+  /** A chat request you asked to log a ticket: it now comes through your queue. */
   logged?: boolean;
-  /** A walk-up has already come and led you away from your desk. */
-  escorted?: boolean;
-  /** You've followed them to the problem and can work on it. */
+  /** You've gone over to help them in person and can work on it. */
   onSite?: boolean;
 }
 
@@ -54,10 +49,8 @@ export interface Outcome {
 export interface Today {
   /** Tickets resolved: the only number Mr. Grisby counts. */
   resolved: number;
-  /** People helped on the floor with no ticket. Real work, invisible to the manager. */
+  /** People helped in person off the back of a chat, with no ticket. Real work, invisible to the manager. */
   helped: number;
-  /** People on the floor who gave up waiting for you. */
-  gaveUp: number;
   pushed: number;
   wrongFixes: number;
   missed: number;
@@ -70,7 +63,7 @@ export interface Today {
 }
 
 export interface GameState {
-  version: 7;
+  version: 8;
   /** 1..DAYS while working; DAYS + 1 once the week is over. */
   day: number;
   phase: Phase;
@@ -79,9 +72,9 @@ export interface GameState {
   place: Place;
   /** Tickets waiting on you right now, oldest first. */
   queue: string[];
-  /** People on the office floor waiting for help, with no ticket. */
-  floor: string[];
-  /** A walk-up leading you to their problem. While set, you're on the floor following them. */
+  /** People who messaged you on chat instead of logging a ticket, waiting for an answer. */
+  chats: string[];
+  /** Someone you're helping in person, after telling them you're on your way. */
   escort?: string;
   /** Tickets still to arrive today. */
   arriving: { id: string; at: number }[];
@@ -156,11 +149,13 @@ export const isKnown = (s: GameState, t: Ticket) => s.runbook[t.issue] === 'your
 
 export const canWorkaround = (s: GameState, id: string) => !ticketState(s, id).workedAround;
 export const canPush = (s: GameState, id: string) => ticketState(s, id).pushes < MAX_PUSHES;
-/** Floor requests only count for the manager once they come through as a ticket. */
-const isTicket = (s: GameState, t: Ticket) => t.via !== 'floor' || Boolean(s.tickets[t.id]?.logged);
+/** Only real tickets count for the manager: tray tickets, or chats you got logged as tickets. */
+const isTicket = (s: GameState, t: Ticket) => t.via === 'tray' || Boolean(s.tickets[t.id]?.logged);
+/** Asks that come by chat rather than the ticket system: everyone who'd walk up or catch you in the office. */
+const byChat = (t: Ticket) => t.via !== 'tray';
 
 const emptyToday = (): Today => ({
-  resolved: 0, helped: 0, gaveUp: 0, pushed: 0, wrongFixes: 0, missed: 0, complaints: 0, notes: 0, xp: 0, voucher: false, bonds: [],
+  resolved: 0, helped: 0, pushed: 0, wrongFixes: 0, missed: 0, complaints: 0, notes: 0, xp: 0, voucher: false, bonds: [],
 });
 
 /** Each action copies the state, so the caller can keep or drop the old one. */
@@ -180,14 +175,16 @@ function arrive(d: GameState, id: string, at: number): void {
   // First visit: their usual mood, a step calmer for friends or angrier for nemeses.
   // Coming back: a step grumpier than they left. Never already Furious.
   // Being asked to submit a ticket already cost them a step, so that doesn't count twice.
-  const asked = before?.logged && before.status === 'pending' && t.via === 'floor';
+  const asked = before?.logged && before.status === 'pending' && byChat(t);
   const base = before ? before.mood + (asked ? 0 : 1) : t.mood + (r === 'nemesis' ? 1 : r === 'friend' ? -1 : 0);
   const mood = Math.max(0, Math.min(base, 2)) as Mood;
   const greeting = r === 'friend' ? `${v.fond} ` : r === 'nemesis' ? `${v.grudge} ` : '';
-  const onFloor = t.via === 'floor' && !before?.logged;
+  const onChat = byChat(t) && !before?.logged;
   const again = !before ? '' : asked ? 'Here\u2019s the ticket you asked for. '
     : before.status === 'new' || before.status === 'open' ? 'Still waiting from yesterday. ' : 'It\u2019s me again. ';
-  const window = onFloor ? FLOOR_WAITS : t.via === 'walkup' ? REPLY_WITHIN.walkup : REPLY_WITHIN[t.priority];
+  const window = !onChat ? REPLY_WITHIN[t.priority] : t.via === 'walkup' ? REPLY_WITHIN.walkup : REPLY_WITHIN.chat;
+  // On chat they never start with the problem. They start by being friendly.
+  const opener = onChat && !before ? [{ from: 'them' as const, text: v.opener, at }] : [];
   d.tickets[id] = {
     status: 'new',
     mood,
@@ -196,12 +193,11 @@ function arrive(d: GameState, id: string, at: number): void {
     workedAround: before?.workedAround ?? false,
     tried: before?.tried ?? [],
     due: at + window * patience(d, t),
-    messages: [{ from: 'them', text: greeting + again + t.message, at }],
+    messages: [...opener, { from: 'them', text: greeting + again + t.message, at }],
     logged: before?.logged,
   };
-  if (onFloor) d.floor.push(id);
+  if (onChat) d.chats.push(id);
   else d.queue.push(id);
-  fetchedBy(d);
 }
 
 function changeBond(d: GameState, who: VillagerId, by: number): void {
@@ -219,7 +215,8 @@ function close(d: GameState, t: Ticket, kind: Outcome['kind'], xp: number): void
   const counted = isTicket(d, t);
   st.status = kind === 'push' || kind === 'asked' ? 'pending' : 'resolved';
   d.queue = d.queue.filter((id) => id !== t.id);
-  d.floor = d.floor.filter((id) => id !== t.id);
+  d.chats = d.chats.filter((id) => id !== t.id);
+  // Done helping in person. You head back to your desk once you've taken in how it went (see next()).
   if (d.escort === t.id) { d.escort = undefined; st.onSite = false; }
   const skill = issueOf(t).skill;
   d.xp[skill] += xp;
@@ -247,55 +244,31 @@ function advance(d: GameState, minutes: number): void {
     d.clock = Math.min(d.clock + 1, target);
     for (const a of d.arriving.filter((x) => x.at <= d.clock)) arrive(d, a.id, a.at);
     d.arriving = d.arriving.filter((x) => x.at > d.clock);
-    for (const id of [...d.queue]) {
+    for (const id of [...d.queue, ...d.chats]) {
       if (ticketState(d, id).due > d.clock) continue;
       const t = ticketById(id);
       d.today.missed += 1;
       slip(d, t);
-      if (d.queue.includes(id)) ticketState(d, id).due = d.clock + GRACE_AFTER_MISS * patience(d, t);
+      if (d.queue.includes(id) || d.chats.includes(id)) ticketState(d, id).due = d.clock + GRACE_AFTER_MISS * patience(d, t);
     }
-    for (const id of d.floor.filter((x) => ticketState(d, x).due <= d.clock)) giveUp(d, id);
     if (d.clock >= target) break;
   }
   // At closing time the day ends, unless a card is still up; dismissing the last card ends it.
   if (d.clock >= CLOSE && !d.outcomes.length) finishDay(d);
 }
 
-/**
- * A walk-up at your desk takes you away from it to show you the problem. In this office, that's a given.
- * If you're out on the floor, they wait at your desk until you come back.
- */
-function fetchedBy(d: GameState): void {
-  if (d.escort || d.place !== 'computer') return;
-  const id = d.queue.find((x) => ticketById(x).via === 'walkup' && !ticketState(d, x).escorted);
-  if (!id) return;
-  const st = ticketState(d, id);
-  st.escorted = true;
-  st.status = 'open';
-  // They're with you now: no reply-by time while you follow them.
-  st.due = Number.MAX_SAFE_INTEGER;
-  d.escort = id;
-  d.place = 'floor';
-}
-
-/** Someone on the floor stops waiting for you. You don't find out until the end of the day. */
-function giveUp(d: GameState, id: string): void {
-  ticketState(d, id).status = 'gone';
-  d.floor = d.floor.filter((x) => x !== id);
-  d.today.gaveUp += 1;
-}
-
 /** Whatever you just did for this ticket counts as contact, so it can't miss its reply-by time while you do it. */
 function work(d: GameState, t: Ticket, minutes: number): void {
   const st = d.tickets[t.id];
-  if (st && d.queue.includes(t.id)) st.due = Math.max(st.due, d.clock + minutes + 1);
+  if (st && (d.queue.includes(t.id) || d.chats.includes(t.id))) st.due = Math.max(st.due, d.clock + minutes + 1);
   advance(d, minutes);
 }
 
 function startDay(d: GameState): void {
-  const carried = d.queue;
+  // Anything unanswered comes back first thing tomorrow, a step grumpier.
+  const carried = [...d.queue, ...d.chats];
   d.queue = [];
-  d.floor = [];
+  d.chats = [];
   d.place = 'computer';
   d.escort = undefined;
   d.clock = OPEN;
@@ -330,13 +303,12 @@ export const toolFor = (s: GameState, t: Ticket): Tool | undefined =>
   TOOLS.find((tool) => tool.issue === t.issue && s.tools.includes(tool.id));
 
 function finishDay(d: GameState): void {
-  for (const id of d.floor) giveUp(d, id);
-  // Anyone you were following will catch you again tomorrow.
+  // Still helping someone at five? They'll be back on chat tomorrow.
   if (d.escort) {
-    const st = ticketState(d, d.escort);
-    st.escorted = false;
-    st.onSite = false;
+    ticketState(d, d.escort).onSite = false;
+    if (d.day + 1 <= DAYS) d.returning.push({ id: d.escort, day: d.day + 1 });
     d.escort = undefined;
+    d.place = 'computer';
   }
   d.phase = 'dayEnd';
   d.today.voucher = d.today.resolved >= scriptFor(d.day).goal;
@@ -347,13 +319,13 @@ export function newGame(seed = Math.floor(Math.random() * 2 ** 31)): GameState {
   const s: GameState = {
     seed,
     tools: [],
-    version: 7,
+    version: 8,
     day: 1,
     phase: 'boot',
     clock: OPEN,
     place: 'computer',
     queue: [],
-    floor: [],
+    chats: [],
     arriving: [],
     returning: [],
     tickets: {},
@@ -376,15 +348,17 @@ export function tick(s: GameState, minutes: number): GameState {
   return act(s, (d) => advance(d, minutes));
 }
 
-/** You can only work on what's in front of you: your queue at the computer, or people on the floor. Not while a card is up. */
+/** You can only fix what's in front of you: your queue at the computer, or the person you've gone to help. Not while a card is up. */
 function workable(s: GameState, id: string): Ticket | undefined {
   if (s.phase !== 'desk' || s.outcomes.length) return undefined;
-  const onSite = id === s.escort && Boolean(s.tickets[id]?.onSite);
-  const here = s.place === 'computer' ? s.queue.filter((x) => x !== s.escort) : s.floor;
-  return here.includes(id) || onSite ? ticketById(id) : undefined;
+  const here = s.place === 'computer' ? s.queue.includes(id) : id === s.escort && Boolean(s.tickets[id]?.onSite);
+  return here ? ticketById(id) : undefined;
 }
-/** Workarounds and pending are ticket things: for tickets in your queue, or a walk-up you've followed to the problem. */
-const ticketWork = (s: GameState, id: string) => (s.place === 'computer' || id === s.escort ? workable(s, id) : undefined);
+const ticketWork = workable;
+/** A chat you can answer: you're at your computer, not off helping someone, and no card is up. */
+function answerable(s: GameState, id: string): Ticket | undefined {
+  return s.phase === 'desk' && !s.outcomes.length && s.place === 'computer' && !s.escort && s.chats.includes(id) ? ticketById(id) : undefined;
+}
 
 /** Send a standard update: it buys you time before they expect to hear from you again. */
 export function reply(s: GameState, id: string): GameState {
@@ -495,45 +469,52 @@ export function writeNote(s: GameState, noteIndex: number): GameState {
 /** Dismiss the card on top. If the day ran out meanwhile, it ends now. */
 export const next = (s: GameState) => act(s, (d) => {
   d.outcomes.shift();
+  if (!d.outcomes.length && d.place === 'floor' && !d.escort) d.place = 'computer';
   if (!d.outcomes.length && d.clock >= CLOSE && d.phase === 'desk') finishDay(d);
 });
 
-/** Leave your computer to walk the office floor, or go back to it. Walking takes a few minutes. */
-export function walk(s: GameState, to: Place): GameState {
-  if (s.phase !== 'desk' || s.outcomes.length || s.place === to || s.escort) return s;
-  return act(s, (d) => {
-    d.place = to;
-    advance(d, COST.walk);
-    fetchedBy(d); // anyone who walked up while you were away is waiting at your desk
-  });
-}
-
-/** You've followed a walk-up to the problem: now you can see it and fix it. */
-export function arriveOnSite(s: GameState): GameState {
-  if (!s.escort || s.outcomes.length) return s;
-  return act(s, (d) => {
-    const st = ticketState(d, d.escort ?? '');
-    st.onSite = true;
-    st.messages.push({ from: 'them', text: 'Here. Look.', at: d.clock });
-  });
-}
-
-/** Nothing in your queue: let some time pass. */
-export function wait(s: GameState): GameState {
-  if (s.phase !== 'desk' || s.outcomes.length || s.place !== 'computer' || s.queue.length) return s;
-  return act(s, (d) => advance(d, WAIT_MINUTES));
-}
-
-/** The classic IT line. It annoys them, but the request comes back through your queue where it counts. */
-export function askForTicket(s: GameState, id: string): GameState {
-  const t = workable(s, id);
-  if (!t || s.place !== 'floor') return s;
+/** "On my way": you get up and go to help them in person. Whatever's in your queue keeps waiting. */
+export function goNow(s: GameState, id: string): GameState {
+  const t = answerable(s, id);
+  if (!t) return s;
   return act(s, (d) => {
     const st = ticketState(d, id);
-    st.logged = true;
-    st.messages.push({ from: 'you', text: 'Could you submit a ticket for this, please?', at: d.clock });
+    st.messages.push({ from: 'you', text: 'On my way.', at: d.clock }, { from: 'them', text: 'You\u2019re a lifesaver. Come to my desk.', at: d.clock });
+    st.status = 'open';
+    st.onSite = true;
+    st.due = Number.MAX_SAFE_INTEGER; // they're with you now
+    d.chats = d.chats.filter((x) => x !== id);
+    d.escort = id;
+    d.place = 'floor';
+    advance(d, COST.goOver);
+  });
+}
+
+/** "Can it wait?": they're put out, and they'll message you again in an hour. At most twice. */
+export function later(s: GameState, id: string): GameState {
+  const t = answerable(s, id);
+  if (!t || !canPush(s, id)) return s;
+  return act(s, (d) => {
+    const st = ticketState(d, id);
+    st.pushes += 1;
+    d.today.pushed += 1;
+    st.messages.push({ from: 'you', text: 'Can it wait? I\u2019m up to my neck in tickets.', at: d.clock }, { from: 'them', text: '\u2026fine. An hour.', at: d.clock });
     slip(d, t);
-    if (!d.floor.includes(id)) return; // that was the last straw: they stormed off
+    if (d.chats.includes(id)) st.due = d.clock + CHAT_LATER * patience(d, t);
+    advance(d, COST.push);
+  });
+}
+
+/** The classic IT line. It annoys them, but the request comes back through your queue, where it counts. */
+export function askForTicket(s: GameState, id: string): GameState {
+  const t = answerable(s, id);
+  if (!t) return s;
+  return act(s, (d) => {
+    const st = ticketState(d, id);
+    st.messages.push({ from: 'you', text: 'Could you log a ticket for this, please?', at: d.clock }, { from: 'them', text: 'Seriously? \u2026fine.', at: d.clock });
+    slip(d, t);
+    if (!d.chats.includes(id)) return; // that was the last straw: they stormed off
+    st.logged = true;
     const lands = d.clock + TICKET_LANDS_AFTER;
     if (lands < CLOSE) d.arriving.push({ id, at: lands });
     else if (d.day + 1 <= DAYS) d.returning.push({ id, day: d.day + 1 });
@@ -588,9 +569,9 @@ export function parseSave(raw: string | null): GameState | undefined {
     const known = new Set(TICKETS.map((t) => t.id));
     const isObject = (x: unknown) => typeof x === 'object' && x !== null;
     const ok =
-      s.version === 7 && typeof s.seed === 'number' && Array.isArray(s.tools) && (s.place === 'computer' || s.place === 'floor') &&
+      s.version === 8 && typeof s.seed === 'number' && Array.isArray(s.tools) && (s.place === 'computer' || s.place === 'floor') &&
       (s.escort === undefined || known.has(s.escort)) &&
-      Array.isArray(s.floor) && s.floor.every((id) => known.has(id) && isObject(s.tickets?.[id])) &&
+      Array.isArray(s.chats) && s.chats.every((id) => known.has(id) && isObject(s.tickets?.[id])) &&
       typeof s.day === 'number' && s.day >= 1 && s.day <= DAYS + 1 &&
       typeof s.clock === 'number' && typeof s.savings === 'number' &&
       Array.isArray(s.queue) && s.queue.every((id) => known.has(id) && isObject(s.tickets?.[id])) &&
