@@ -18,27 +18,14 @@ export interface Villager {
 
 export type Relation = 'friend' | 'neutral' | 'nemesis';
 
-/** One thing on the desk the player can compare: what they said, a screen, a sticker, a runbook page. */
-export interface Clue {
-  id: string;
-  label: string;
-  text: string;
-  /** Hidden clues only land on the desk once a question reveals them. */
-  hidden?: boolean;
-}
-
 export const MOODS = ['Calm', 'Annoyed', 'Upset', 'Furious'] as const;
 /** Index into MOODS. Pushed past Furious, they storm off to the manager. */
 export type Mood = 0 | 1 | 2 | 3;
 
-export interface Question {
-  id: string;
-  ask: string;
-  answer: string;
-  reveals?: string;
-  /** Useless or condescending questions make the mood worse. */
-  annoys?: boolean;
-}
+export type Priority = 'low' | 'normal' | 'high';
+
+export const AREAS = ['Kitchen', 'Meeting room', 'Finance corner', 'Corridor'] as const;
+export type Area = (typeof AREAS)[number];
 
 export interface Fix {
   id: string;
@@ -47,35 +34,46 @@ export interface Fix {
   fail?: string;
 }
 
+/** Something you can see on the ticket: what's on their screen, a sticker, a cable. */
+export interface Detail {
+  label: string;
+  text: string;
+}
+
+/** 'yours' means you rewrote the page with an internal note. */
+export type PageStatus = 'ok' | 'outdated' | 'missing' | 'yours';
+
+/** A kind of problem. Several tickets can be the same issue, which is what makes your notes useful. */
+export interface Issue {
+  id: string;
+  title: string;
+  skill: Skill;
+  /** The old runbook's page for this issue, as you first find it. */
+  page: { status: Exclude<PageStatus, 'yours'>; text: string };
+  fixes: Fix[];
+  correctFix: string;
+  /** Internal-note choices after fixing. Exactly one is right. */
+  notes: { text: string; right?: true }[];
+  why: string;
+}
+
 export interface Ticket {
   id: string;
   day: number;
+  /** Arrival time on the office clock, e.g. '9:10'. */
+  at: string;
   who: VillagerId;
-  arrival: 'tray' | 'walkup';
-  skill: Skill;
+  /** 'floor' means they catch you in the office with no ticket; you only see them if you walk the floor. */
+  via: 'tray' | 'walkup' | 'floor';
+  /** Where in the office a floor request waits. */
+  where?: Area;
+  priority: Priority;
+  issue: string;
   title: string;
-  mood: Mood;
-  questions: Question[];
-  clues: Clue[];
-  /** The two clue ids that don't add up. Spotting them unlocks the fixes. */
-  mismatch: [string, string];
-  fixes: Fix[];
-  correctFix: string;
+  message: string;
+  details: Detail[];
   workaround: string;
-  why: string;
-  /** Runbook page this ticket repairs or finds when fixed. */
-  runbookPage?: string;
-}
-
-export type PageStatus = 'ok' | 'outdated' | 'missing' | 'updated';
-
-export interface RunbookPage {
-  id: string;
-  title: string;
-  status: Exclude<PageStatus, 'updated'>;
-  text: string;
-  /** Corrected text, shown once the player has fixed or found the page. */
-  updated: string;
+  mood: Mood;
 }
 
 export interface Job {

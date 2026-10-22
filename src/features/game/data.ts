@@ -1,4 +1,4 @@
-import type { DayScript, Job, RunbookPage, Villager } from './types.ts';
+import type { DayScript, Job, Villager } from './types.ts';
 
 export const COMPANY = 'Burrow & Co.';
 export const MANAGER = 'Mr. Grisby';
@@ -9,9 +9,35 @@ export const GOAL_VOUCHER = 8;
 export const MAX_PUSHES = 2;
 /** How people feel about you, -3..3. Friends at 1 or above, nemeses at -1 or below. */
 export const BOND = { clean: 1, messy: -1, storm: -2, min: -3, max: 3 } as const;
-/** A fix with this many slips (annoying questions, wrong guesses, wrong fixes) leaves a bad taste. */
+/** A fix with this many slips (missed reply-by times, wrong fixes) leaves a bad taste. */
 export const MESSY_SLIPS = 2;
-export const XP = { fix: 2, workaround: 1 } as const;
+export const XP = { fix: 2, workaround: 1, note: 1 } as const;
+
+/** The office clock, in minutes since midnight. */
+export const OPEN = 9 * 60;
+export const CLOSE = 17 * 60;
+/** How fast the office clock runs: a full day takes about 10 real minutes. */
+export const GAME_MINUTES_PER_SECOND = 0.8;
+/** Minutes until someone expects a first reply. Walk-ups are standing right there. */
+export const REPLY_WITHIN = { walkup: 15, high: 20, normal: 40, low: 90 } as const;
+/** How long someone on the office floor waits for you before giving up. */
+export const FLOOR_WAITS = 60;
+/** After you ask a floor request to submit a ticket, minutes until it lands in your queue. */
+export const TICKET_LANDS_AFTER = 30;
+/** "Wait" button when your queue is empty. */
+export const WAIT_MINUTES = 15;
+/** After a reply, minutes until they expect the next update; after a missed one, minutes of grace. */
+export const UPDATE_EVERY = 60;
+export const GRACE_AFTER_MISS = 30;
+/** Friends give you more time, nemeses less. */
+export const PATIENCE = { friend: 1.5, neutral: 1, nemesis: 0.7 } as const;
+/** Clock minutes each action takes. A fix is faster when your own note tells you what to do. */
+export const COST = { update: 2, fix: 15, knownFix: 5, wrongFix: 15, workaround: 10, push: 2, note: 3, walk: 3, askForTicket: 2 } as const;
+export const REPLIES = {
+  first: 'Thanks, we\u2019ve got your ticket and we\u2019re on it.',
+  update: 'Quick update: still working on this. Thanks for your patience.',
+  pending: 'We\u2019ll pick this up again tomorrow. Sorry for the wait.',
+} as const;
 /** A worked-around ticket comes back this many days later. */
 export const WORKAROUND_RETURNS_AFTER = 2;
 
@@ -43,28 +69,28 @@ export type VillagerId = keyof typeof VILLAGERS;
 export const DAY_SCRIPTS: DayScript[] = [
   {
     goal: 2,
-    memo: 'Welcome aboard, intern! Close 2 tickets today and we can TALK about pay. No promises. Some promises. Mostly no.',
+    memo: 'Welcome aboard, intern! Resolve 2 tickets today and we can TALK about pay. No promises. Some promises. Mostly no.',
     metGoal: 'Not bad. Here, a lunch voucher. Pay? Let’s circle back.',
     missedGoal: 'Hmm. Interns who want to be paid usually close tickets.',
   },
   {
-    goal: 2,
-    memo: 'Day 2. Same goal, but I need it done with more enthusiasm.',
+    goal: 3,
+    memo: 'Day 2. Three tickets, and I need them done with more enthusiasm.',
     rule: 'Budget freeze: no new hardware. Not even a mouse.',
     metGoal: 'Great hustle. Lunch voucher. Pay is “in the pipeline”.',
     missedGoal: 'Disappointing. The pipeline is clogged now. That’s on you.',
   },
   {
     goal: 3,
-    memo: 'Goal is 3 today. The bar is raised because I believe in you. Also the other intern quit.',
+    memo: 'Goal is 3 today. Also the other intern quit, so it\u2019s busier. I believe in you.',
     metGoal: 'Three! You’re practically staff. Practically. Voucher.',
     missedGoal: 'I told the board you’d do 3. Now I look silly. Honk.',
   },
   {
-    goal: 3,
-    memo: 'Day 4. Finance says pay is “not impossible”. Keep it up.',
+    goal: 4,
+    memo: 'Day 4. Four tickets. Finance says pay is “not impossible”. Keep it up.',
     rule: 'Nobody gets admin rights. Nobody. Not even me. Especially not me.',
-    metGoal: 'Solid. Voucher. I’ll mention you in my review. Of myself.',
+    metGoal: 'Four! Voucher. I’ll mention you in my review. Of myself.',
     missedGoal: 'Not ideal. Finance is now saying “impossible”.',
   },
   {
@@ -75,60 +101,22 @@ export const DAY_SCRIPTS: DayScript[] = [
   },
 ];
 
-export const RUNBOOK: RunbookPage[] = [
-  {
-    id: 'slow-laptop',
-    title: 'Laptop running slow',
-    status: 'outdated',
-    text: 'Request a new laptop from Purchasing. (Written 2009)',
-    updated: 'Restart first, then install waiting updates. Most “slow” laptops just haven’t been restarted in weeks.',
-  },
-  {
-    id: 'printer-driver',
-    title: 'Adding a printer',
-    status: 'outdated',
-    text: 'Install the printer driver from the CD in the top drawer.',
-    updated: 'Download the current driver from the printer maker’s website. New laptops have no disc drive.',
-  },
-  {
-    id: 'default-printer',
-    title: 'Prints going to the wrong printer',
-    status: 'missing',
-    text: '(This page has been torn out. Someone wrote “sorry” in the margin.)',
-    updated: 'Check which printer is set as the default. Set it to the one nearest the person’s desk.',
-  },
-  {
-    id: 'guest-wifi',
-    title: 'Staff Wi-Fi vs guest Wi-Fi',
-    status: 'ok',
-    text: 'Staff devices use Burrow-Staff. Burrow-Guest only reaches the internet, never the shared drive or printers.',
-    updated: 'Staff devices use Burrow-Staff. Burrow-Guest only reaches the internet, never the shared drive or printers.',
-  },
-  {
-    id: 'admin-rights',
-    title: 'Someone asks for admin rights',
-    status: 'missing',
-    text: '(Coffee stain. Unreadable.)',
-    updated: 'Give people only the access they need. If an app is in the Company Portal, install it from there: no admin needed.',
-  },
-];
-
 export const JOBS: Job[] = [
   {
     id: 'library',
     title: 'Junior IT Support (paid!)',
     company: 'Meadow Library',
     blurb: 'Help patrons and staff with laptops, printers and Wi-Fi. Kind team, real salary, a window.',
-    needs: { devices: 8, networks: 4 },
+    needs: { devices: 14, networks: 8 },
   },
   {
     id: 'ocean',
     title: 'IT Support Technician',
     company: 'Big Ocean Corp',
     blurb: 'Fast-paced team supporting 2,000 staff. Accounts, access and networking experience a must.',
-    needs: { devices: 12, networks: 8, access: 8 },
+    needs: { devices: 20, networks: 14, access: 12 },
   },
 ];
 
 
-export { TICKETS } from './tickets.ts';
+export { ISSUES, TICKETS } from './tickets.ts';
