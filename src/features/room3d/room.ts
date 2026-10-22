@@ -61,6 +61,11 @@ function wall(): Object3D {
   const pegboard = painted(64, 64, (ctx) => {
     ctx.fillStyle = '#6a4f36';
     ctx.fillRect(0, 0, 64, 64);
+    // Board grain and a bit of grime, so it isn't a flat colour.
+    for (let i = 0; i < 90; i++) {
+      ctx.fillStyle = `rgba(${i % 2 ? '40, 26, 14' : '120, 90, 60'}, 0.08)`;
+      ctx.fillRect((i * 37) % 64, (i * 23) % 64, 1 + (i % 3), 1);
+    }
     ctx.fillStyle = '#3f2f21';
     for (let y = 8; y < 64; y += 16) for (let x = 8; x < 64; x += 16) { ctx.beginPath(); ctx.arc(x, y, 2.5, 0, Math.PI * 2); ctx.fill(); }
   });
@@ -70,7 +75,19 @@ function wall(): Object3D {
   back.position.set(0, 1.5, WALL_Z);
   back.receiveShadow = true;
   g.add(back);
-  const floor = new Mesh(new PlaneGeometry(6, 4), mat('#3b2a1e', { roughness: 0.9 }));
+  // Tired office carpet tiles: flecked, with one tile slightly off-colour.
+  const carpet = painted(128, 128, (ctx) => {
+    ctx.fillStyle = '#3a3532'; ctx.fillRect(0, 0, 128, 128);
+    for (let i = 0; i < 2600; i++) {
+      const v = (i * 7919) % 255;
+      ctx.fillStyle = `rgba(${v % 3 ? '90, 82, 74' : '24, 22, 20'}, 0.5)`;
+      ctx.fillRect((i * 53) % 128, (i * 97) % 128, 1, 1);
+    }
+    ctx.strokeStyle = '#2a2624'; ctx.lineWidth = 1; ctx.strokeRect(0.5, 0.5, 127, 127);
+  });
+  carpet.wrapS = carpet.wrapT = RepeatWrapping;
+  carpet.repeat.set(10, 7);
+  const floor = new Mesh(new PlaneGeometry(6, 4), new MeshStandardMaterial({ map: carpet, roughness: 1 }));
   floor.rotation.x = -Math.PI / 2;
   floor.position.set(0, 0, 1);
   floor.receiveShadow = true;
@@ -100,18 +117,47 @@ function wallBits(): { notes: Object3D; calendar: Object3D; binders: Object3D } 
     note.rotation.z = tilt;
     notes.add(note);
   }
-  const calTex = painted(96, 80, (ctx) => {
-    ctx.fillStyle = '#f4efe2'; ctx.fillRect(0, 0, 96, 80);
-    ctx.fillStyle = '#c8453b'; ctx.fillRect(0, 0, 96, 16);
-    for (let row = 0; row < 4; row++) for (let col = 0; col < 6; col++) {
-      ctx.fillStyle = '#cfc6b2'; ctx.fillRect(6 + col * 15, 22 + row * 14, 11, 10);
-      if (row * 6 + col < 20) { ctx.strokeStyle = '#c8453b'; ctx.beginPath(); ctx.moveTo(6 + col * 15, 22 + row * 14); ctx.lineTo(17 + col * 15, 32 + row * 14); ctx.stroke(); }
+  // A proper month on the wall: Sam crossed off every working day, and circled the last one.
+  const calTex = painted(480, 400, (ctx) => {
+    ctx.fillStyle = '#f4efe2'; ctx.fillRect(0, 0, 480, 400);
+    ctx.fillStyle = '#c8453b'; ctx.fillRect(0, 0, 480, 64);
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 34px Georgia, serif'; ctx.fillText('OCTOBER', 24, 44);
+    ctx.font = '18px Georgia, serif'; ctx.fillText('Burrow & Co. \u2022 2026', 290, 42);
+    ctx.fillStyle = '#6e5e52'; ctx.font = 'bold 15px sans-serif';
+    ['M', 'T', 'W', 'T', 'F', 'S', 'S'].forEach((d, c) => ctx.fillText(d, 30 + c * 64, 88));
+    ctx.font = '17px sans-serif';
+    for (let day = 1; day <= 31; day++) {
+      const cell = day + 2; // the 1st is a Wednesday
+      const c = cell % 7;
+      const r = Math.floor(cell / 7);
+      const x = 14 + c * 64;
+      const y = 100 + r * 56;
+      ctx.strokeStyle = '#d8cfbb'; ctx.lineWidth = 1; ctx.strokeRect(x, y, 62, 54);
+      ctx.fillStyle = c >= 5 ? '#c8453b' : '#3b2f2a'; ctx.fillText(String(day), x + 6, y + 20);
+      if (day <= 23 && c < 5) {
+        ctx.strokeStyle = '#c8453bcc'; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(x + 8, y + 10); ctx.lineTo(x + 54, y + 48); ctx.moveTo(x + 54, y + 10); ctx.lineTo(x + 8, y + 48); ctx.stroke();
+      }
+      if (day === 23) {
+        ctx.strokeStyle = '#c8453b'; ctx.lineWidth = 4;
+        ctx.beginPath(); ctx.ellipse(x + 31, y + 27, 36, 30, -0.1, 0, Math.PI * 2); ctx.stroke();
+        ctx.font = '17px sans-serif';
+      }
     }
-    ctx.strokeStyle = '#c8453b'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(37, 69, 8, 0, Math.PI * 2); ctx.stroke();
+    // Someone scribbled a reminder, and a mug left a ring.
+    // In the empty squares before the 1st: Sam's last word on the matter, and a reminder that never got done.
+    ctx.fillStyle = '#c8453b'; ctx.font = 'italic bold 26px Georgia, serif'; ctx.fillText('FREEDOM!', 22, 140);
+    ctx.fillStyle = '#2f4c7c'; ctx.font = 'italic 14px Georgia, serif'; ctx.fillText('printer guy Thu??', 30, 386);
+    ctx.strokeStyle = 'rgba(90, 55, 25, 0.35)'; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.arc(390, 330, 34, 0.5, Math.PI * 1.8); ctx.stroke();
   });
   const card = new MeshStandardMaterial({ color: new Color('#e8e2d2'), roughness: 1 });
-  const calendar = new Mesh(new BoxGeometry(0.3, 0.25, 0.004), [card, card, card, card, new MeshStandardMaterial({ map: calTex, roughness: 1 }), card]);
+  const calendar = new Mesh(new BoxGeometry(0.36, 0.3, 0.004), [card, card, card, card, new MeshStandardMaterial({ map: calTex, roughness: 1 }), card]);
   calendar.position.set(0.36, 1.27, WALL_Z + 0.005);
+  const pin = new Mesh(new CylinderGeometry(0.008, 0.008, 0.012, 12), mat('#c8453b', { roughness: 0.4 }));
+  pin.rotation.x = Math.PI / 2;
+  calendar.add(pin);
+  pin.position.set(0, 0.14, 0.007);
   const binders = new Group();
   for (const [x, h, color] of [[-1.12, 0.3, '#6b5a4b'], [-1.06, 0.27, '#7a6a58'], [-1.0, 0.3, '#4f5d6b'], [-0.94, 0.24, '#8a7a62']] as const) {
     binders.add(box(0.05, h, 0.2, color, [x, 1.635 + h / 2, WALL_Z + 0.11]));
@@ -127,7 +173,7 @@ export const GLASS = { w: 0.32, h: 0.24 } as const;
  * and a chunky CRT monitor on top. The glass is a "hole": it draws nothing, so the real
  * screen (a web page, placed in 3D behind the canvas) shows through exactly there.
  */
-function computerSet(top: number): { group: Group; glass: Mesh; powerButton: Mesh; led: MeshStandardMaterial } {
+function computerSet(top: number): { group: Group; glass: Mesh; powerButton: Mesh; led: MeshStandardMaterial; note: Mesh } {
   const group = new Group();
   const beige = '#d8cdb3';
   const shade = '#bdb194';
@@ -158,7 +204,19 @@ function computerSet(top: number): { group: Group; glass: Mesh; powerButton: Mes
   const glass = new Mesh(new PlaneGeometry(GLASS.w, GLASS.h), new MeshBasicMaterial({ color: new Color('#000000'), opacity: 0, blending: NoBlending }));
   glass.position.set(0, cy, bezelZ - 0.005);
   group.add(glass);
-  return { group, glass, powerButton, led };
+  // Sam's note, stuck to the top corner of the bezel.
+  const noteTex = painted(32, 32, (ctx) => {
+    ctx.fillStyle = '#f7e27a'; ctx.fillRect(0, 0, 32, 32);
+    ctx.fillStyle = '#3b2f2a99';
+    for (const row of [8, 13, 18, 23]) ctx.fillRect(4, row, 20 + (row % 5), 1.5);
+    ctx.fillStyle = '#c8453b'; ctx.fillRect(24, 22, 4, 4);
+  });
+  const notePaper = new MeshStandardMaterial({ color: new Color('#f7e27a'), roughness: 1 });
+  const monitorNote = new Mesh(new BoxGeometry(0.07, 0.07, 0.002), [notePaper, notePaper, notePaper, notePaper, new MeshStandardMaterial({ map: noteTex, roughness: 1 }), notePaper]);
+  monitorNote.position.set(bezelW / 2 - 0.05, cy + bezelH / 2 - 0.02, bezelZ + 0.027);
+  monitorNote.rotation.z = -0.12;
+  group.add(monitorNote);
+  return { group, glass, powerButton, led, note: monitorNote };
 }
 
 function mug(): Object3D {
@@ -273,6 +331,8 @@ export async function buildRoom(): Promise<Room> {
   // Sam's CRT, a little off-centre, with its glass facing you.
   const set = computerSet(top);
   set.group.remove(set.powerButton);
+  set.group.remove(set.note);
+  add('monitor-note', set.note);
   add('computer', set.group);
   add('power', set.powerButton);
   const screenLight = new PointLight('#d6f2d6', 0.4, 0.7);

@@ -25,7 +25,7 @@ const SHOTS: Record<Shot, Pose> = {
 };
 const MOVE_MS = 1500;
 /** How far the camera drifts as you move the mouse, so the room never feels like a still picture. */
-const DRIFT = { overview: 0.18, wall: 0.06, computer: 0 } as const;
+const DRIFT = { overview: 0.035, wall: 0.015, computer: 0 } as const;
 
 interface Handlers { pick: (id: string) => void; hover: (id: string | undefined) => void }
 

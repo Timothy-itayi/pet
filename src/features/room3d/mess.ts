@@ -37,6 +37,16 @@ function cast(m: Mesh): Mesh {
 function deskWear(width: number, depth: number): Mesh {
   const rand = seeded(7);
   const map = texture(1024, 540, (ctx) => {
+    // Wood grain: long, faint, wavy lines along the desk.
+    for (let i = 0; i < 70; i++) {
+      const y = rand() * 540;
+      ctx.strokeStyle = `rgba(${rand() < 0.5 ? '70, 40, 18' : '200, 150, 100'}, ${0.04 + rand() * 0.06})`;
+      ctx.lineWidth = 1 + rand() * 3;
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      for (let x = 0; x <= 1024; x += 64) ctx.lineTo(x, y + Math.sin(x / 140 + i) * 6);
+      ctx.stroke();
+    }
     // Coffee rings, mostly where a right-handed person puts a mug down.
     for (const [x, y, r] of [[790, 250, 38], [835, 300, 36], [760, 330, 40], [420, 440, 34], [880, 120, 37]] as const) {
       ctx.strokeStyle = `rgba(70, 40, 18, ${0.25 + rand() * 0.2})`;

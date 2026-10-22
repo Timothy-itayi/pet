@@ -5,13 +5,17 @@ import { h } from './dom.ts';
 
 const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-const linesFor = (day: number) => [
-  'BurrowOS 98  (c) Not Really Supported',
-  'Checking memory... 640K (should be enough)',
-  'Loading drivers............ some',
-  'Fan noise: LOUD',
-  `Welcome to ${COMPANY}`,
-  day > DAYS ? 'Saturday? The office is open? Of course it is.' : `${WEEKDAYS[day - 1]}, day ${day} of ${DAYS}`,
+/** An old machine's boot, line by line, with how long each one takes (ms). About ten seconds in all. */
+const bootFor = (day: number): [string, number][] => [
+  ['Award Modular BIOS v4.51PG, An Energy Star Ally', 600],
+  ['Main Processor : Pentium III 450MHz', 500],
+  ['Memory Test : 131072K OK', 1600],
+  ['Detecting IDE Primary Master ... QUANTUM FIREBALL 8.4GB', 1400],
+  ['Detecting IDE Primary Slave  ... None', 700],
+  ['Starting BurrowOS 2000...', 900],
+  ['Loading drivers ......................... some', 1600],
+  ['Applying computer settings...', 1500],
+  [`Welcome to ${COMPANY}. ${day > DAYS ? 'Saturday. Of course.' : `${WEEKDAYS[day - 1]}, day ${day} of ${DAYS}.`}`, 800],
 ];
 
 /** Off: just dark glass. The power button is on the case. */
@@ -56,7 +60,7 @@ export function computerScreen(app: App): HTMLElement {
 
   const showLogin = () => {
     if (!login.hidden) return;
-    if (power === 'booting') log.textContent = linesFor(state.day).join('\n');
+    if (power === 'booting') log.textContent = bootFor(state.day).map(([line]) => line).join('\n');
     login.append(
       h('p', { class: 'login-title' }, power === 'booting' ? 'Log on to BurrowOS' : 'This computer is locked'),
       h('label', {}, 'User ', h('input', { name: 'user', value: 'intern', readonly: true, autocomplete: 'off' })),
@@ -71,23 +75,19 @@ export function computerScreen(app: App): HTMLElement {
     );
     login.hidden = false;
     login.querySelector<HTMLElement>('[data-autofocus]')?.focus();
-    removeEventListener('keydown', skip);
   };
-
-  const skip = (e: KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); showLogin(); } };
 
   if (power !== 'booting' || matchMedia('(prefers-reduced-motion: reduce)').matches) {
     // Locked: the password screen is already there. Waking: the same, as the screen fades up from black.
     queueMicrotask(showLogin);
     return root;
   }
-  root.addEventListener('click', () => { if (login.hidden) showLogin(); });
-  addEventListener('keydown', skip);
-  const lines = linesFor(state.day);
-  lines.forEach((line, i) => setTimeout(() => {
-    if (!login.hidden) return;
-    log.textContent += (i ? '\n' : '') + line;
-    if (i === lines.length - 1) setTimeout(showLogin, 500);
-  }, 300 * i + 200));
+  // It's old. It takes its time, and there's no hurrying it.
+  let at = 300;
+  for (const [i, [line, wait]] of bootFor(state.day).entries()) {
+    setTimeout(() => { if (login.hidden) log.textContent += (i ? '\n' : '') + line; }, at);
+    at += wait;
+  }
+  setTimeout(showLogin, at);
   return root;
 }

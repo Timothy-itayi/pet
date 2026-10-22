@@ -17,10 +17,15 @@ function describe(app: App, id: string): { label: string; says: string } | undef
   return item && { label: item.label, says: item.says(app.state.day) };
 }
 
-/** Press the power button on the case: it starts booting, and you pull your chair in while it does. */
+/** The power button on the case toggles it: off, it starts its long boot and you pull your chair in; on, it shuts down. */
 export function pressPower(app: App): void {
   const { ui } = app;
-  if (ui.power !== 'off') { ui.note = 'It\u2019s already on. The light on the case is green.'; app.rerender(); return; }
+  if (ui.power !== 'off') {
+    ui.power = 'off';
+    ui.note = 'Click. The fan winds down and the screen goes dark.';
+    app.rerender();
+    return;
+  }
   ui.power = 'booting';
   sitAtComputer(app);
 }
@@ -73,13 +78,13 @@ function putBack(app: App): void {
   app.rerender();
 }
 
-/** Keys in the room: Esc puts things back or steps back; arrows turn what you're holding. */
 /** While you're at the computer: a way to stand up again. Everything else is on the screen itself. */
 export function computerHud(app: App): HTMLElement {
   return h('main', { class: 'room-hud computer-hud' },
-    h('button', { class: 'btn small stand-up', 'data-testid': 'stand-up', onclick: () => leaveComputer(app) }, '\u2190 Stand up'));
+    h('button', { class: 'back-chip', 'data-testid': 'stand-up', 'aria-label': 'Stand up', title: 'Stand up', onclick: () => leaveComputer(app) }, '\u2190'));
 }
 
+/** Keys in the room: Esc puts things back or steps back; arrows turn what you're holding. */
 export function roomKeys(app: App, e: KeyboardEvent): void {
   const { ui } = app;
   if (ui.view !== 'room' || ui.panel) return;
@@ -93,40 +98,40 @@ export function roomKeys(app: App, e: KeyboardEvent): void {
   if (turn && isInspecting()) { e.preventDefault(); turnInspected(...turn); }
 }
 
-/** Shown over the 3D room: where you are, what you're looking at, and a button for everything you can click. */
+/**
+ * Shown over the 3D room: just a line of text and, when you've moved in close, a small way back.
+ * No buttons telling you what to do: Sam's notes do that. The things you can click are also listed for keyboard
+ * and screen-reader players, hidden until you Tab to them.
+ */
 export function roomHud(app: App): HTMLElement {
   const { state, ui } = app;
   const day = state.day > DAYS ? 'Saturday' : `${WEEKDAYS[state.day - 1]}, day ${state.day}`;
   const dropped = TOOLS.find((t) => t.id === state.drop);
   const held = ui.inspecting ? describe(app, ui.inspecting) : undefined;
   const intro = ui.note ?? (dropped ? `Something new in your ticket tray. ${dropped.gift}`
-    : state.day === 1 && state.phase === 'boot' ? 'Your first day. This was Sam’s desk. Click around, or use the buttons below.'
+    : state.day === 1 && state.phase === 'boot' ? 'Your first day. This was Sam\u2019s desk. Sam left notes.'
     : 'Sam\u2019s desk. Well, yours now.');
-  const things = [
-    ...ROOM_ITEMS.filter((i) => i.kind === 'inspect' && (ui.shot === 'wall') === ['notes', 'calendar', 'binders'].includes(i.id)),
-    ...(state.tools.length && ui.shot === 'overview' ? [{ id: 'tool', label: describe(app, 'tool')?.label ?? 'Tool' }] : []),
-  ];
+  const here = ROOM_ITEMS.filter((i) => (ui.shot === 'wall'
+    ? ['notes', 'calendar', 'binders'].includes(i.id)
+    : i.kind !== 'inspect' || !['notes', 'calendar', 'binders'].includes(i.id)));
+  const things = [...here, ...(state.tools.length && ui.shot === 'overview' ? [{ id: 'tool', label: describe(app, 'tool')?.label ?? 'Tool' }] : [])];
   return h('main', { class: 'room-hud', 'data-testid': 'room' },
     h('header', { class: 'room-top' },
       h('p', {}, `${COMPANY} IT Help Desk`),
       h('p', {}, state.phase === 'desk' ? `${day}, ${clockText(state.clock)}` : day)),
+    h('nav', { class: 'skip-list', 'aria-label': 'Things you can look at' }, ...things.map((t) => h('button', {
+      class: 'skip-item', 'data-testid': `item-${t.id}`, onclick: () => pickInRoom(app, t.id),
+    }, t.label))),
     held && h('section', { class: 'inspect-panel', role: 'dialog', 'aria-labelledby': 'held-name', 'data-testid': 'inspect' },
       h('h2', { id: 'held-name' }, held.label),
       h('p', {}, held.says),
-      h('p', { class: 'meta' }, 'Drag it, or use the arrow keys, to turn it over.'),
-      h('button', { class: 'btn', 'data-testid': 'put-back', 'data-autofocus': true, onclick: () => putBack(app) }, 'Put it back (Esc)')),
+      h('p', { class: 'meta' }, 'Drag to turn it over. Esc to put it back.'),
+      h('button', { class: 'back-chip', 'data-testid': 'put-back', 'data-autofocus': true, 'aria-label': 'Put it back', onclick: () => putBack(app) }, '\u2190')),
+    !held && ui.shot !== 'overview' && h('button', {
+      class: 'back-chip corner', 'data-testid': 'step-back', 'aria-label': 'Step back', onclick: () => { ui.shot = 'overview'; app.rerender(); },
+    }, '\u2190'),
     !held && h('section', { class: 'room-bottom' },
-      h('p', { class: 'caption', 'aria-live': 'polite', 'data-testid': 'caption' }, intro),
       h('p', { class: 'hover-label', 'aria-hidden': 'true', 'data-hover': true }),
-      h('div', { class: 'room-actions' },
-        ui.power === 'off'
-          ? h('button', { class: 'btn primary', 'data-testid': 'press-power', 'data-autofocus': true, onclick: () => pressPower(app) }, 'Press the power button')
-          : h('button', { class: 'btn primary', 'data-testid': 'use-computer', 'data-autofocus': true, onclick: () => sitAtComputer(app) }, 'Sit at the computer'),
-        ui.shot === 'overview'
-          ? h('button', { class: 'btn', 'data-testid': 'look-wall', onclick: () => pickInRoom(app, 'wall') }, 'Look at the wall')
-          : h('button', { class: 'btn', 'data-testid': 'step-back', onclick: () => { ui.shot = 'overview'; app.rerender(); } }, 'Step back (Esc)'),
-        ...things.map((t) => h('button', {
-          class: `btn small${t.id === 'tool' && dropped ? ' new' : ''}`, 'data-testid': `item-${t.id}`, onclick: () => pickInRoom(app, t.id),
-        }, t.label)))),
+      h('p', { class: 'caption', 'aria-live': 'polite', 'data-testid': 'caption' }, intro)),
   );
 }

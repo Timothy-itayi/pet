@@ -19,6 +19,7 @@ export const SAM_NOTE = [
 
 export const ROOM_ITEMS: RoomItem[] = [
   { id: 'computer', label: 'The computer', kind: 'computer', says: () => 'Sam’s old computer. It hums like it’s thinking about it.' },
+  { id: 'monitor-note', label: 'Note on the monitor', kind: 'inspect', says: () => '\u201CPower button\u2019s on the case, bottom right. It takes AGES to boot. Go make a tea. \u2013 S\u201D' },
   { id: 'power', label: 'Power button', kind: 'power', says: () => 'A chunky power button on the beige case, under the monitor.' },
   { id: 'wall', label: 'The wall', kind: 'wall', says: () => 'Pegboard, shelves, a calendar and Sam’s sticky notes.' },
   { id: 'runbook', label: 'The old runbook', kind: 'inspect', says: () => 'A blue binder, fat with pages. Half of them are wrong. Some are missing. One is just a coffee stain.' },
