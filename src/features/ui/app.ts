@@ -21,8 +21,12 @@ export interface Ui {
   /** Office clock when you last stepped away from the computer, to know if it went to sleep. */
   leftAt?: number;
   panel?: Panel;
+  /** Tickets or chat, on the left of the help desk. */
+  tab?: 'tickets' | 'chat';
   /** The ticket open on the right of the desk. */
   selected?: string;
+  /** The chat open on the right, when you're on the chat tab. */
+  chat?: string;
   /** Player pause: stops the office clock. */
   paused: boolean;
 }

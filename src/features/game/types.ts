@@ -11,6 +11,8 @@ export interface Villager {
   ears: Ears;
   fur: string;
   beak?: string;
+  /** How they start a chat when they want something fixed but don't want to log a ticket. */
+  opener: string;
   /** What they say when they arrive as your friend, or as your nemesis. */
   fond: string;
   grudge: string;

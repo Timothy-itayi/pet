@@ -1,17 +1,16 @@
-import { MAX_PUSHES, VILLAGERS, WAIT_MINUTES, WORKAROUND_RETURNS_AFTER } from '../game/data.ts';
+import { CHAT_LATER, MAX_PUSHES, VILLAGERS, WORKAROUND_RETURNS_AFTER } from '../game/data.ts';
 import {
-  askForTicket, canPush, canWorkaround, fix, goTo, isKnown, issueOf, minutesLeft, moodName, next, noteTarget, pushBack, relation,
-  reply, scriptFor, ticketById, ticketState, toolFor, wait, walk, workaround, writeNote, type GameState, type Outcome, type Status,
+  askForTicket, canPush, canWorkaround, fix, goNow, goTo, isKnown, issueOf, later, minutesLeft, moodName, next, noteTarget, pushBack,
+  relation, reply, scriptFor, ticketById, ticketState, toolFor, workaround, writeNote, type GameState, type Outcome, type Status,
 } from '../game/rules.ts';
 import type { Ticket } from '../game/types.ts';
-import { worldMap } from '../floor/world.ts';
 import { leaveComputer } from './roomHud.ts';
 import { face } from '../art/sprites.ts';
 import type { App } from './app.ts';
 import { clockText, h, money } from './dom.ts';
 import { panel, SKILL_NAMES } from './panels.ts';
 
-const STATUS: Record<Status, string> = { new: 'New', open: 'Open', pending: 'Pending', resolved: 'Resolved', gone: 'Gave up' };
+const STATUS: Record<Status, string> = { new: 'New', open: 'Open', pending: 'Pending', resolved: 'Resolved' };
 const PRIORITY = { low: 'Low priority', normal: 'Normal priority', high: 'High priority' } as const;
 
 /** "Reply by 10:50 (8 min)" or "Overdue": the countdown that drives everyone's mood. */
@@ -26,7 +25,7 @@ export function refreshTimes(root: HTMLElement, s: GameState): void {
   root.querySelectorAll<HTMLElement>('[data-clock]').forEach((el) => { el.textContent = clockText(s.clock); });
   root.querySelectorAll<HTMLElement>('[data-due]').forEach((el) => {
     const id = el.dataset.due ?? '';
-    if (!s.queue.includes(id)) return;
+    if (!s.queue.includes(id) && !s.chats.includes(id)) return;
     el.textContent = dueText(s, id);
     el.classList.toggle('urgent', urgent(s, id));
   });
@@ -41,11 +40,7 @@ function statusBar(app: App): HTMLElement {
     h('button', { class: 'btn small', 'data-testid': 'pause', 'aria-pressed': ui.paused ? 'true' : 'false', onclick: toggle },
       ui.paused ? 'Resume' : 'Pause'),
     h('span', { 'data-testid': 'goal' }, `Tickets resolved ${state.today.resolved}/${scriptFor(state.day).goal}`),
-    state.place === 'computer'
-      ? h('button', { class: 'btn small walk', 'data-testid': 'walk', onclick: () => app.set(walk(state, 'floor')) }, 'Walk the office floor')
-      : h('span', { class: 'where-you-are' }, state.escort
-        ? `Following ${VILLAGERS[ticketById(state.escort).who].name}`
-        : 'On the office floor'),
+    state.escort && h('span', { class: 'where-you-are' }, `With ${VILLAGERS[ticketById(state.escort).who].name}`),
     h('span', {}, `Savings ${money(state.savings)}`),
     h('button', { class: 'btn small', onclick: () => { app.ui.panel = 'runbook'; app.rerender(); } }, 'Runbook'),
     state.place === 'computer' && h('button', { class: 'btn small', onclick: () => app.set(goTo(state, 'desktop')) }, 'Inbox & jobs'),
@@ -53,28 +48,90 @@ function statusBar(app: App): HTMLElement {
   );
 }
 
-function queueList(app: App, selected: string | undefined): HTMLElement {
+/** The left of the screen: your ticket queue, or the chat, where people message you to skip the queue. */
+function sidebar(app: App): HTMLElement {
+  const { state, ui } = app;
+  const tab = ui.tab ?? 'tickets';
+  const unread = state.chats.length;
+  const pick = (to: 'tickets' | 'chat') => () => { ui.tab = to; app.rerender(); };
+  return h('nav', { class: 'queue', 'aria-label': tab === 'chat' ? 'Chat' : 'Ticket queue' },
+    h('div', { class: 'tabs', role: 'tablist' },
+      h('button', { class: `tab${tab === 'tickets' ? ' on' : ''}`, role: 'tab', 'aria-selected': tab === 'tickets' ? 'true' : 'false', 'data-testid': 'tab-tickets', onclick: pick('tickets') },
+        `Tickets (${state.queue.length})`),
+      h('button', { class: `tab${tab === 'chat' ? ' on' : ''}`, role: 'tab', 'aria-selected': tab === 'chat' ? 'true' : 'false', 'data-testid': 'tab-chat', onclick: pick('chat') },
+        'Chat', unread > 0 && h('span', { class: 'unread', 'data-testid': 'unread' }, unread))),
+    ...(tab === 'tickets' ? ticketList(app) : chatList(app)),
+  );
+}
+
+function ticketList(app: App): HTMLElement[] {
+  const { state, ui } = app;
+  if (!state.queue.length) return [h('p', { class: 'queue-empty' }, 'Nothing in your queue right now. The printer hums ominously.')];
+  return state.queue.map((id) => {
+    const t = ticketById(id);
+    const st = ticketState(state, id);
+    const v = VILLAGERS[t.who];
+    return h('button', {
+      class: `queue-item${id === ui.selected ? ' selected' : ''}`, 'data-testid': `queue-${id}`,
+      'aria-current': id === ui.selected ? 'true' : false,
+      onclick: () => { ui.selected = id; app.rerender(); },
+    },
+      h('img', { class: 'sprite tiny', src: face(v, st.mood), alt: '' }),
+      h('span', { class: 'queue-text' },
+        h('strong', {}, t.title),
+        h('span', {}, `${v.name}, ${moodName(st.mood).toLowerCase()}. ${STATUS[st.status]}.`),
+        h('span', { class: `due${urgent(state, id) ? ' urgent' : ''}`, 'data-due': id }, dueText(state, id))));
+  });
+}
+
+function chatList(app: App): HTMLElement[] {
+  const { state, ui } = app;
+  if (!state.chats.length) return [h('p', { class: 'queue-empty' }, 'No messages. Suspiciously quiet.')];
+  return state.chats.map((id) => {
+    const t = ticketById(id);
+    const st = ticketState(state, id);
+    const v = VILLAGERS[t.who];
+    return h('button', {
+      class: `queue-item chat-item${id === ui.chat ? ' selected' : ''}`, 'data-testid': `chat-${id}`,
+      onclick: () => { ui.chat = id; app.rerender(); },
+    },
+      h('img', { class: 'sprite tiny', src: face(v, st.mood), alt: '' }),
+      h('span', { class: 'queue-text' },
+        h('strong', {}, v.name),
+        h('span', { class: 'preview' }, st.messages.at(-1)?.text ?? '')));
+  });
+}
+
+/**
+ * A chat with someone who'd rather not log a ticket. Their face, DOOM-style, shows how they're taking it:
+ * the longer you leave them, the crosser they look.
+ */
+function chatView(app: App, t: Ticket): HTMLElement {
   const { state } = app;
-  return h('nav', { class: 'queue', 'aria-label': 'Ticket queue' },
-    h('h2', { class: 'small-heading' }, `Queue (${state.queue.length})`),
-    ...state.queue.map((id) => {
-      const t = ticketById(id);
-      const st = ticketState(state, id);
-      const v = VILLAGERS[t.who];
-      return h('button', {
-        class: `queue-item${id === selected ? ' selected' : ''}`, 'data-testid': `queue-${id}`,
-        'aria-current': id === selected ? 'true' : false,
-        onclick: () => { app.ui.selected = id; app.rerender(); },
-      },
-        h('img', { class: 'sprite tiny', src: face(v, st.mood), alt: '' }),
-        h('span', { class: 'queue-text' },
-          h('strong', {}, t.title),
-          h('span', {}, `${v.name}, ${moodName(st.mood).toLowerCase()}. ${STATUS[st.status]}.`),
-          h('span', { class: `due${urgent(state, id) ? ' urgent' : ''}`, 'data-due': id }, dueText(state, id))));
-    }),
-    !state.queue.length && h('div', { class: 'queue-empty' },
-      h('p', {}, 'Nothing in your queue right now. The printer hums ominously.'),
-      h('button', { class: 'btn', 'data-testid': 'wait', onclick: () => app.set(wait(state)) }, `Wait ${WAIT_MINUTES} minutes`)),
+  const st = ticketState(state, t.id);
+  const v = VILLAGERS[t.who];
+  return h('article', { class: 'ticket-view chat-view', 'aria-label': `Chat with ${v.name}` },
+    h('div', { class: 'ticket-info' },
+      h('header', { class: 'chat-head' },
+        h('figure', { class: `chat-face mood-${st.mood}` },
+          h('img', { class: 'sprite', src: face(v, st.mood), alt: `${v.name}, looking ${moodName(st.mood).toLowerCase()}`, 'data-testid': 'chat-face' }),
+          h('figcaption', {}, moodName(st.mood))),
+        h('div', {},
+          h('h2', {}, v.name),
+          h('p', { class: 'meta' }, 'Burrow Chat. Not a ticket.'),
+          h('p', { class: `due${urgent(state, t.id) ? ' urgent' : ''}`, 'data-due': t.id }, dueText(state, t.id)))),
+      h('ol', { class: 'conversation', 'data-testid': 'conversation' }, ...st.messages.map((m) =>
+        h('li', { class: `msg ${m.from}` },
+          h('span', { class: 'msg-meta' }, `${m.from === 'you' ? 'You' : v.name}, ${clockText(m.at)}`),
+          h('span', {}, m.text))))),
+    h('section', { class: 'decide', 'aria-label': 'Reply' },
+      h('button', { class: 'btn primary', 'data-testid': 'go-now', 'data-autofocus': true, onclick: () => app.set(goNow(state, t.id)) }, 'On my way'),
+      h('button', { class: 'btn choice', 'data-testid': 'later', disabled: !canPush(state, t.id), onclick: () => app.set(later(state, t.id)) },
+        h('strong', {}, 'Can it wait?'),
+        h('span', {}, canPush(state, t.id) ? `They\u2019ll message again in ${CHAT_LATER} minutes. ${MAX_PUSHES - st.pushes} left` : 'Not again')),
+      h('button', { class: 'btn choice', 'data-testid': 'ask-ticket', onclick: () => app.set(askForTicket(state, t.id)) },
+        h('strong', {}, 'Please log a ticket'),
+        h('span', {}, 'They\u2019ll be annoyed, but then it counts'))),
   );
 }
 
@@ -97,9 +154,7 @@ export function ticketView(app: App, t: Ticket): HTMLElement {
   const known = isKnown(state, t);
   const tool = toolFor(state, t);
   const [first, ...later] = st.messages;
-  /** Someone who caught you on the floor with no ticket. */
-  const onFloor = state.floor.includes(t.id);
-  const following = state.escort === t.id;
+  const helping = state.escort === t.id;
   // Alphabetical, so the right answer isn't always in the same spot.
   const fixes = issue.fixes.filter((f) => !st.tried.includes(f.id)).sort((a, b) => a.label.localeCompare(b.label));
   const choice = (props: Record<string, string | boolean | (() => void)>, title: string, detail: string) =>
@@ -110,10 +165,9 @@ export function ticketView(app: App, t: Ticket): HTMLElement {
     h('header', { class: 'ticket-head' },
       h('div', {},
         h('h2', {}, t.title),
-        h('p', { class: 'meta' }, onFloor ? `Caught you in the ${t.where?.toLowerCase() ?? 'office'}. No ticket.`
-          : following ? `Walked up to your desk and took you to the ${t.where?.toLowerCase() ?? 'office'}. ${PRIORITY[t.priority]}.`
-          : `${t.via === 'walkup' ? 'Walked up to your desk' : t.via === 'floor' ? 'Submitted after you asked' : 'From the tray'}. ${PRIORITY[t.priority]}.`)),
-      !onFloor && h('span', { class: `status-pill ${st.status}`, 'data-testid': 'status' }, STATUS[st.status])),
+        h('p', { class: 'meta' }, helping ? `Messaged you on chat. You went over to the ${t.where?.toLowerCase() ?? 'office'}. No ticket.`
+          : `${t.via === 'tray' ? 'From the tray' : 'Logged after you asked'}. ${PRIORITY[t.priority]}.`)),
+      !helping && h('span', { class: `status-pill ${st.status}`, 'data-testid': 'status' }, STATUS[st.status])),
     h('div', { class: 'who' },
       h('img', { class: 'sprite', src: face(v, st.mood), alt: `${v.name} the ${v.species}, looking ${moodName(st.mood).toLowerCase()}` }),
       h('div', {},
@@ -121,9 +175,7 @@ export function ticketView(app: App, t: Ticket): HTMLElement {
         h('div', { class: 'badges' },
           h('span', { class: `mood mood-${st.mood}`, 'data-testid': 'mood' }, moodName(st.mood)),
           bond !== 'neutral' && h('span', { class: `bond ${bond}`, 'data-testid': 'bond' }, bond === 'friend' ? '♥ Friend' : 'Nemesis')),
-        onFloor
-          ? h('p', { class: 'due' }, 'Waiting for help. No ticket, so no reply-by time: just their patience.')
-          : following ? h('p', { class: 'due' }, 'They\u2019re right here with you.')
+        helping ? h('p', { class: 'due' }, 'They\u2019re right here with you.')
           : h('p', { class: `due${urgent(state, t.id) ? ' urgent' : ''}`, 'data-due': t.id, 'data-testid': 'due' }, dueText(state, t.id)))),
     first && h('p', { class: 'opening msg them', 'data-testid': 'opening' },
       h('span', { class: 'msg-meta' }, `${v.name}, ${clockText(first.at)}`), h('span', {}, first.text)),
@@ -147,9 +199,7 @@ export function ticketView(app: App, t: Ticket): HTMLElement {
           class: `btn fix${known && f.id === issue.correctFix ? ' from-note' : ''}`, 'data-testid': `fix-${f.id}`,
           onclick: () => app.set(fix(state, t.id, f.id)),
         }, f.label, known && f.id === issue.correctFix && h('span', { class: 'from-note-tag' }, 'Your note says this')))),
-      onFloor && choice({ 'data-testid': 'ask-ticket', onclick: () => app.set(askForTicket(state, t.id)) },
-        'Ask them to submit a ticket', 'They\u2019ll be annoyed, but then it counts'),
-      !onFloor && h('div', { class: 'row' },
+      h('div', { class: 'row' },
         choice({ 'data-testid': 'workaround', disabled: !canWorkaround(state, t.id), onclick: () => app.set(workaround(state, t.id)) },
           'Give them something', canWorkaround(state, t.id) ? t.workaround : 'They won’t take a workaround again'),
         choice({ 'data-testid': 'push', disabled: !canPush(state, t.id), onclick: () => app.set(pushBack(state, t.id)) },
@@ -166,9 +216,9 @@ function outcomeCard(app: App, o: Outcome): HTMLElement {
   const issue = issueOf(t);
   const headline = {
     fix: 'Resolved!', workaround: 'Good enough for now', push: 'Set to pending', storm: `${v.name} storms off`,
-    asked: 'Submit a ticket, please',
+    asked: 'Please log a ticket',
   }[o.kind];
-  const uncounted = o.kind === 'fix' && t.via === 'floor' && !ticketState(state, t.id).logged;
+  const uncounted = o.kind === 'fix' && t.via !== 'tray' && !ticketState(state, t.id).logged;
   const body = {
     fix: issue.why,
     workaround: `${v.name} is happy for now. It’ll probably come back in ${WORKAROUND_RETURNS_AFTER} days. Fix it properly to learn what was really wrong.`,
@@ -204,47 +254,44 @@ function outcomeCard(app: App, o: Outcome): HTMLElement {
   );
 }
 
+const pausedCard = (app: App) => h('div', { class: 'overlay' },
+  h('section', { class: 'outcome', role: 'dialog', 'aria-label': 'Paused', 'data-testid': 'paused' },
+    h('h2', {}, 'Paused'),
+    h('p', {}, 'The office clock has stopped. Take your time.'),
+    h('button', { class: 'btn primary', 'data-autofocus': true, onclick: () => { app.ui.paused = false; app.rerender(); } }, 'Resume')));
+
 export function deskScreen(app: App): HTMLElement {
   const { state, ui } = app;
-  if (state.place === 'floor') return floorScreen(app);
+  if (state.place === 'floor') return onSiteScreen(app);
   if (!ui.selected || !state.queue.includes(ui.selected)) ui.selected = state.queue[0];
-  const t = ui.selected ? ticketById(ui.selected) : undefined;
+  if (!ui.chat || !state.chats.includes(ui.chat)) ui.chat = state.chats[0];
+  const onChat = ui.tab === 'chat';
+  const id = onChat ? ui.chat : ui.selected;
   const outcome = state.outcomes[0];
   return h('main', { class: 'screen desk', 'data-testid': 'desk' },
     statusBar(app),
     h('div', { class: 'desk-body' },
-      queueList(app, ui.selected),
-      t ? ticketView(app, t) : h('section', { class: 'ticket-view empty-view' }, h('p', {}, 'Your queue is empty. Check back soon, or walk the office floor.'))),
-    ui.paused && !outcome && h('div', { class: 'overlay' },
-      h('section', { class: 'outcome', role: 'dialog', 'aria-label': 'Paused', 'data-testid': 'paused' },
-        h('h2', {}, 'Paused'),
-        h('p', {}, 'The office clock has stopped. Take your time.'),
-        h('button', { class: 'btn primary', 'data-autofocus': true, onclick: () => { ui.paused = false; app.rerender(); } }, 'Resume'))),
+      sidebar(app),
+      id ? (onChat ? chatView(app, ticketById(id)) : ticketView(app, ticketById(id)))
+        : h('section', { class: 'ticket-view empty-view' }, h('p', {}, onChat ? 'No one is messaging you.' : 'Your queue is empty. Check back soon.'))),
+    ui.paused && !outcome && pausedCard(app),
     outcome && outcomeCard(app, outcome),
     ui.panel && panel(app, ui.panel));
 }
 
-/** Away from the computer: the office map, and whoever you're dealing with beside it. */
-function floorScreen(app: App): HTMLElement {
+/** Away from your computer, helping someone in person: you followed them to their desk, and here's the problem. */
+function onSiteScreen(app: App): HTMLElement {
   const { state, ui } = app;
-  const onSite = state.escort && ticketState(state, state.escort).onSite ? state.escort : undefined;
-  if (ui.selected && !state.floor.includes(ui.selected)) ui.selected = undefined;
-  const id = onSite ?? ui.selected;
+  const id = state.escort;
   const outcome = state.outcomes[0];
-  return h('main', { class: 'screen desk', 'data-testid': 'desk' },
+  const t = id ? ticketById(id) : undefined;
+  return h('main', { class: 'screen desk on-site', 'data-testid': 'desk' },
     statusBar(app),
-    // Walking shows the map; dealing with someone switches to a full screen, like a battle screen in a handheld game.
-    id
-      ? h('div', { class: 'floor-talk' },
-        !onSite && h('button', { class: 'btn small close-ticket', 'data-testid': 'step-away', onclick: () => { ui.selected = undefined; app.rerender(); } },
-          '\u2190 Step away'),
-        ticketView(app, ticketById(id)))
-      : h('div', { class: 'floor-body' }, worldMap(app)),
-    ui.paused && !outcome && h('div', { class: 'overlay' },
-      h('section', { class: 'outcome', role: 'dialog', 'aria-label': 'Paused', 'data-testid': 'paused' },
-        h('h2', {}, 'Paused'),
-        h('p', {}, 'The office clock has stopped. Take your time.'),
-        h('button', { class: 'btn primary', 'data-autofocus': true, onclick: () => { ui.paused = false; app.rerender(); } }, 'Resume'))),
+    t && h('div', { class: 'floor-talk' }, ticketView(app, t)),
+    // A moment of walking over, before you see the problem.
+    t && h('div', { class: 'walk-over', 'aria-hidden': 'true' },
+      h('p', {}, `You follow ${VILLAGERS[t.who].name} to the ${t.where?.toLowerCase() ?? 'office'}\u2026`)),
+    ui.paused && !outcome && pausedCard(app),
     outcome && outcomeCard(app, outcome),
     ui.panel && panel(app, ui.panel));
 }

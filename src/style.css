@@ -277,12 +277,6 @@ img.sprite.tiny { width: 40px; height: 40px; }
 .area-empty { margin: 0; color: var(--muted); font-size: 0.95rem; }
 .btn.walk { background: var(--manila); }
 
-/* The office map */
-.floor-body { flex: 1; min-height: 0; padding: 12px; overflow-y: auto; }
-.map { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
-.map-frame { border: 4px solid var(--ink); border-radius: 8px; background: var(--ink); line-height: 0; }
-.map-frame:focus-visible { outline: 4px dashed var(--focus); outline-offset: 3px; }
-.map-canvas { width: 100%; height: auto; image-rendering: pixelated; display: block; border-radius: 4px; }
 /* A classic handheld-game text box. */
 .map-prompt {
   margin: 0; padding: 10px 14px; min-height: 2.9em; font: 1.05rem/1.4 var(--pixel);
@@ -397,3 +391,33 @@ body.in-room #app .room-hud > * { pointer-events: auto; }
 .back-chip:hover, .back-chip:focus-visible { background: #120d0aee; border-color: var(--paper); }
 .back-chip.corner { position: absolute; left: 16px; bottom: 24px; }
 .inspect-panel .back-chip { margin-top: 8px; }
+
+/* Tickets and chat tabs */
+.tabs { display: flex; gap: 4px; margin-bottom: 4px; }
+.tab { flex: 1; font: 0.95rem var(--pixel); padding: 4px 8px; cursor: pointer; background: #e9e2cf; border: 2px solid var(--ink); border-radius: 8px 8px 0 0; color: var(--muted); }
+.tab.on { background: var(--paper); color: var(--ink); }
+.unread { display: inline-block; margin-left: 6px; min-width: 1.4em; padding: 0 5px; border-radius: 999px; background: var(--honk); color: #fff; font-size: 0.8rem; }
+.chat-item .preview { color: var(--muted); font-size: 0.9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* A chat: their face, DOOM-style, getting crosser the longer you leave them */
+.chat-head { display: flex; gap: 16px; align-items: center; }
+.chat-head h2 { margin: 0; }
+.chat-face { margin: 0; padding: 6px; display: flex; flex-direction: column; align-items: center; gap: 4px; background: #1f1712; border: 3px solid var(--ink); border-radius: 6px; }
+.chat-face .sprite { width: 112px; height: 112px; }
+.chat-face figcaption { font: 0.85rem var(--pixel); color: #fff; }
+.chat-face.mood-2 { box-shadow: 0 0 0 3px #f8c79a; }
+.chat-face.mood-3 { box-shadow: 0 0 0 3px var(--honk); animation: fume 0.6s ease-in-out infinite alternate; }
+@keyframes fume { from { transform: translateX(-1px); } to { transform: translateX(1px); } }
+
+/* Helping someone in person: a beat of walking over, then their problem */
+.screen.on-site { position: relative; }
+.walk-over {
+  position: absolute; inset: 0; z-index: 5; display: grid; place-items: center; pointer-events: none;
+  background: #120d0a; color: var(--paper); font: 1.4rem var(--pixel);
+  animation: walk-over 1.8s ease-in forwards;
+}
+@keyframes walk-over { 0%, 55% { opacity: 1; } 100% { opacity: 0; visibility: hidden; } }
+@media (prefers-reduced-motion: reduce) {
+  .walk-over { animation: none; display: none; }
+  .chat-face.mood-3 { animation: none; }
+}
