@@ -138,6 +138,7 @@ meter { width: 100%; height: 18px; }
 
 /* Desk: your queue on the left, the open ticket on the right */
 .desk { background: var(--wood); height: min(780px, calc(100vh - 32px)); }
+.crt-screen .desk { height: 100%; }
 .status {
   display: flex; flex-wrap: wrap; gap: 6px 18px; align-items: center;
   padding: 8px 16px; background: var(--paper); border-bottom: 4px solid var(--ink);
@@ -304,27 +305,80 @@ img.sprite.tiny { width: 40px; height: 40px; }
 .login input { font: 1.2rem var(--term); background: #0b1a10; color: var(--crt-text); border: 2px solid var(--crt-text); border-radius: 4px; padding: 2px 8px; }
 .login .hint { margin: 4px 0 10px; }
 
-/* Sam's desk, as a picture you can click on */
-.room { background: #1f1712; }
-.desk-art { position: relative; line-height: 0; }
-.desk-canvas { width: 100%; height: auto; image-rendering: pixelated; display: block; }
-.hotspot { position: absolute; padding: 0; background: none; border: 2px solid transparent; border-radius: 4px; cursor: pointer; }
-.hotspot:hover, .hotspot:focus-visible { border-color: #fff3a8; background: #fff3a822; outline: none; }
-.hotspot-label {
-  position: absolute; left: 50%; bottom: calc(100% + 4px); transform: translateX(-50%); white-space: nowrap;
-  font: 0.85rem/1.4 var(--pixel); color: var(--ink); background: var(--paper); border: 2px solid var(--ink); border-radius: 6px; padding: 0 6px;
-  opacity: 0; pointer-events: none;
-}
-.hotspot:hover .hotspot-label, .hotspot:focus-visible .hotspot-label { opacity: 1; }
-.room-bar { display: flex; gap: 12px; align-items: stretch; background: #fff; border-top: 4px double var(--ink); }
-.room-bar .caption { flex: 1; border-top: 0; }
-.room-bar .btn { margin: 10px 12px 10px 0; align-self: center; }
-@media (max-width: 640px) {
-  .room-bar { flex-direction: column; gap: 0; }
-  .room-bar .btn { margin: 0 12px 12px; align-self: stretch; text-align: center; }
-}
-
 /* Loot */
 .btn.fix.from-tool { background: #e4f5d6; border-color: var(--leaf-dark); box-shadow: 0 4px 0 var(--leaf-dark); }
-.new-drop [data-testid='item-tool'] { border-color: #fff3a8; background: #fff3a822; }
-.new-drop [data-testid='item-tool'] .hotspot-label { opacity: 1; }
+
+/* The 3D room behind everything */
+body:has(.room-canvas:not([hidden])) { background: #120d0a; }
+.room-canvas { position: fixed; inset: 0; z-index: 1; display: block; transition: filter 0.4s ease; }
+.room-canvas.blurred { filter: blur(6px) brightness(0.4) saturate(0.8); }
+.inspect-canvas { position: fixed; inset: 0; z-index: 2; display: block; cursor: grab; }
+.inspect-canvas:active { cursor: grabbing; }
+#app { position: relative; z-index: 3; }
+body.in-room #app { pointer-events: none; }
+body.in-room #app .room-hud > * { pointer-events: auto; }
+
+.room-hud { position: fixed; inset: 0; display: flex; flex-direction: column; justify-content: space-between; padding: 16px; pointer-events: none; }
+.room-top { display: flex; justify-content: space-between; gap: 12px; align-self: stretch; }
+.room-top p { margin: 0; padding: 4px 12px; font-family: var(--pixel); color: var(--paper); background: #120d0acc; border-radius: 6px; }
+.room-bottom { display: flex; flex-direction: column; gap: 10px; max-width: 760px; width: 100%; margin: 0 auto; }
+.room-bottom .caption { border: 4px double var(--ink); border-radius: 8px; box-shadow: 0 3px 0 var(--ink); }
+.hover-label { margin: 0; min-height: 1.6em; text-align: center; font-family: var(--pixel); color: #fff3a8; text-shadow: 0 2px 0 #000; }
+.room-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.room-actions .btn.new { background: #fff3a8; border-color: var(--leaf-dark); }
+.inspect-panel {
+  position: absolute; left: 4vw; top: 50%; transform: translateY(-50%); max-width: min(420px, 40vw);
+  color: var(--paper); text-shadow: 0 2px 6px #000;
+}
+.inspect-panel h2 { font-size: clamp(1.6rem, 3vw, 2.4rem); margin-bottom: 12px; }
+.inspect-panel p { font-size: 1.15rem; line-height: 1.6; }
+.inspect-panel .meta { color: #e8dcc0; }
+.inspect-panel .btn { text-shadow: none; }
+.screen.boot.waking { animation: wake 1.4s ease-out; }
+@keyframes wake { from { filter: brightness(0); } to { filter: brightness(1); } }
+@media (max-width: 640px) {
+  .inspect-panel { left: 16px; right: 16px; top: auto; bottom: 16px; transform: none; max-width: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .room-canvas { transition: none; }
+  .screen.boot.waking { animation: none; }
+}
+
+/* The monitor's screen: a page placed in 3D behind the glass. Scanlines, a little static, a slow flicker, dark corners. */
+.screen-layer { position: fixed !important; inset: 0; z-index: 0; }
+.crt-screen { position: relative; overflow: hidden; border-radius: 22px; background: #0d1a12; color: var(--ink); font: 500 18px/1.55 var(--read); }
+.crt-screen > .screen {
+  width: 100%; height: 100%; min-height: 0; margin: 0; border: 0; border-radius: 0; box-shadow: none;
+  filter: sepia(0.12) saturate(0.95) brightness(0.96);
+}
+.crt-screen::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 10;
+  background:
+    radial-gradient(ellipse at center, transparent 58%, #0a0705b3 100%),
+    repeating-linear-gradient(to bottom, #00000018 0 1px, transparent 1px 3px),
+    var(--static);
+  animation: static-shift 0.35s steps(4) infinite, flicker 6s ease-in-out infinite;
+}
+/* Switched off: plain dark glass, no static. */
+.crt-screen:has([data-testid='screen-off'])::after { animation: none; background: radial-gradient(ellipse at 30% 25%, #ffffff0d, transparent 40%), radial-gradient(ellipse at center, transparent 58%, #000000 100%); }
+@keyframes static-shift { 0% { background-position: 0 0, 0 0, 0 0; } 25% { background-position: 0 0, 0 1px, 31px 17px; } 50% { background-position: 0 0, 0 0, -23px 41px; } 75% { background-position: 0 0, 0 1px, 57px -11px; } }
+@keyframes flicker { 0%, 100% { opacity: 1; } 48% { opacity: 0.9; } 50% { opacity: 1; } 52% { opacity: 0.94; } }
+.computer-hud { justify-content: flex-start; align-items: flex-start; }
+.stand-up { background: #120d0acc; color: var(--paper); border-color: var(--paper); }
+
+/* The computer switched off, or asleep. */
+.screen.boot.dark { background: #050505; align-items: center; justify-content: center; }
+.dark-centre { display: flex; flex-direction: column; align-items: center; gap: 18px; text-align: center; margin: auto; }
+.dark-hint { margin: 0; color: #9be39b88; font: 1.25rem var(--term); }
+.dark-hint.small { font-size: 1rem; }
+.power-button {
+  width: 88px; height: 88px; border-radius: 50%; cursor: pointer;
+  font-size: 2.6rem; line-height: 1; color: #9be39b; background: radial-gradient(circle at 40% 35%, #2a3a2e, #0d150f);
+  border: 4px solid #3b4a3e; box-shadow: 0 0 0 4px #050505, 0 0 24px #9be39b33;
+}
+.power-button:hover { box-shadow: 0 0 0 4px #050505, 0 0 36px #9be39b66; }
+.sleep-z { margin: 0; color: #9be39b44; font: 2rem var(--term); letter-spacing: 0.3em; }
+
+@media (prefers-reduced-motion: reduce) {
+  .crt-screen::after { animation: none; }
+}

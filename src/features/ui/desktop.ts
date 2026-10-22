@@ -4,6 +4,7 @@ import { face } from '../art/sprites.ts';
 import type { App, Panel } from './app.ts';
 import { h, money } from './dom.ts';
 import { panel } from './panels.ts';
+import { leaveComputer } from './roomHud.ts';
 
 const ICONS: { id: Panel; label: string; glyph: string }[] = [
   { id: 'inbox', label: 'Inbox', glyph: '✉' },
@@ -42,6 +43,7 @@ export function desktopScreen(app: App): HTMLElement {
     app.ui.panel && panel(app, app.ui.panel),
     notification(app),
     h('footer', { class: 'taskbar' },
+      h('button', { class: 'btn small', 'data-testid': 'back-to-desk', onclick: () => leaveComputer(app) }, 'Back to desk'),
       h('span', {}, weekOver ? 'Saturday · week over' : `Day ${state.day} of ${DAYS}`),
       h('span', {}, `Savings ${money(state.savings)}`),
       !weekOver && h('button', {

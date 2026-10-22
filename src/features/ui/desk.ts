@@ -5,6 +5,7 @@ import {
 } from '../game/rules.ts';
 import type { Ticket } from '../game/types.ts';
 import { worldMap } from '../floor/world.ts';
+import { leaveComputer } from './roomHud.ts';
 import { face } from '../art/sprites.ts';
 import type { App } from './app.ts';
 import { clockText, h, money } from './dom.ts';
@@ -48,6 +49,7 @@ function statusBar(app: App): HTMLElement {
     h('span', {}, `Savings ${money(state.savings)}`),
     h('button', { class: 'btn small', onclick: () => { app.ui.panel = 'runbook'; app.rerender(); } }, 'Runbook'),
     state.place === 'computer' && h('button', { class: 'btn small', onclick: () => app.set(goTo(state, 'desktop')) }, 'Inbox & jobs'),
+    state.place === 'computer' && h('button', { class: 'btn small', 'data-testid': 'back-to-desk', onclick: () => leaveComputer(app) }, 'Back to desk'),
   );
 }
 
