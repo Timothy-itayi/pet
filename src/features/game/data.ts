@@ -2,14 +2,17 @@ import type { DayScript, Job, Villager } from './types.ts';
 
 export const COMPANY = 'Burrow & Co.';
 export const MANAGER = 'Mr. Grisby';
-export const DAYS = 5;
-export const START_SAVINGS = 50;
+/** Two working weeks: Sam's old system in week 1, Oktopus for Marketing in week 2. */
+export const DAYS = 10;
+/** Enough for two weeks of bus fare and food, if most days go well. */
+export const START_SAVINGS = 80;
 export const DAILY_COST = 12;
-export const GOAL_VOUCHER = 8;
+/** A met goal's lunch voucher covers the day's bus fare and food; a missed one costs you. */
+export const GOAL_VOUCHER = 12;
 export const MAX_PUSHES = 2;
 /** How people feel about you, -3..3. Friends at 1 or above, nemeses at -1 or below. */
-export const BOND = { clean: 1, messy: -1, storm: -2, min: -3, max: 3 } as const;
-/** A fix with this many slips (missed reply-by times, wrong fixes) leaves a bad taste. */
+export const BOND = { clean: 1, messy: -1, complaint: -2, min: -3, max: 3 } as const;
+/** A fix that took this many failed attempts leaves a bad taste. */
 export const MESSY_SLIPS = 2;
 export const XP = { fix: 2, workaround: 1, note: 1 } as const;
 
@@ -18,19 +21,10 @@ export const OPEN = 9 * 60;
 export const CLOSE = 17 * 60;
 /** How fast the office clock runs: a full day takes about 10 real minutes. */
 export const GAME_MINUTES_PER_SECOND = 0.8;
-/** Minutes until someone expects a first reply. Walk-ups are standing right there. */
-export const REPLY_WITHIN = { walkup: 15, chat: 45, high: 20, normal: 40, low: 90 } as const;
 /** After you ask someone on chat to log a ticket, minutes until it lands in your queue. */
 export const TICKET_LANDS_AFTER = 30;
-/** "Can it wait?" on chat: they message you again this many minutes later. */
-export const CHAT_LATER = 60;
-/** After a reply, minutes until they expect the next update; after a missed one, minutes of grace. */
-export const UPDATE_EVERY = 60;
-export const GRACE_AFTER_MISS = 30;
-/** Friends give you more time, nemeses less. */
-export const PATIENCE = { friend: 1.5, neutral: 1, nemesis: 0.7 } as const;
 /** Clock minutes each action takes. A fix is faster when your own note tells you what to do. */
-export const COST = { update: 2, fix: 15, knownFix: 5, toolFix: 5, wrongFix: 15, workaround: 10, push: 2, note: 3, goOver: 5, askForTicket: 2, unlock: 1, reset: 3 } as const;
+export const COST = { update: 2, fix: 15, knownFix: 5, toolFix: 5, wrongFix: 15, workaround: 10, push: 2, note: 3, askForTicket: 2, unlock: 1, reset: 3 } as const;
 /** The one morning in week 1 when something turns up on your desk. Loot is rare. */
 export const DROP_DAY = 3;
 export const REPLIES = {
@@ -38,6 +32,20 @@ export const REPLIES = {
   update: 'Quick update: still working on this. Thanks for your patience.',
   pending: 'We\u2019ll pick this up again tomorrow. Sorry for the wait.',
 } as const;
+/**
+ * The IT Service Policy: how every kind of problem is handled. You're the only IT there is, so you work with
+ * what the company has.
+ */
+export const POLICY = [
+  'Every request is a ticket. If someone asks on chat, ask them to log one: that\u2019s how it gets fixed and counted.',
+  'Reply first, then keep people updated. Nobody gets turned away: it waits until it\u2019s fixed.',
+  'Accounts and passwords: check it\u2019s really them against HR, then fix it in Active Directory or Oktopus. IT never sets, reads out or learns anyone\u2019s password.',
+  'Hardware: use what we have. Spares cupboard, batteries, the hot-desk PC. Budget freeze: no new hardware.',
+  'Software: install from the Company Portal. Nobody gets admin rights.',
+  'Joiners, movers and leavers: HR is the source of truth. Apps go to groups, never to people one by one.',
+  'Security: report anything odd. Never reset sign-in for a request from outside the company.',
+] as const;
+
 /** A worked-around ticket comes back this many days later. */
 export const WORKAROUND_RETURNS_AFTER = 2;
 
@@ -95,7 +103,39 @@ export const DAY_SCRIPTS: DayScript[] = [
   },
   {
     goal: 6,
-    memo: 'Last day of the week! 6 tickets and we’ll have The Conversation about pay.',
+    memo: 'Last day of the week! 6 tickets. The Conversation about pay is next Friday. The board insists. I insist less.',
+    metGoal: 'Six! Next Friday, The Conversation. I’ve pencilled it in. In pencil.',
+    missedGoal: 'Hmm. The Conversation is still next Friday. I’ve rubbed some of it out.',
+  },
+  {
+    goal: 4,
+    memo: 'Week 2! The investors want Oktopus for Marketing, starting TODAY. Sign-on, apps, all of it. Four tickets, and get Marketing on it.',
+    rule: 'Apps go to groups, not to people. The Oktopus salesman was very firm.',
+    metGoal: 'Marketing are on Oktopus! The investors are thrilled. I took the credit. Voucher.',
+    missedGoal: 'The investors asked how Oktopus is going. I said “great”. Make it great.',
+  },
+  {
+    goal: 4,
+    memo: 'We have a new starter in Marketing! HR has done their bit. Your bit is everything else. Four tickets.',
+    metGoal: 'Fern says her first day was “seamless”. I don’t know what that means but I like it. Voucher.',
+    missedGoal: 'Fern spent her first day sharpening pencils. We don’t have pencils.',
+  },
+  {
+    goal: 5,
+    memo: 'Basil has moved to Sales. Do whatever IT does when people move. Five tickets.',
+    rule: 'People who move teams keep their account. They lose their old team’s things.',
+    metGoal: 'Marlo says Basil is selling things already. Voucher.',
+    missedGoal: 'Marketing say Basil is still posting on their socials. From Sales.',
+  },
+  {
+    goal: 5,
+    memo: 'Sad news: Wren has left us. Also, the auditors are in. Five tickets, and nothing embarrassing please.',
+    metGoal: 'The auditors left smiling. Auditors never smile. Voucher.',
+    missedGoal: 'The auditors wrote a lot of things down. Some of them were about you.',
+  },
+  {
+    goal: 6,
+    memo: 'Friday! 6 tickets, and then: The Conversation. I mean it this time.',
     metGoal: 'Six! Come see me after. About The Conversation.',
     missedGoal: 'Well. We’ll still have The Conversation. It’s shorter now.',
   },
@@ -107,14 +147,14 @@ export const JOBS: Job[] = [
     title: 'Junior IT Support (paid!)',
     company: 'Meadow Library',
     blurb: 'Help patrons and staff with laptops, printers and Wi-Fi. Kind team, real salary, a window.',
-    needs: { devices: 20, networks: 11 },
+    needs: { devices: 36, networks: 14 },
   },
   {
     id: 'ocean',
     title: 'IT Support Technician',
     company: 'Big Ocean Corp',
     blurb: 'Fast-paced team supporting 2,000 staff. Accounts, access and networking experience a must.',
-    needs: { devices: 30, networks: 20, access: 18 },
+    needs: { devices: 60, networks: 24, access: 56 },
   },
 ];
 

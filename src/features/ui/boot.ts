@@ -1,10 +1,9 @@
 import { COMPANY, DAYS } from '../game/data.ts';
-import { goTo, isWeekOver, newGame } from '../game/rules.ts';
+import { goTo, isWeekOver, newGame, weekday, weekOf } from '../game/rules.ts';
 import type { App } from './app.ts';
 import { morningNotes } from './desktop.ts';
 import { h } from './dom.ts';
 
-const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 /** An old machine's BIOS, line by line, with how long each one takes (ms). */
 const BIOS: [string, number][] = [
@@ -24,7 +23,7 @@ const SPLASH: [string, number][] = [
 /** Then the smooth "welcome" animation, before the login. Matches the animations in style.css. */
 const REVEAL_MS = 3200;
 
-const dayLine = (day: number) => (day > DAYS ? 'Saturday. Of course.' : `${WEEKDAYS[day - 1]}, day ${day} of ${DAYS}`);
+const dayLine = (day: number) => (day > DAYS ? 'Saturday. Of course.' : `${weekday(day)}, week ${weekOf(day)}`);
 
 /** Off: just dark glass. The power button is on the case. */
 export function darkScreen(): HTMLElement {

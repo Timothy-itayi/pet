@@ -1,9 +1,10 @@
 import {
-  BOND, CLOSE, COST, DAILY_COST, DAYS, DAY_SCRIPTS, DROP_DAY, TOOLS, CHAT_LATER, GOAL_VOUCHER, GRACE_AFTER_MISS, ISSUES, JOBS, MAX_PUSHES,
-  MESSY_SLIPS, OPEN, PATIENCE, REPLIES, REPLY_WITHIN, START_SAVINGS, TICKET_LANDS_AFTER, TICKETS, UPDATE_EVERY, VILLAGERS,
+  BOND, CLOSE, COST, DAILY_COST, DAYS, DAY_SCRIPTS, DROP_DAY, TOOLS, GOAL_VOUCHER, ISSUES, JOBS, MAX_PUSHES,
+  MESSY_SLIPS, OPEN, REPLIES, START_SAVINGS, TICKET_LANDS_AFTER, TICKETS, VILLAGERS,
   WORKAROUND_RETURNS_AFTER, XP, type VillagerId,
 } from './data.ts';
 import { MINUTES_A_DAY, newAccounts, type Account } from './directory.ts';
+import { appsOf, groupsOf, hrOn, newOkta, type Okta } from './oktopus.ts';
 import { MOODS, type Issue, type Job, type Mood, type PageStatus, type Relation, type Skill, type Ticket, type Tool } from './types.ts';
 
 export type Phase = 'boot' | 'desktop' | 'desk' | 'dayEnd' | 'ending';
@@ -11,7 +12,6 @@ export type Ending = 'hired' | 'burnout' | 'stay';
 /** A ticket's life, like a real service desk: new, open (you've replied), pending (pushed back), resolved. */
 export type Status = 'new' | 'open' | 'pending' | 'resolved';
 /** At your computer, or away from it helping someone in person. */
-export type Place = 'computer' | 'floor';
 
 export interface Message {
   from: 'them' | 'you';
@@ -22,23 +22,25 @@ export interface Message {
 export interface TicketState {
   status: Status;
   mood: Mood;
-  /** Times you cost them patience: missed reply-by times and wrong fixes. Zero on a fix makes a friend. */
+  /** Times you let them down: fixes that didn't work. Zero on a fix makes a friend. */
   slips: number;
   pushes: number;
   workedAround: boolean;
   tried: string[];
-  /** Clock time by which they expect to hear from you. */
-  due: number;
   messages: Message[];
-  /** A chat request you asked to log a ticket: it now comes through your queue. */
+  /** It's a real ticket (submitted, or logged after you asked on chat), so it comes through your queue and counts. */
   logged?: boolean;
-  /** You've gone over to help them in person and can work on it. */
-  onSite?: boolean;
+  /** It started as a chat message, and you asked them to log a ticket. */
+  asked?: boolean;
+  /** They've already been to Mr. Grisby about this one. */
+  complained?: boolean;
 }
 
 export interface Outcome {
   ticketId: string;
-  kind: 'fix' | 'workaround' | 'push' | 'storm' | 'asked';
+  kind: 'fix' | 'workaround' | 'push' | 'complaint' | 'asked';
+  /** A complaint about a grave mistake, rather than about waiting. */
+  grave?: boolean;
   xp: number;
   /** After a fix: whether you wrote the internal note, and which wrong one you tried last. */
   noted?: boolean;
@@ -50,11 +52,8 @@ export interface Outcome {
 export interface Today {
   /** Tickets resolved: the only number Mr. Grisby counts. */
   resolved: number;
-  /** People helped in person off the back of a chat, with no ticket. Real work, invisible to the manager. */
-  helped: number;
   pushed: number;
   wrongFixes: number;
-  missed: number;
   complaints: number;
   notes: number;
   xp: number;
@@ -64,19 +63,16 @@ export interface Today {
 }
 
 export interface GameState {
-  version: 9;
+  version: 11;
   /** 1..DAYS while working; DAYS + 1 once the week is over. */
   day: number;
   phase: Phase;
   /** Office clock, minutes since midnight. */
   clock: number;
-  place: Place;
   /** Tickets waiting on you right now, oldest first. */
   queue: string[];
   /** People who messaged you on chat instead of logging a ticket, waiting for an answer. */
   chats: string[];
-  /** Someone you're helping in person, after telling them you're on your way. */
-  escort?: string;
   /** Tickets still to arrive today. */
   arriving: { id: string; at: number }[];
   /** Tickets coming back on a later day. */
@@ -94,6 +90,8 @@ export interface GameState {
   accounts: Record<string, Account>;
   /** How many Burrow Intranet posts you've read. */
   newsRead: number;
+  /** Oktopus, from week 2: people, groups, rules and apps. */
+  okta: Okta;
   /** A tool that turned up on your desk this morning, to show you when you sit down. */
   drop?: string;
   /** Fixed when the game starts, so the same choices give the same loot. */
@@ -105,6 +103,12 @@ export interface GameState {
   ending?: Ending;
   jobId?: string;
 }
+
+const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+/** The day of the week for a game day: Monday to Friday each week, Saturday once it's all over. */
+export const weekday = (day: number) => (day > DAYS ? 'Saturday' : WEEKDAYS[(day - 1) % WEEKDAYS.length] ?? 'Monday');
+/** Which week a game day is in, from 1. */
+export const weekOf = (day: number) => Math.ceil(Math.min(day, DAYS) / WEEKDAYS.length);
 
 /** '9:05' -> minutes since midnight. */
 export function clockTime(hm: string): number {
@@ -139,7 +143,6 @@ export function scriptFor(day: number) {
 
 export const isWeekOver = (s: GameState) => s.day > DAYS;
 export const moodName = (m: Mood) => MOODS[m];
-export const minutesLeft = (s: GameState, id: string) => Math.ceil(ticketState(s, id).due - s.clock);
 
 export function relation(s: GameState, who: VillagerId): Relation {
   const bond = s.bonds[who];
@@ -160,7 +163,7 @@ const isTicket = (s: GameState, t: Ticket) => t.via === 'tray' || Boolean(s.tick
 const byChat = (t: Ticket) => t.via !== 'tray';
 
 const emptyToday = (): Today => ({
-  resolved: 0, helped: 0, pushed: 0, wrongFixes: 0, missed: 0, complaints: 0, notes: 0, xp: 0, voucher: false, bonds: [],
+  resolved: 0, pushed: 0, wrongFixes: 0, complaints: 0, notes: 0, xp: 0, voucher: false, bonds: [],
 });
 
 /** Each action copies the state, so the caller can keep or drop the old one. */
@@ -170,7 +173,6 @@ function act(s: GameState, fn: (d: GameState) => void): GameState {
   return d;
 }
 
-const patience = (d: GameState, t: Ticket) => PATIENCE[relation(d, t.who)];
 
 function arrive(d: GameState, id: string, at: number): void {
   const t = ticketById(id);
@@ -178,16 +180,17 @@ function arrive(d: GameState, id: string, at: number): void {
   const before = d.tickets[id];
   const r = relation(d, t.who);
   // First visit: their usual mood, a step calmer for friends or angrier for nemeses.
-  // Coming back: a step grumpier than they left. Never already Furious.
-  // Being asked to submit a ticket already cost them a step, so that doesn't count twice.
-  const asked = before?.logged && before.status === 'pending' && byChat(t);
-  const base = before ? before.mood + (asked ? 0 : 1) : t.mood + (r === 'nemesis' ? 1 : r === 'friend' ? -1 : 0);
+  // Waiting is normal in IT, so coming back doesn't make anyone crosser, unless you said it was sorted and it
+  // broke again (a workaround wearing off). Never already Furious.
+  const asked = before?.asked && before.status === 'pending' && byChat(t);
+  const brokeAgain = before?.status === 'resolved';
+  const base = before ? before.mood + (brokeAgain ? 1 : 0) : t.mood + (r === 'nemesis' ? 1 : r === 'friend' ? -1 : 0);
   const mood = Math.max(0, Math.min(base, 2)) as Mood;
   const greeting = r === 'friend' ? `${v.fond} ` : r === 'nemesis' ? `${v.grudge} ` : '';
-  const onChat = byChat(t) && !before?.logged;
+  // Only friends message you directly. Everyone else submits a ticket, as they should.
+  const onChat = byChat(t) && !before?.logged && r === 'friend';
   const again = !before ? '' : asked ? 'Here\u2019s the ticket you asked for. '
-    : before.status === 'new' || before.status === 'open' ? 'Still waiting from yesterday. ' : 'It\u2019s me again. ';
-  const window = !onChat ? REPLY_WITHIN[t.priority] : t.via === 'walkup' ? REPLY_WITHIN.walkup : REPLY_WITHIN.chat;
+    : brokeAgain ? 'It\u2019s broken again. ' : before.status === 'pending' ? 'Back, as you said. ' : 'Still waiting from yesterday. ';
   // On chat they never start with the problem. They start by being friendly.
   const opener = onChat && !before ? [{ from: 'them' as const, text: v.opener, at }] : [];
   // A lockout is real: their account in Active Directory is locked until you unlock it.
@@ -200,9 +203,9 @@ function arrive(d: GameState, id: string, at: number): void {
     pushes: before?.pushes ?? 0,
     workedAround: before?.workedAround ?? false,
     tried: before?.tried ?? [],
-    due: at + window * patience(d, t),
     messages: [...opener, { from: 'them', text: greeting + again + t.message, at }],
-    logged: before?.logged,
+    logged: before?.logged || !onChat,
+    asked: before?.asked,
   };
   if (onChat) d.chats.push(id);
   else d.queue.push(id);
@@ -219,66 +222,61 @@ function changeBond(d: GameState, who: VillagerId, by: number): void {
 function close(d: GameState, t: Ticket, kind: Outcome['kind'], xp: number): void {
   const st = ticketState(d, t.id);
   if (kind === 'fix') changeBond(d, t.who, st.slips === 0 ? BOND.clean : st.slips >= MESSY_SLIPS ? BOND.messy : 0);
-  if (kind === 'storm') changeBond(d, t.who, BOND.storm);
   const counted = isTicket(d, t);
   st.status = kind === 'push' || kind === 'asked' ? 'pending' : 'resolved';
   d.queue = d.queue.filter((id) => id !== t.id);
   d.chats = d.chats.filter((id) => id !== t.id);
-  // Done helping in person. You head back to your desk once you've taken in how it went (see next()).
-  if (d.escort === t.id) { d.escort = undefined; st.onSite = false; }
   const skill = issueOf(t).skill;
   d.xp[skill] += xp;
   d.today.xp += xp;
   if ((kind === 'fix' || kind === 'workaround') && counted) d.today.resolved += 1;
-  if (kind === 'fix' && !counted) d.today.helped += 1;
-  if (kind === 'storm') d.today.complaints += 1;
   d.outcomes.push({ ticketId: t.id, kind, xp });
   if (d.notice?.ticketId === t.id) d.notice = undefined;
 }
 
-/** You cost them patience: mood gets a step worse. Pushed past Furious, they storm off to the manager. */
+/**
+ * They go to Mr. Grisby. It's on your day report and they like you less, but they still need it fixed:
+ * you're the only IT there is, so the ticket stays yours.
+ */
+function complain(d: GameState, t: Ticket, grave = false): void {
+  const st = ticketState(d, t.id);
+  st.complained = true;
+  d.today.complaints += 1;
+  changeBond(d, t.who, BOND.complaint);
+  d.outcomes.push({ ticketId: t.id, kind: 'complaint', xp: 0, grave });
+}
+
+/** A step crosser, up to Furious. */
+function annoy(d: GameState, t: Ticket): void {
+  const st = ticketState(d, t.id);
+  if (st.mood + 1 < MOODS.length) st.mood = (st.mood + 1) as Mood;
+}
+
+/**
+ * You let them down: a fix that didn't work. They get crosser, up to Furious, but they stay: it still needs
+ * fixing. Only a nemesis, let down again while Furious, goes to the manager about it.
+ */
 function slip(d: GameState, t: Ticket): void {
   const st = ticketState(d, t.id);
   st.slips += 1;
-  if (st.mood + 1 >= MOODS.length) close(d, t, 'storm', 0);
-  else st.mood = (st.mood + 1) as Mood;
+  if (st.mood + 1 < MOODS.length) annoy(d, t);
+  else if (relation(d, t.who) === 'nemesis' && !st.complained) complain(d, t);
 }
 
-/** Run the office clock forward: people arrive, and anyone you haven't updated in time gets upset. */
+/** Run the office clock forward: people's tickets and messages arrive on time. */
 function advance(d: GameState, minutes: number): void {
-  const target = Math.min(d.clock + minutes, CLOSE);
-  // A minute at a time, so a long wait can't skip past several missed reply-by times.
-  for (;;) {
-    d.clock = Math.min(d.clock + 1, target);
-    for (const a of d.arriving.filter((x) => x.at <= d.clock)) arrive(d, a.id, a.at);
-    d.arriving = d.arriving.filter((x) => x.at > d.clock);
-    for (const id of [...d.queue, ...d.chats]) {
-      if (ticketState(d, id).due > d.clock) continue;
-      const t = ticketById(id);
-      d.today.missed += 1;
-      slip(d, t);
-      if (d.queue.includes(id) || d.chats.includes(id)) ticketState(d, id).due = d.clock + GRACE_AFTER_MISS * patience(d, t);
-    }
-    if (d.clock >= target) break;
-  }
+  d.clock = Math.min(d.clock + minutes, CLOSE);
+  for (const a of d.arriving.filter((x) => x.at <= d.clock).sort((x, y) => x.at - y.at)) arrive(d, a.id, a.at);
+  d.arriving = d.arriving.filter((x) => x.at > d.clock);
   // At closing time the day ends, unless a card is still up; dismissing the last card ends it.
   if (d.clock >= CLOSE && !d.outcomes.length) finishDay(d);
 }
 
-/** Whatever you just did for this ticket counts as contact, so it can't miss its reply-by time while you do it. */
-function work(d: GameState, t: Ticket, minutes: number): void {
-  const st = d.tickets[t.id];
-  if (st && (d.queue.includes(t.id) || d.chats.includes(t.id))) st.due = Math.max(st.due, d.clock + minutes + 1);
-  advance(d, minutes);
-}
-
 function startDay(d: GameState): void {
-  // Anything unanswered comes back first thing tomorrow, a step grumpier.
+  // Anything still open comes back first thing tomorrow.
   const carried = [...d.queue, ...d.chats];
   d.queue = [];
   d.chats = [];
-  d.place = 'computer';
-  d.escort = undefined;
   d.clock = OPEN;
   d.today = emptyToday();
   d.outcomes = [];
@@ -311,13 +309,6 @@ export const toolFor = (s: GameState, t: Ticket): Tool | undefined =>
   TOOLS.find((tool) => tool.issue === t.issue && s.tools.includes(tool.id));
 
 function finishDay(d: GameState): void {
-  // Still helping someone at five? They'll be back on chat tomorrow.
-  if (d.escort) {
-    ticketState(d, d.escort).onSite = false;
-    if (d.day + 1 <= DAYS) d.returning.push({ id: d.escort, day: d.day + 1 });
-    d.escort = undefined;
-    d.place = 'computer';
-  }
   d.phase = 'dayEnd';
   d.today.voucher = d.today.resolved >= scriptFor(d.day).goal;
   d.savings += (d.today.voucher ? GOAL_VOUCHER : 0) - DAILY_COST;
@@ -329,11 +320,11 @@ export function newGame(seed = Math.floor(Math.random() * 2 ** 31)): GameState {
     tools: [],
     accounts: newAccounts(),
     newsRead: 0,
-    version: 9,
+    okta: newOkta(),
+    version: 11,
     day: 1,
     phase: 'boot',
     clock: OPEN,
-    place: 'computer',
     queue: [],
     chats: [],
     arriving: [],
@@ -358,27 +349,24 @@ export function tick(s: GameState, minutes: number): GameState {
   return act(s, (d) => advance(d, minutes));
 }
 
-/** You can only fix what's in front of you: your queue at the computer, or the person you've gone to help. Not while a card is up. */
+/** You can only work on tickets in your queue, and not while a card is up. Chat requests have to be logged first. */
 function workable(s: GameState, id: string): Ticket | undefined {
-  if (s.phase !== 'desk' || s.outcomes.length) return undefined;
-  const here = s.place === 'computer' ? s.queue.includes(id) : id === s.escort && Boolean(s.tickets[id]?.onSite);
-  return here ? ticketById(id) : undefined;
+  return s.phase === 'desk' && !s.outcomes.length && s.queue.includes(id) ? ticketById(id) : undefined;
 }
 const ticketWork = workable;
-/** A chat you can answer: you're at your computer, not off helping someone, and no card is up. */
+/** A chat you can answer: no card is up. */
 function answerable(s: GameState, id: string): Ticket | undefined {
-  return s.phase === 'desk' && !s.outcomes.length && s.place === 'computer' && !s.escort && s.chats.includes(id) ? ticketById(id) : undefined;
+  return s.phase === 'desk' && !s.outcomes.length && s.chats.includes(id) ? ticketById(id) : undefined;
 }
 
-/** Send a standard update: it buys you time before they expect to hear from you again. */
+/** Send a standard reply or update, so they know where it's at. Good manners; nobody's counting the minutes. */
 export function reply(s: GameState, id: string): GameState {
-  const t = s.place === 'computer' ? workable(s, id) : undefined;
+  const t = workable(s, id);
   if (!t) return s;
   return act(s, (d) => {
     const st = ticketState(d, id);
     st.messages.push({ from: 'you', text: st.status === 'new' ? REPLIES.first : REPLIES.update, at: d.clock });
     st.status = 'open';
-    st.due = d.clock + COST.update + UPDATE_EVERY * patience(d, t);
     advance(d, COST.update);
   });
 }
@@ -389,8 +377,11 @@ export function reply(s: GameState, id: string): GameState {
  */
 export function accountProblem(s: GameState, t: Ticket): string | undefined {
   const fixBy = issueOf(t).console;
+  if (!fixBy) return undefined;
+  if (fixBy === 'disable') return s.accounts.sam?.enabled ? 'Sam\u2019s account is still enabled in Active Directory. Anyone with his old password can still get in.' : undefined;
+  if (fixBy !== 'unlock' && fixBy !== 'reset') return oktaProblem(s, t, fixBy);
   const a = s.accounts[t.who];
-  if (!fixBy || !a) return undefined;
+  if (!a) return undefined;
   if (!a.enabled) return 'Their account is disabled, so nothing will let them in. Enable it again in Active Directory.';
   if (fixBy === 'unlock') return a.locked ? 'Still locked out. Find their account in Active Directory and unlock it.' : undefined;
   const resetSinceTheyAsked = (a.resetAt ?? -1) >= t.day * MINUTES_A_DAY + clockTime(t.at);
@@ -400,6 +391,47 @@ export function accountProblem(s: GameState, t: Ticket): string | undefined {
   return undefined;
 }
 
+/** Marketing, as HR has them today. */
+const marketing = (s: GameState) => hrOn(s.day).filter((r) => r.dept === 'Marketing' && r.status === 'active');
+const named = (s: GameState, logins: string[]) => logins.map((l) => hrOn(s.day).find((r) => r.login === l)?.name ?? l).join(', ');
+
+/** What's still wrong in Oktopus for a ticket, in a sentence; undefined once it's right. */
+function oktaProblem(s: GameState, t: Ticket, fixBy: Exclude<NonNullable<Issue['console']>, 'unlock' | 'reset' | 'disable'>): string | undefined {
+  const { okta } = s;
+  const has = (login: string, app: string) => appsOf(okta, login).includes(app);
+  switch (fixBy) {
+    case 'okta-setup': {
+      const missing = marketing(s).filter((r) => !okta.users[r.login]).map((r) => r.login);
+      if (missing.length) return `${named(s, missing)} ${missing.length > 1 ? 'aren\u2019t' : 'isn\u2019t'} in Oktopus yet. Import Marketing from the HR file.`;
+      const grouped = marketing(s).every((r) => okta.rules.some((rule) => 'dept' in rule && rule.dept === 'Marketing' && groupsOf(okta, r.login).includes(rule.group)));
+      return grouped ? undefined : 'Marketing need a group of their own, filled by a rule: everyone whose department is Marketing.';
+    }
+    case 'okta-app': {
+      if (!okta.apps.hootsweet) return 'Hootsweet isn\u2019t in Oktopus. Add it from the App Catalog.';
+      const without = marketing(s).filter((r) => !has(r.login, 'hootsweet')).map((r) => r.login);
+      if (without.length) return `${named(s, without)} still can\u2019t see Hootsweet. Assign it to a group that\u2019s filled with Marketing.`;
+      const extra = Object.keys(okta.users).filter((l) => has(l, 'hootsweet') && !marketing(s).some((r) => r.login === l));
+      return extra.length ? `${named(s, extra)} can see Hootsweet too, and ${extra.length > 1 ? 'they\u2019re' : 'they\u2019re'} not in Marketing. Only Marketing should have it.` : undefined;
+    }
+    case 'joiner':
+      if (!okta.users.fern) return 'Fern isn\u2019t in Oktopus. HR added her this morning: create her from the HR file.';
+      return has('fern', 'hootsweet') ? undefined : 'Fern is in Oktopus but has no Hootsweet. Her group rules should give it to her: is her department right?';
+    case 'mover': {
+      const basil = okta.users.basil;
+      if (!basil) return 'Basil isn\u2019t in Oktopus at all.';
+      if (basil.status !== 'active') return 'Basil can\u2019t sign in at all now. He moved to Sales; he didn\u2019t leave. Activate him again.';
+      if (basil.dept !== 'Sales') return 'Oktopus still thinks Basil is in Marketing. Update his profile from the HR file.';
+      return has('basil', 'hootsweet') ? 'Basil is in Sales now but still has Hootsweet. Marketing\u2019s app should come from Marketing\u2019s rule, not be given to him by hand.' : undefined;
+    }
+    case 'leaver':
+      return okta.users.wren?.status === 'active' ? 'Wren can still sign in to Oktopus and everything in it. Deactivate her.' : undefined;
+    case 'mfa': {
+      const reset = okta.users[t.who]?.mfaResetAt ?? -1;
+      return reset >= t.day * MINUTES_A_DAY + clockTime(t.at) ? undefined : 'Her old phone is still the only way in. Reset her sign-in methods in Oktopus, once you\u2019ve checked it\u2019s really her.';
+    }
+  }
+}
+
 export function fix(s: GameState, id: string, fixId: string): GameState {
   const t = workable(s, id);
   if (!t || ticketState(s, id).tried.includes(fixId)) return s;
@@ -407,7 +439,7 @@ export function fix(s: GameState, id: string, fixId: string): GameState {
   const tool = fixId === 'tool' ? toolFor(s, t) : undefined;
   // An Active Directory ticket has one move here: ask them to try again. The account itself says if it worked.
   const problem = issue.console && fixId === 'console' ? accountProblem(s, t) : undefined;
-  const chosen = tool ? { id: 'tool', label: tool.fixLabel, fail: undefined }
+  const chosen: { id: string; label: string; fail?: string; grave?: true } | undefined = tool ? { id: 'tool', label: tool.fixLabel }
     : issue.console ? (fixId === 'console' ? { id: 'console', label: 'Asked them to try signing in again', fail: problem } : undefined)
     : issue.fixes.find((f) => f.id === fixId);
   if (!chosen) return s;
@@ -431,7 +463,17 @@ export function fix(s: GameState, id: string, fixId: string): GameState {
     d.notice = { ticketId: id, text: chosen.fail ?? 'That didn’t work.' };
     if (relation(d, t.who) === 'friend') d.notice.text += ' They give you an encouraging smile anyway.';
     else slip(d, t);
-    work(d, t, COST.wrongFix);
+    // Some mistakes are too serious to keep quiet, whoever it was for.
+    if (chosen.grave) complain(d, t, true);
+    advance(d, COST.wrongFix);
+  });
+}
+
+/** Admin work in a console. On the office clock, it takes a few minutes. */
+export function officeWork(s: GameState, minutes: number, change: (d: GameState) => void): GameState {
+  return act(s, (d) => {
+    change(d);
+    if (d.phase === 'desk') advance(d, minutes);
   });
 }
 
@@ -528,52 +570,20 @@ export function writeNote(s: GameState, noteIndex: number): GameState {
 /** Dismiss the card on top. If the day ran out meanwhile, it ends now. */
 export const next = (s: GameState) => act(s, (d) => {
   d.outcomes.shift();
-  if (!d.outcomes.length && d.place === 'floor' && !d.escort) d.place = 'computer';
   if (!d.outcomes.length && d.clock >= CLOSE && d.phase === 'desk') finishDay(d);
 });
 
-/** "On my way": you get up and go to help them in person. Whatever's in your queue keeps waiting. */
-export function goNow(s: GameState, id: string): GameState {
-  const t = answerable(s, id);
-  if (!t) return s;
-  return act(s, (d) => {
-    const st = ticketState(d, id);
-    st.messages.push({ from: 'you', text: 'On my way.', at: d.clock }, { from: 'them', text: 'You\u2019re a lifesaver. Come to my desk.', at: d.clock });
-    st.status = 'open';
-    st.onSite = true;
-    st.due = Number.MAX_SAFE_INTEGER; // they're with you now
-    d.chats = d.chats.filter((x) => x !== id);
-    d.escort = id;
-    d.place = 'floor';
-    advance(d, COST.goOver);
-  });
-}
-
-/** "Can it wait?": they're put out, and they'll message you again in an hour. At most twice. */
-export function later(s: GameState, id: string): GameState {
-  const t = answerable(s, id);
-  if (!t || !canPush(s, id)) return s;
-  return act(s, (d) => {
-    const st = ticketState(d, id);
-    st.pushes += 1;
-    d.today.pushed += 1;
-    st.messages.push({ from: 'you', text: 'Can it wait? I\u2019m up to my neck in tickets.', at: d.clock }, { from: 'them', text: '\u2026fine. An hour.', at: d.clock });
-    slip(d, t);
-    if (d.chats.includes(id)) st.due = d.clock + CHAT_LATER * patience(d, t);
-    advance(d, COST.push);
-  });
-}
-
-/** The classic IT line. It annoys them, but the request comes back through your queue, where it counts. */
+/** The rule: every request is a ticket. It annoys them, but the request comes back through your queue, where it counts. */
 export function askForTicket(s: GameState, id: string): GameState {
   const t = answerable(s, id);
   if (!t) return s;
   return act(s, (d) => {
     const st = ticketState(d, id);
-    st.messages.push({ from: 'you', text: 'Could you log a ticket for this, please?', at: d.clock }, { from: 'them', text: 'Seriously? \u2026fine.', at: d.clock });
-    slip(d, t);
-    if (!d.chats.includes(id)) return; // that was the last straw: they stormed off
+    st.messages.push({ from: 'you', text: 'Could you log a ticket for this, please? That\u2019s how it gets fixed.', at: d.clock }, { from: 'them', text: 'Seriously? \u2026fine. \u{1F644}', at: d.clock });
+    // It's company policy, not your failing: it annoys them, but doesn't count against you.
+    annoy(d, t);
     st.logged = true;
+    st.asked = true;
     const lands = d.clock + TICKET_LANDS_AFTER;
     if (lands < CLOSE) d.arriving.push({ id, at: lands });
     else if (d.day + 1 <= DAYS) d.returning.push({ id, day: d.day + 1 });
@@ -621,17 +631,34 @@ export function acceptOffer(s: GameState): GameState {
 }
 
 /** Parse a saved game. Returns undefined for anything that isn't a save this version can play. */
+/** Someone you were helping in person goes back to waiting on chat; storm cards (people walking off) are dropped. */
+function normaliseV10(s: Partial<GameState> & { escort?: string; place?: string }): void {
+  const helping = s.escort;
+  const st = helping ? s.tickets?.[helping] : undefined;
+  if (helping && st && s.chats && !s.chats.includes(helping)) {
+    s.chats.push(helping);
+    delete (st as { onSite?: boolean }).onSite;
+  }
+  delete s.escort;
+  delete s.place;
+  s.outcomes = (s.outcomes ?? []).filter((o) => (o.kind as string) !== 'storm');
+  s.version = 11;
+}
+
 export function parseSave(raw: string | null): GameState | undefined {
   if (!raw) return undefined;
   try {
     const s = JSON.parse(raw) as Partial<GameState>;
     // Saves from before Active Directory and the intranet: same game, with a fresh directory.
     if ((s.version as number) === 8) Object.assign(s, { version: 9, accounts: newAccounts(), newsRead: 0 });
+    // Saves from before Oktopus: same game, Oktopus not set up yet.
+    if ((s.version as number) === 9) Object.assign(s, { version: 10, okta: newOkta() });
+    // Saves from when you could go over in person, and people stormed off: back at your desk, nobody stormed off.
+    if ((s.version as number) === 10) normaliseV10(s as Partial<GameState> & { escort?: string; place?: string });
     const known = new Set(TICKETS.map((t) => t.id));
     const isObject = (x: unknown) => typeof x === 'object' && x !== null;
     const ok =
-      s.version === 9 && typeof s.seed === 'number' && typeof s.newsRead === 'number' && Array.isArray(s.tools) && (s.place === 'computer' || s.place === 'floor') &&
-      (s.escort === undefined || known.has(s.escort)) &&
+      s.version === 11 && typeof s.seed === 'number' && typeof s.newsRead === 'number' && Array.isArray(s.tools) &&
       Array.isArray(s.chats) && s.chats.every((id) => known.has(id) && isObject(s.tickets?.[id])) &&
       typeof s.day === 'number' && s.day >= 1 && s.day <= DAYS + 1 &&
       typeof s.clock === 'number' && typeof s.savings === 'number' &&
@@ -639,7 +666,7 @@ export function parseSave(raw: string | null): GameState | undefined {
       Array.isArray(s.arriving) && s.arriving.every((a) => known.has(a.id)) &&
       Array.isArray(s.returning) && s.returning.every((r) => known.has(r.id)) &&
       Array.isArray(s.outcomes) &&
-      [s.tickets, s.bonds, s.xp, s.runbook, s.today, s.accounts].every(isObject);
+      [s.tickets, s.bonds, s.xp, s.runbook, s.today, s.accounts, s.okta].every(isObject);
     return ok ? (s as GameState) : undefined;
   } catch {
     return undefined;

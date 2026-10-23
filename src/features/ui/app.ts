@@ -1,15 +1,18 @@
 import type { Department } from '../game/directory.ts';
 import type { GameState } from '../game/rules.ts';
+import type { OktaPage } from './oktopus.ts';
 import type { Power } from './power.ts';
 
 /** The programs on the computer, each in its own window. */
-export type AppId = 'desk' | 'chat' | 'directory' | 'browser' | 'mail' | 'runbook' | 'resume' | 'jobs' | 'trash';
+export type AppId = 'desk' | 'chat' | 'directory' | 'okta' | 'browser' | 'mail' | 'runbook' | 'policy' | 'resume' | 'jobs' | 'trash';
 
 /** An open window: where it is, and whether it's minimised to the taskbar or maximised. */
 export interface Win {
   id: AppId;
   x: number;
   y: number;
+  w: number;
+  h: number;
   min?: boolean;
   max?: boolean;
 }
@@ -21,6 +24,8 @@ export interface Toast {
   from: string;
   text: string;
   ticket?: string;
+  /** Already on screen: it slid in once and shouldn't slide in again on every redraw. */
+  shown?: boolean;
 }
 
 /** Screen-only state that isn't worth saving. */
@@ -62,10 +67,19 @@ export interface Ui {
   startOpen?: boolean;
   /** Notifications showing in the corner, newest last. */
   toasts: Toast[];
+  /** Oktopus: the page you're on, and the person, app or identity check you've opened there. */
+  oktaPage?: OktaPage;
+  oktaUser?: string;
+  oktaApp?: string;
+  oktaVerify?: string;
   /** Burrow Chat: a channel you're reading, or a direct message (ui.chat) when unset. */
   channel?: 'general' | 'service-desk';
   /** The mail you're reading, by day (the newest when unset). */
   mailDay?: number;
+  /** Ridge: open tabs (each with its own back/forward history), the one in front, and announcements you've liked. */
+  tabs?: { history: string[]; at: number }[];
+  tab?: number;
+  liked?: string[];
   /** You emptied the Recycle Bin. Sam's files are gone for good. */
   trashEmptied?: boolean;
   /** Player pause: stops the office clock. */

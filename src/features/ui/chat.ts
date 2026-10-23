@@ -1,10 +1,9 @@
-import { CHAT_LATER, MAX_PUSHES, VILLAGERS } from '../game/data.ts';
+import { VILLAGERS } from '../game/data.ts';
 import { newsFor } from '../game/news.ts';
-import { askForTicket, canPush, goNow, later, moodName, ticketById, ticketState, type GameState } from '../game/rules.ts';
+import { askForTicket, moodName, ticketById, ticketState, type GameState } from '../game/rules.ts';
 import type { Ticket } from '../game/types.ts';
 import { face } from '../art/sprites.ts';
 import type { App } from './app.ts';
-import { dueText, urgent } from './desk.ts';
 import { openApp } from './desktop.ts';
 import { clockText, h } from './dom.ts';
 
@@ -16,7 +15,7 @@ import { clockText, h } from './dom.ts';
 /** Today's tickets, in the order they turned up: what the Service Desk bot has posted in #service-desk. */
 function announced(s: GameState): Ticket[] {
   return Object.keys(s.tickets).map(ticketById)
-    .filter((t) => (t.via === 'tray' || ticketState(s, t.id).logged) && (t.day === s.day || s.queue.includes(t.id)))
+    .filter((t) => ticketState(s, t.id).logged && !s.arriving.some((a) => a.id === t.id) && (t.day === s.day || s.queue.includes(t.id)))
     .sort((a, b) => a.at.localeCompare(b.at, undefined, { numeric: true }));
 }
 
@@ -41,42 +40,59 @@ function serviceDeskChannel(app: App): HTMLElement[] {
 
 const generalChannel = (app: App) => newsFor(app.state.day).reverse().map((p) => post(p.from, `Day ${p.day}`, h('p', {}, h('strong', {}, p.title)), h('p', {}, p.body)));
 
+/** Where a conversation stands once you've answered it. */
+function after(app: App, t: Ticket): HTMLElement | false {
+  const { state, ui } = app;
+  const st = ticketState(state, t.id);
+  if (state.chats.includes(t.id)) return false;
+  if (st.status === 'resolved') return h('p', { class: 'chat-status' }, '\u2714 Resolved');
+  if (state.queue.includes(t.id)) {
+    return h('p', { class: 'chat-status' }, 'Logged as a ticket. ',
+      h('button', { class: 'btn small', 'data-testid': `dm-open-${t.id}`, onclick: () => { ui.selected = t.id; openApp(app, 'desk'); } }, 'Open in Service Desk'));
+  }
+  if (state.arriving.some((a) => a.id === t.id)) return h('p', { class: 'chat-status' }, 'Logging a ticket\u2026 it\u2019ll land in your queue soon.');
+  return h('p', { class: 'chat-status' }, 'Waiting until tomorrow.');
+}
+
 /**
- * A direct message from someone who'd rather not log a ticket. Their face, DOOM-style, shows how they're taking it:
- * the longer you leave them, the crosser they look.
+ * A direct message from a friend, who'd rather not log a ticket. Their face shows how they're taking it.
+ * The rule is still: every request is a ticket.
  */
 function chatView(app: App, t: Ticket): HTMLElement {
   const { state } = app;
   const st = ticketState(state, t.id);
   const v = VILLAGERS[t.who];
-  return h('article', { class: 'ticket-view chat-view', 'aria-label': `Chat with ${v.name}` },
-    h('div', { class: 'ticket-info' },
-      h('header', { class: 'chat-head' },
-        h('figure', { class: `chat-face mood-${st.mood}` },
-          h('img', { class: 'sprite', src: face(v, st.mood), alt: `${v.name}, looking ${moodName(st.mood).toLowerCase()}`, 'data-testid': 'chat-face' }),
-          h('figcaption', {}, moodName(st.mood))),
-        h('div', {},
-          h('h2', {}, v.name),
-          h('p', { class: 'meta' }, 'Direct message. Not a ticket.'),
-          h('p', { class: `due${urgent(state, t.id) ? ' urgent' : ''}`, 'data-due': t.id }, dueText(state, t.id)))),
-      h('ol', { class: 'conversation', 'data-testid': 'conversation' }, ...st.messages.map((m) =>
-        h('li', { class: `msg ${m.from}` },
-          h('span', { class: 'msg-meta' }, `${m.from === 'you' ? 'You' : v.name}, ${clockText(m.at)}`),
-          h('span', {}, m.text))))),
-    h('section', { class: 'decide', 'aria-label': 'Reply' },
-      h('button', { class: 'btn primary', 'data-testid': 'go-now', onclick: () => app.set(goNow(state, t.id)) }, 'On my way'),
-      h('button', { class: 'btn choice', 'data-testid': 'later', disabled: !canPush(state, t.id), onclick: () => app.set(later(state, t.id)) },
-        h('strong', {}, 'Can it wait?'),
-        h('span', {}, canPush(state, t.id) ? `They’ll message again in ${CHAT_LATER} minutes. ${MAX_PUSHES - st.pushes} left` : 'Not again')),
-      h('button', { class: 'btn choice', 'data-testid': 'ask-ticket', onclick: () => app.set(askForTicket(state, t.id)) },
-        h('strong', {}, 'Please log a ticket'),
-        h('span', {}, 'They’ll be annoyed, but then it counts'))),
+  const open = state.chats.includes(t.id);
+  return h('article', { class: 'chat-dm', 'aria-label': `Chat with ${v.name}` },
+    h('header', { class: 'chat-head' },
+      h('figure', { class: `chat-face mood-${st.mood}` },
+        h('img', { class: 'sprite', src: face(v, st.mood), alt: `${v.name}, looking ${moodName(st.mood).toLowerCase()}`, 'data-testid': 'chat-face' }),
+        h('figcaption', {}, moodName(st.mood))),
+      h('div', {},
+        h('h2', {}, v.name),
+        h('p', { class: 'meta' }, 'Direct message. Not a ticket yet.'))),
+    h('ol', { class: 'chat-feed', 'data-testid': 'conversation' }, ...st.messages.map((m) =>
+      post(m.from === 'you' ? 'You' : v.name, clockText(m.at), h('p', {}, m.text)))),
+    after(app, t),
+    open && h('div', { class: 'chat-composer' },
+      h('div', { class: 'chat-suggest', role: 'group', 'aria-label': 'Reply' },
+        h('button', { class: 'chat-chip primary', 'data-testid': 'ask-ticket', onclick: () => app.set(askForTicket(state, t.id)) }, 'Please log a ticket')),
+      h('input', { class: 'chat-input', disabled: true, placeholder: `Message ${v.name}\u2026`, 'aria-label': `Message ${v.name}` })),
   );
+}
+
+/** Everyone who's messaged you today, the ones still waiting first. */
+function conversations(s: GameState): Ticket[] {
+  const waiting = s.chats.map(ticketById);
+  const earlier = Object.keys(s.tickets).map(ticketById)
+    .filter((t) => ticketState(s, t.id).asked && !s.chats.includes(t.id) && (t.day === s.day || s.queue.includes(t.id)));
+  return [...waiting, ...earlier];
 }
 
 export function chatApp(app: App): HTMLElement {
   const { state, ui } = app;
-  if (ui.chat && !state.chats.includes(ui.chat)) ui.chat = undefined;
+  const people = conversations(state);
+  if (ui.chat && !people.some((t) => t.id === ui.chat)) ui.chat = undefined;
   const dm = ui.channel ? undefined : ui.chat ?? state.chats[0];
   const channel = dm ? undefined : ui.channel ?? 'service-desk';
   const go = (to: { channel?: 'general' | 'service-desk'; chat?: string }) => () => { ui.channel = to.channel; ui.chat = to.chat; app.rerender(); };
@@ -89,10 +105,11 @@ export function chatApp(app: App): HTMLElement {
       link('# general', channel === 'general', go({ channel: 'general' }), 'channel-general'),
       link('# service-desk', channel === 'service-desk', go({ channel: 'service-desk' }), 'channel-service-desk'),
       h('p', { class: 'chat-section' }, 'Direct messages'),
-      ...(state.chats.length
-        ? state.chats.map((id) => {
-          const v = VILLAGERS[ticketById(id).who];
-          return link(`● ${v.name}`, id === dm, go({ chat: id }), `chat-${id}`, h('span', { class: 'unread' }, '1'));
+      ...(people.length
+        ? people.map((t) => {
+          const waiting = state.chats.includes(t.id);
+          return link(`${waiting ? '\u25CF' : '\u25CB'} ${VILLAGERS[t.who].name}`, t.id === dm, go({ chat: t.id }), `chat-${t.id}`,
+            waiting && h('span', { class: 'unread' }, '1'));
         })
         : [h('p', { class: 'chat-empty' }, 'Nobody. Suspiciously quiet.')])),
     dm ? chatView(app, ticketById(dm))

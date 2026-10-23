@@ -12,9 +12,7 @@ export function dayEndScreen(app: App): HTMLElement {
     h('h1', {}, `Day ${state.day} done`),
     h('dl', { class: 'summary' },
       h('dt', {}, 'Tickets resolved'), h('dd', {}, `${today.resolved} (goal ${script.goal})`),
-      h('dt', {}, 'Helped in person off a chat (Grisby doesn\u2019t count these)'), h('dd', { 'data-testid': 'helped' }, today.helped),
       h('dt', {}, 'Set to pending'), h('dd', {}, today.pushed),
-      h('dt', {}, 'Missed reply-by times'), h('dd', { 'data-testid': 'missed' }, today.missed),
       h('dt', {}, 'Fixes that didn’t work'), h('dd', {}, today.wrongFixes),
       h('dt', {}, 'Runbook pages you wrote'), h('dd', {}, today.notes),
       h('dt', {}, 'Complaints to Grisby'), h('dd', { 'data-testid': 'complaints' }, today.complaints),
@@ -52,7 +50,7 @@ export function endingScreen(app: App): HTMLElement {
   const ending = {
     hired: {
       title: 'You’re hired!',
-      text: `${job?.company ?? 'They'} called back. ${job?.title ?? 'A real job'}. In the interview you talked about printers that were just jammed, a runbook that was years out of date, and why you didn’t give anyone admin rights. They loved it.${refs}${grudges} Your last day at Burrow & Co. is Friday. ${MANAGER} asks if you can still “pop in on weekends”. You cannot.`,
+      text: `${job?.company ?? 'They'} called back. ${job?.title ?? 'A real job'}. In the interview you talked about printers that were just jammed, a runbook that was years out of date, rolling out single sign-on for Marketing, joiners, movers and leavers, and why you didn’t give anyone admin rights. They loved it.${refs}${grudges} Your last day at Burrow & Co. is Friday. ${MANAGER} asks if you can still “pop in on weekends”. You cannot.`,
     },
     burnout: {
       title: 'Burnt out',

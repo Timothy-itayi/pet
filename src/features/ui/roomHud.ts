@@ -1,5 +1,5 @@
 import { COMPANY, DAYS, TOOLS } from '../game/data.ts';
-import type { GameState } from '../game/rules.ts';
+import { weekday, weekOf, type GameState } from '../game/rules.ts';
 import { ON_THE_WALL, ROOM_ITEMS, SIPS } from '../room3d/items.ts';
 import { closeInspect, goTo, inspectItem, isInspecting, pressMouse, sipMug, spinChair, swayPlant, turnInspected } from '../room3d/view.ts';
 import type { App } from './app.ts';
@@ -8,7 +8,6 @@ import { announceArrival } from './desktop.ts';
 import { clockText, h } from './dom.ts';
 import { powerAway } from './power.ts';
 
-const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 /** What an item says, including loot in the tray. */
 function describe(app: App, id: string): { label: string; says: string } | undefined {
@@ -164,7 +163,7 @@ export function roomKeys(app: App, e: KeyboardEvent): void {
  */
 export function roomHud(app: App): HTMLElement {
   const { state, ui } = app;
-  const day = state.day > DAYS ? 'Saturday' : `${WEEKDAYS[state.day - 1]}, day ${state.day}`;
+  const day = state.day > DAYS ? 'Saturday' : `${weekday(state.day)}, week ${weekOf(state.day)}`;
   const dropped = TOOLS.find((t) => t.id === state.drop);
   const held = ui.inspecting ? describe(app, ui.inspecting) : undefined;
   const intro = ui.note ?? (dropped ? `Something new in your ticket tray. ${dropped.gift}`

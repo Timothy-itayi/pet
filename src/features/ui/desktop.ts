@@ -1,10 +1,12 @@
-import { DAYS, MANAGER, VILLAGERS } from '../game/data.ts';
+import { MANAGER, VILLAGERS } from '../game/data.ts';
 import { newsFor } from '../game/news.ts';
+import { OKTOPUS_DAY } from '../game/oktopus.ts';
 import { isWeekOver, readNews, scriptFor, ticketById, type GameState } from '../game/rules.ts';
 import type { App, AppId, Toast, Win } from './app.ts';
+import { browserTitle } from './browser.ts';
 import { chatApp } from './chat.ts';
 import { outcomeCard, pausedCard, serviceDesk } from './desk.ts';
-import { clockText, h } from './dom.ts';
+import { h } from './dom.ts';
 import { BODIES } from './panels.ts';
 import { leaveComputer } from './roomHud.ts';
 import { chime } from './sound.ts';
@@ -18,17 +20,20 @@ const APPS: Record<AppId, { title: string; label: string; glyph: string; w: numb
   desk: { title: 'Burrow Service Desk — Incidents', label: 'Service Desk', glyph: '\u{1F3AB}', w: 900, h: 620, max: true },
   chat: { title: 'Burrow Chat', label: 'Burrow Chat', glyph: '\u{1F4AC}', w: 780, h: 520 },
   directory: { title: 'Active Directory Users and Computers', label: 'Active Directory', glyph: '\u{1F5C2}', w: 860, h: 480 },
+  okta: { title: 'Oktopus Admin \u2014 Ridge', label: 'Oktopus Admin', glyph: '\u{1F419}', w: 940, h: 640, max: true },
   browser: { title: 'Burrow Intranet — Ridge', label: 'Ridge', glyph: '\u{1F310}', w: 920, h: 620, max: true },
   mail: { title: 'Burrow Mail', label: 'Mail', glyph: '✉', w: 640, h: 420 },
   runbook: { title: 'The Runbook', label: 'Runbook', glyph: '\u{1F4D6}', w: 560, h: 500 },
+  policy: { title: 'IT Service Policy \u2014 WordPad', label: 'IT Service Policy', glyph: '\u{1F4CB}', w: 600, h: 460 },
   resume: { title: 'resume.doc — WordPad', label: 'resume.doc', glyph: '\u{1F4C4}', w: 560, h: 480 },
   jobs: { title: 'Job Board', label: 'Job Board', glyph: '\u{1F4CC}', w: 600, h: 500 },
   trash: { title: 'Recycle Bin', label: 'Recycle Bin', glyph: '\u{1F5D1}', w: 560, h: 360 },
 };
-const ON_DESKTOP: AppId[] = ['desk', 'chat', 'directory', 'browser', 'trash'];
-const PROGRAMS: AppId[] = ['desk', 'chat', 'directory', 'browser', 'mail'];
-const DOCUMENTS: AppId[] = ['resume', 'runbook', 'jobs'];
-const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+/** Oktopus arrives in week 2, once Burrow has the money for it. */
+const hasOktopus = (s: GameState) => s.day >= OKTOPUS_DAY;
+const onDesktop = (s: GameState): AppId[] => ['desk', 'chat', 'directory', ...(hasOktopus(s) ? ['okta' as const] : []), 'browser', 'trash'];
+const programs = (s: GameState): AppId[] => ['desk', 'chat', 'directory', ...(hasOktopus(s) ? ['okta' as const] : []), 'browser', 'mail'];
+const DOCUMENTS: AppId[] = ['policy', 'runbook', 'resume', 'jobs'];
 
 const front = (app: App) => app.ui.windows.at(-1);
 
@@ -37,7 +42,8 @@ export function openApp(app: App, id: AppId): void {
   const { ui } = app;
   ui.startOpen = false;
   const open = ui.windows.find((w) => w.id === id);
-  const win: Win = open ?? { id, x: 60 + 26 * ui.windows.length, y: 30 + 22 * ui.windows.length, max: APPS[id].max };
+  const n = ui.windows.length;
+  const win: Win = open ?? fit({ id, x: 60 + 26 * n, y: 30 + 22 * n, w: APPS[id].w, h: APPS[id].h, max: APPS[id].max });
   win.min = false;
   ui.windows = [...ui.windows.filter((w) => w !== win), win];
   // Opening the browser is reading the news.
@@ -63,30 +69,59 @@ function raise(app: App, win: Win, screen: Element | null): void {
   });
 }
 
-/** Drag a window by its title bar. The screen is drawn at an angle in 3D, so pointer movement is scaled back to screen pixels. */
-function drag(win: Win, el: HTMLElement, e: PointerEvent): void {
-  if (win.max || (e.target as Element).closest('button')) return;
+/** The desktop above the taskbar, in screen pixels. */
+const SCREEN = { w: 1024, h: 768 - 30 };
+const MIN = { w: 320, h: 200 };
+
+/** Keep a window the right size for the screen and fully on it. */
+function fit(win: Win): Win {
+  win.w = Math.min(Math.max(win.w, MIN.w), SCREEN.w);
+  win.h = Math.min(Math.max(win.h, MIN.h), SCREEN.h);
+  win.x = Math.min(Math.max(win.x, 0), SCREEN.w - win.w);
+  win.y = Math.min(Math.max(win.y, 0), SCREEN.h - win.h);
+  return win;
+}
+
+/**
+ * Follow the pointer until it's let go, changing the window as it moves without redrawing anything.
+ * The screen is drawn at an angle in 3D, so pointer movement is scaled back to screen pixels.
+ */
+function follow(win: Win, el: HTMLElement, e: PointerEvent, change: (dx: number, dy: number, from: Win) => void): void {
+  e.preventDefault();
   const scale = el.getBoundingClientRect().width / el.offsetWidth || 1;
-  const [sx, sy, ox, oy] = [e.clientX, e.clientY, win.x, win.y];
+  const [sx, sy, from] = [e.clientX, e.clientY, { ...win }];
   const move = (m: PointerEvent) => {
-    win.x = Math.round(ox + (m.clientX - sx) / scale);
-    win.y = Math.max(0, Math.round(oy + (m.clientY - sy) / scale));
-    el.style.left = `${win.x}px`;
-    el.style.top = `${win.y}px`;
+    change((m.clientX - sx) / scale, (m.clientY - sy) / scale, from);
+    fit(win);
+    Object.assign(el.style, { left: `${win.x}px`, top: `${win.y}px`, width: `${win.w}px`, height: `${win.h}px` });
   };
   const up = () => { removeEventListener('pointermove', move); removeEventListener('pointerup', up); };
   addEventListener('pointermove', move);
   addEventListener('pointerup', up);
 }
 
+/** Drag a window by its title bar. */
+function drag(win: Win, el: HTMLElement, e: PointerEvent): void {
+  if (win.max || (e.target as Element).closest('button')) return;
+  follow(win, el, e, (dx, dy, from) => { win.x = Math.round(from.x + dx); win.y = Math.round(from.y + dy); });
+}
+
+/** Resize a window from its right edge, bottom edge or bottom-right corner. */
+function resize(win: Win, el: HTMLElement, e: PointerEvent, edge: 'right' | 'bottom' | 'corner'): void {
+  follow(win, el, e, (dx, dy, from) => {
+    if (edge !== 'bottom') win.w = Math.round(Math.min(from.w + dx, SCREEN.w - from.x));
+    if (edge !== 'right') win.h = Math.round(Math.min(from.h + dy, SCREEN.h - from.y));
+  });
+}
+
 function windowEl(app: App, win: Win, z: number): HTMLElement {
-  const meta = APPS[win.id];
+  const meta = win.id === 'browser' ? { ...APPS.browser, title: browserTitle(app) } : APPS[win.id];
   const toggleMax = () => { win.max = !win.max; app.rerender(); };
   const body = win.id === 'desk' ? serviceDesk(app) : win.id === 'chat' ? chatApp(app) : BODIES[win.id]?.(app) ?? h('p', {}, '');
   const el: HTMLElement = h('section', {
     class: `win window window-${win.id}${win.max ? ' max' : ''}${front(app) === win ? ' front' : ''}`,
     role: 'dialog', 'aria-label': meta.title, 'data-testid': `win-${win.id}`, 'data-win': win.id, hidden: win.min,
-    style: win.max ? `z-index:${z}` : `left:${win.x}px;top:${win.y}px;width:${meta.w}px;height:${meta.h}px;z-index:${z}`,
+    style: win.max ? `z-index:${z}` : `left:${win.x}px;top:${win.y}px;width:${win.w}px;height:${win.h}px;z-index:${z}`,
     onpointerdown: () => raise(app, win, el.closest('.desktop')),
     onkeydown: (e) => { if ((e as KeyboardEvent).key === 'Escape') { e.stopPropagation(); closeApp(app, win.id); } },
   },
@@ -96,25 +131,37 @@ function windowEl(app: App, win: Win, z: number): HTMLElement {
         h('button', { class: 'close', 'aria-label': `Minimise ${meta.label}`, 'data-testid': `min-${win.id}`, onclick: () => { win.min = true; app.rerender(); } }, '–'),
         h('button', { class: 'close', 'aria-label': `${win.max ? 'Restore' : 'Maximise'} ${meta.label}`, 'data-testid': `max-${win.id}`, onclick: toggleMax }, win.max ? '❐' : '□'),
         h('button', { class: 'close', 'aria-label': `Close ${meta.label}`, 'data-testid': `close-${win.id}`, onclick: () => closeApp(app, win.id) }, '×'))),
-    h('div', { class: 'window-body' }, body));
+    h('div', { class: 'window-body' }, body),
+    // Grab handles along the right and bottom edges, and the corner.
+    !win.max && h('span', { class: 'grip right', 'aria-hidden': 'true', onpointerdown: (e) => resize(win, el, e as PointerEvent, 'right') }),
+    !win.max && h('span', { class: 'grip bottom', 'aria-hidden': 'true', onpointerdown: (e) => resize(win, el, e as PointerEvent, 'bottom') }),
+    !win.max && h('span', { class: 'grip corner', 'aria-hidden': 'true', onpointerdown: (e) => resize(win, el, e as PointerEvent, 'corner') }));
   return el;
 }
 
 // ---- Notifications -------------------------------------------------------------------------------------------
 
 let toastCount = 0;
+/** How long a notification stays up, and how long it takes to fade out. */
+const TOAST_MS = 7000;
+const FADE_MS = 400;
 
-/** Pop up a notification in the corner. It goes by itself after a few seconds. */
+/** Pop up a notification in the corner. It fades away by itself after a few seconds. */
 export function notify(app: App, toast: Omit<Toast, 'id'>): void {
   const id = ++toastCount;
   app.ui.toasts = [...app.ui.toasts, { ...toast, id }].slice(-3);
-  setTimeout(() => dismiss(app, id), 9000);
+  setTimeout(() => dismiss(app, id), TOAST_MS);
 }
 
+/** Fade a notification out, then take it away. */
 function dismiss(app: App, id: number): void {
   if (!app.ui.toasts.some((t) => t.id === id)) return;
-  app.ui.toasts = app.ui.toasts.filter((t) => t.id !== id);
-  app.rerender();
+  document.querySelector(`[data-toast="${id}"]`)?.classList.add('leaving');
+  setTimeout(() => {
+    if (!app.ui.toasts.some((t) => t.id === id)) return;
+    app.ui.toasts = app.ui.toasts.filter((t) => t.id !== id);
+    app.rerender();
+  }, FADE_MS);
 }
 
 function openToast(app: App, t: Toast): void {
@@ -150,9 +197,17 @@ export function morningNotes(app: App, s: GameState): void {
 }
 
 function toasts(app: App): HTMLElement {
-  return h('div', { class: 'toasts', 'aria-live': 'polite' }, ...app.ui.toasts.map((t) => h('div', { class: 'toast', 'data-testid': 'toast' },
+  let fresh = 0;
+  return h('div', { class: 'toasts', 'aria-live': 'polite' }, ...app.ui.toasts.map((t) => {
+    const entering = !t.shown;
+    t.shown = true;
+    return h('div', {
+      class: `toast${entering ? ' fresh' : ''}`, 'data-testid': 'toast', 'data-toast': t.id,
+      style: entering ? `animation-delay:${150 * fresh++}ms` : undefined,
+    },
     h('button', { class: 'toast-body', onclick: () => openToast(app, t) }, h('span', { class: 'meta' }, t.from), h('span', {}, t.text)),
-    h('button', { class: 'toast-close', 'aria-label': 'Dismiss', onclick: () => dismiss(app, t.id) }, '×'))));
+    h('button', { class: 'toast-close', 'aria-label': 'Dismiss', onclick: () => dismiss(app, t.id) }, '×'));
+  }));
 }
 
 // ---- Start menu ----------------------------------------------------------------------------------------------
@@ -177,7 +232,7 @@ function startMenu(app: App): HTMLElement {
     h('div', { class: 'start-banner', 'aria-hidden': 'true' }, h('span', {}, 'BurrowOS 2000')),
     h('div', { class: 'start-items' },
       h('p', { class: 'start-user' }, '\u{1F464} intern'),
-      h('p', { class: 'start-heading' }, 'Programs'), ...PROGRAMS.map(item),
+      h('p', { class: 'start-heading' }, 'Programs'), ...programs(app.state).map(item),
       h('p', { class: 'start-heading' }, 'Documents'), ...DOCUMENTS.map(item),
       h('hr', {}),
       h('button', { class: 'start-item', 'data-testid': 'log-off', onclick: () => powerDown(app, 'locked') }, h('span', { class: 'glyph', 'aria-hidden': 'true' }, '\u{1F511}'), 'Log Off intern…'),
@@ -186,6 +241,14 @@ function startMenu(app: App): HTMLElement {
 }
 
 // ---- The desktop ---------------------------------------------------------------------------------------------
+
+/** Your own computer's time and date, in your time zone, the way a taskbar clock shows them. */
+const realTime = () => new Date().toLocaleString([], { hour: 'numeric', minute: '2-digit', weekday: 'short', day: 'numeric', month: 'short' });
+
+/** Keep every taskbar clock showing the real time. */
+export function tickRealClock(): void {
+  document.querySelectorAll<HTMLElement>('[data-real-clock]').forEach((el) => { el.textContent = realTime(); });
+}
 
 /** How many things are waiting in an app, for the little red count on its icon. */
 function waiting(app: App, id: AppId): number {
@@ -203,7 +266,6 @@ function taskbar(app: App): HTMLElement {
     win.min = true;
     app.rerender();
   };
-  const working = state.phase === 'desk';
   return h('footer', { class: 'taskbar' },
     h('button', {
       class: `start${ui.startOpen ? ' on' : ''}`, 'aria-expanded': ui.startOpen ? 'true' : 'false', 'data-testid': 'start',
@@ -213,15 +275,18 @@ function taskbar(app: App): HTMLElement {
       class: `task${front(app) === w && !w.min ? ' on' : ''}`, 'data-testid': `task-${w.id}`, onclick: taskClick(w),
     }, h('span', { 'aria-hidden': 'true' }, APPS[w.id].glyph), APPS[w.id].label))),
     h('span', { class: 'tray' },
-      h('span', { class: 'tray-clock', 'data-clock': working, 'data-testid': 'tray-clock' }, working ? clockText(state.clock) : ''),
-      h('span', { class: 'tray-day' }, WEEKDAYS[Math.min(state.day, DAYS + 1) - 1] ?? '')));
+      h('button', {
+        class: 'tray-chat', 'aria-label': `Burrow Chat${state.chats.length ? `, ${state.chats.length} unread` : ''}`, 'data-testid': 'tray-chat',
+        onclick: () => openApp(app, 'chat'),
+      }, '\u{1F4AC}', state.chats.length > 0 && h('span', { class: 'unread' }, String(state.chats.length))),
+      h('span', { class: 'tray-clock', 'data-real-clock': true, 'data-testid': 'tray-clock', title: Intl.DateTimeFormat().resolvedOptions().timeZone }, realTime())));
 }
 
 export function desktopScreen(app: App): HTMLElement {
   const { state, ui } = app;
   const outcome = state.outcomes[0];
   const screen = h('main', { class: 'screen desktop', 'data-testid': 'desktop' },
-    h('nav', { class: 'icons', 'aria-label': 'Desktop' }, ...ON_DESKTOP.map((id) => {
+    h('nav', { class: 'icons', 'aria-label': 'Desktop' }, ...onDesktop(state).map((id) => {
       const count = waiting(app, id);
       return h('button', { class: 'icon', 'data-testid': `icon-${id}`, onclick: () => openApp(app, id) },
         h('span', { class: 'glyph', 'aria-hidden': 'true' }, id === 'trash' && ui.trashEmptied ? '\u{1F5D1}' : APPS[id].glyph), APPS[id].label,

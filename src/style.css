@@ -284,9 +284,6 @@ img.sprite.tiny { width: 40px; height: 40px; }
 }
 .map-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .map-help { margin: 0; color: #fff; }
-.where-you-are { font-family: var(--pixel); background: var(--manila); border: 2px solid var(--ink); border-radius: 6px; padding: 0 8px; }
-.floor-talk { flex: 1; min-height: 0; display: flex; flex-direction: column; }
-.floor-talk .ticket-view { flex: 1; }
 .close-ticket { align-self: flex-start; margin: 12px 14px 0; }
 
 .caption {
@@ -340,7 +337,9 @@ body.in-room #app .room-hud > * { pointer-events: auto; }
 
 /* The monitor's screen: a page placed in 3D behind the glass. Scanlines, a little static, a slow flicker, dark corners. */
 .screen-layer { position: fixed !important; inset: 0; z-index: 0; }
-.crt-screen { position: relative; overflow: hidden; border-radius: 22px; background: #0d1a12; color: var(--ink); font: 500 18px/1.55 var(--read); }
+/* No overflow clipping or rounded corners here: on an element drawn in 3D they stop clicks reaching anything inside.
+   The monitor's glass already shows only the screen, and the bezel hides the rest. */
+.crt-screen { position: relative; background: #0d1a12; color: var(--ink); font: 500 18px/1.55 var(--read); }
 .crt-screen > .screen {
   width: 100%; height: 100%; min-height: 0; margin: 0; border: 0; border-radius: 0; box-shadow: none;
   filter: sepia(0.12) saturate(0.95) brightness(0.96);
@@ -409,16 +408,7 @@ body.in-room #app .room-hud > * { pointer-events: auto; }
 .chat-face.mood-3 { box-shadow: 0 0 0 3px var(--honk); animation: fume 0.6s ease-in-out infinite alternate; }
 @keyframes fume { from { transform: translateX(-1px); } to { transform: translateX(1px); } }
 
-/* Helping someone in person: a beat of walking over, then their problem */
-.screen.on-site { position: relative; }
-.walk-over {
-  position: absolute; inset: 0; z-index: 5; display: grid; place-items: center; pointer-events: none;
-  background: #120d0a; color: var(--paper); font: 1.4rem var(--pixel);
-  animation: walk-over 1.8s ease-in forwards;
-}
-@keyframes walk-over { 0%, 55% { opacity: 1; } 100% { opacity: 0; visibility: hidden; } }
 @media (prefers-reduced-motion: reduce) {
-  .walk-over { animation: none; display: none; }
   .chat-face.mood-3 { animation: none; }
 }
 
@@ -495,7 +485,6 @@ body.in-room #app .room-hud > * { pointer-events: auto; }
 .crt-screen .app-icon { width: 14px; height: 14px; background: var(--os-blue); border: 1px solid #fff; }
 .crt-screen .status { background: #fff; border-bottom: 1px solid var(--os-line); padding: 6px 10px; gap: 6px 14px; font-size: 13px; }
 .crt-screen .clock { background: #0a246a; color: #fff; font: bold 13px var(--read); border-radius: 2px; padding: 1px 8px; }
-.crt-screen .where-you-are { font-family: var(--read); border-radius: 2px; border-color: var(--os-blue); background: #deecf9; }
 .crt-screen .desk-body { background: var(--os-bg); }
 .crt-screen .queue { background: #fff; border-right: 1px solid var(--os-line); padding: 8px; }
 .crt-screen .tab {
@@ -770,12 +759,15 @@ body:has(.book) .inspect-canvas { visibility: hidden; }
 
 /* Notifications, stacked in the corner above the clock. */
 .crt-screen .toasts { position: absolute; right: 8px; bottom: 38px; z-index: 920; display: flex; flex-direction: column; gap: 6px; width: 300px; }
-.crt-screen .toasts .toast { position: static; display: flex; padding: 0; max-width: none; animation: toast-in 0.25s ease-out; }
-@keyframes toast-in { from { opacity: 0; transform: translateY(8px); } }
+.crt-screen .toasts .toast { position: static; display: flex; padding: 0; max-width: none; transition: opacity 0.4s ease, transform 0.4s ease; }
+/* New ones slide in once (staggered when several arrive together); on the way out they fade and slip away. */
+.crt-screen .toasts .toast.fresh { animation: toast-in 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.crt-screen .toasts .toast.leaving { opacity: 0; transform: translateX(16px); }
+@keyframes toast-in { from { opacity: 0; transform: translateX(24px); } }
 .crt-screen .toast-body { flex: 1; display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; background: none; border: 0; text-align: left; font: 12px var(--read); color: var(--os-text); cursor: pointer; }
 .crt-screen .toast-close { background: none; border: 0; font-size: 14px; padding: 4px 8px; cursor: pointer; align-self: flex-start; }
 .crt-screen .overlay { z-index: 980; }
-@media (prefers-reduced-motion: reduce) { .crt-screen .toasts .toast { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .crt-screen .toasts .toast { animation: none; transition: none; } }
 
 /* Burrow Chat: a dark aubergine sidebar of channels and people, the conversation on the right. */
 .chat-app { display: grid; grid-template-columns: 190px 1fr; font: 13px var(--read); color: var(--os-text); }
@@ -794,7 +786,6 @@ body:has(.book) .inspect-canvas { visibility: hidden; }
 .chat-who { display: flex; gap: 8px; align-items: baseline; }
 .chat-avatar { width: 34px; height: 34px; border-radius: 4px; background: #e8912d; color: #fff; display: grid; place-items: center; font-weight: bold; }
 .chat-feed .chat-empty { color: var(--os-mid); }
-.chat-app .chat-view { margin: 0; border: 0; }
 
 /* Ridge: the browser, open on the intranet's news start page. */
 .ridge { display: flex; flex-direction: column; font: 13px 'Segoe UI', var(--read); color: #1b1a19; background: #f3f3f3; }
@@ -840,3 +831,195 @@ body:has(.book) .inspect-canvas { visibility: hidden; }
 .trash-list li { display: grid; grid-template-columns: 24px auto 1fr; gap: 8px; align-items: baseline; }
 .trash-list .glyph { font-size: 16px; }
 .trash .row { justify-content: space-between; align-items: center; }
+
+/* Oktopus: a modern web admin console in the browser. White navigation, light grey pages, blue buttons. */
+.crt-screen .window-okta .window-body { padding: 0; display: flex; flex-direction: column; }
+.okta { flex: 1; min-height: 0; display: flex; flex-direction: column; font: 13px 'Segoe UI', 'Helvetica Neue', var(--read); color: #1d1d21; background: #f4f4f6; }
+.okta-top { display: flex; align-items: center; gap: 16px; padding: 8px 14px; background: #fff; border-bottom: 1px solid #e1e1e6; }
+.okta-brand { font: 600 19px 'Segoe UI', 'Helvetica Neue', sans-serif; color: #1662dd; letter-spacing: -0.02em; }
+.okta-search { flex: 1; max-width: 340px; padding: 5px 12px; border: 1px solid #d7d7dc; border-radius: 4px; color: #8c8c96; }
+.okta-body { flex: 1; min-height: 0; display: grid; grid-template-columns: 170px 1fr; }
+.okta-nav { display: flex; flex-direction: column; gap: 2px; padding: 10px 8px; background: #fff; border-right: 1px solid #e1e1e6; }
+.okta-nav-item { display: flex; gap: 8px; align-items: center; padding: 7px 10px; border: 0; border-radius: 4px; background: none; font: inherit; color: #3e3e47; text-align: left; cursor: pointer; }
+.okta-nav-item:hover { background: #f0f3fa; }
+.okta-nav-item.on { background: #e8effc; color: #1662dd; font-weight: 600; }
+.okta-main { overflow: auto; padding: 16px 20px; }
+.okta-page h1 { margin: 0 0 12px; font: 600 20px 'Segoe UI', 'Helvetica Neue', sans-serif; display: flex; align-items: center; gap: 10px; }
+.okta-page h2 { margin: 14px 0 6px; font: 600 14px 'Segoe UI', 'Helvetica Neue', sans-serif; }
+.okta-page p { margin: 0 0 8px; }
+.okta-card { background: #fff; border: 1px solid #e1e1e6; border-radius: 6px; padding: 12px 16px; margin-bottom: 12px; }
+.okta-card h2:first-child { margin-top: 0; }
+.okta-card.warn { border-color: #f0b429; background: #fffbea; }
+.okta-stats { display: flex; gap: 12px; margin-bottom: 12px; }
+.okta-stats > div { flex: 1; display: flex; flex-direction: column; background: #fff; border: 1px solid #e1e1e6; border-radius: 6px; padding: 10px 14px; }
+.okta-stats strong { font-size: 22px; color: #1662dd; }
+.okta-steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.okta-steps li { display: grid; grid-template-columns: 22px 1fr; gap: 8px; }
+.okta-steps .okta-tick { color: #8c8c96; font-size: 16px; }
+.okta-steps li.done .okta-tick { color: #078b4a; }
+.okta-steps li.done strong { color: #6e6e78; text-decoration: line-through; }
+.okta-table { width: 100%; border-collapse: collapse; background: #fff; border: 1px solid #e1e1e6; margin-bottom: 12px; }
+.okta-table th { text-align: left; font-weight: 600; padding: 7px 10px; background: #fafafc; border-bottom: 1px solid #e1e1e6; }
+.okta-table td { padding: 7px 10px; border-bottom: 1px solid #f0f0f3; vertical-align: top; }
+.okta-table tr.quiet td { color: #8c8c96; }
+.okta-row-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.okta-btn { font: 600 12px 'Segoe UI', 'Helvetica Neue', sans-serif; padding: 6px 12px; border-radius: 4px; border: 1px solid #c6c6cf; background: #fff; color: #1d1d21; cursor: pointer; }
+.okta-btn:hover:not(:disabled) { background: #f4f4f6; }
+.okta-btn.primary { background: #1662dd; border-color: #1662dd; color: #fff; }
+.okta-btn.primary:hover:not(:disabled) { background: #0f4fb5; }
+.okta-btn.small { padding: 3px 9px; font-size: 11px; }
+.okta-btn:disabled { opacity: 0.5; cursor: default; }
+.okta-actions { display: flex; gap: 8px; margin-bottom: 12px; }
+.okta-link { font: inherit; font-weight: 600; color: #1662dd; background: none; border: 0; padding: 0; cursor: pointer; }
+.okta-back { font: inherit; color: #1662dd; background: none; border: 0; padding: 0; margin-bottom: 8px; cursor: pointer; }
+.okta-pill { font: 600 11px 'Segoe UI', sans-serif; padding: 2px 8px; border-radius: 10px; background: #e3f6ec; color: #078b4a; }
+.okta-pill.deactivated { background: #eee; color: #6e6e78; }
+.okta-dl { display: grid; grid-template-columns: 120px 1fr; gap: 4px 12px; margin: 0; }
+.okta-dl dt { color: #6e6e78; }
+.okta-dl dd { margin: 0; }
+.okta-tiles { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; }
+.okta-tile { display: flex; flex-direction: column; align-items: center; gap: 4px; width: 104px; padding: 12px 6px; font: 600 12px 'Segoe UI', sans-serif; background: #fff; border: 1px solid #e1e1e6; border-radius: 6px; cursor: pointer; }
+.okta-form { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 8px 0 12px; }
+.okta-form input, .okta-form select { font: 13px 'Segoe UI', sans-serif; padding: 5px 8px; border: 1px solid #c6c6cf; border-radius: 4px; background: #fff; }
+.okta-rules { list-style: none; margin: 0 0 8px; padding: 0; display: grid; gap: 6px; }
+.okta-rules li { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 6px 10px; background: #fff; border: 1px solid #e1e1e6; border-radius: 4px; }
+.okta-catalog { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.okta-catalog li { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 12px; background: #fff; border: 1px solid #e1e1e6; border-radius: 4px; }
+.okta-empty { color: #6e6e78; font-style: italic; }
+.okta code { font: 12px 'Consolas', 'Courier New', monospace; color: #3e3e47; }
+
+/* Resize grips along a window's right and bottom edges, and its corner. */
+.crt-screen .grip { position: absolute; z-index: 2; touch-action: none; }
+.crt-screen .grip.right { top: 0; right: -4px; width: 8px; height: 100%; cursor: ew-resize; }
+.crt-screen .grip.bottom { left: 0; bottom: -4px; width: 100%; height: 8px; cursor: ns-resize; }
+.crt-screen .grip.corner { right: -4px; bottom: -4px; width: 14px; height: 14px; cursor: nwse-resize;
+  background: linear-gradient(135deg, transparent 50%, var(--os-mid) 50% 58%, transparent 58% 70%, var(--os-mid) 70% 78%, transparent 78%); }
+.crt-screen .titlebar { touch-action: none; }
+
+/* Burrow Chat conversations: Slack-style messages, then a box to reply in with suggested replies. */
+.chat-dm { display: flex; flex-direction: column; min-height: 0; background: #fff; }
+.chat-dm .chat-head { display: flex; gap: 12px; align-items: center; padding: 10px 14px; border-bottom: 1px solid #ddd; }
+.chat-dm .chat-head h2 { margin: 0; font-size: 15px; }
+.chat-dm .chat-head p { margin: 0; }
+.chat-dm .chat-feed { flex: 1; }
+.chat-status { margin: 0; padding: 8px 14px; border-top: 1px solid #eee; color: #616061; display: flex; gap: 8px; align-items: center; }
+.chat-composer { margin: 8px 14px 12px; border: 1px solid #bbb; border-radius: 8px; overflow: hidden; }
+.chat-suggest { display: flex; gap: 6px; padding: 6px 8px; background: #f8f8f8; border-bottom: 1px solid #e5e5e5; }
+.chat-chip { font: 12px var(--read); padding: 4px 10px; border-radius: 14px; border: 1px solid #c9c9c9; background: #fff; cursor: pointer; }
+.chat-chip.primary { background: #007a5a; border-color: #007a5a; color: #fff; }
+.chat-chip:disabled { opacity: 0.5; cursor: default; }
+.chat-input { width: 100%; border: 0; padding: 8px 10px; font: 13px var(--read); background: #fff; }
+
+/* The IT Service Policy, and its line on each ticket. */
+.policy-list { margin: 0; padding-left: 20px; display: grid; gap: 10px; font: 13px/1.5 var(--read); }
+.policy-line { margin: 8px 0 0; padding: 6px 10px; font-size: 13px; background: #eef4fb; border-left: 4px solid #3a6ea5; }
+.crt-screen .tray-chat { position: relative; background: none; border: 0; font-size: 14px; cursor: pointer; padding: 0 2px; }
+.crt-screen .tray-chat .unread { position: absolute; top: -6px; right: -8px; font-size: 9px; padding: 0 4px; }
+
+/* Ridge, working like a browser: real tabs, back/forward/refresh, an address bar you type in, and favourites. */
+.ridge-tabs { align-items: flex-end; }
+.ridge-tab { display: inline-flex; align-items: center; gap: 4px; max-width: 200px; padding: 0 4px 0 0; }
+.ridge-tab-name { flex: 1; min-width: 0; padding: 5px 4px 5px 12px; border: 0; background: none; font: inherit; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
+.ridge-tab-close { border: 0; background: none; font-size: 13px; color: #666; cursor: pointer; padding: 2px 6px; border-radius: 4px; }
+.ridge-tab-close:hover { background: #0001; }
+.ridge-tab.new { border: 0; cursor: pointer; padding: 5px 10px; background: none; font-size: 15px; }
+.ridge-nav { border: 0; background: none; font-size: 15px; color: #444; cursor: pointer; padding: 2px 6px; border-radius: 4px; letter-spacing: 0; }
+.ridge-nav:disabled { color: #bbb; cursor: default; }
+.ridge-nav:hover:not(:disabled) { background: #0001; }
+input.ridge-address { border: 1px solid transparent; font: inherit; outline: none; }
+input.ridge-address:focus { border-color: #0078d4; background: #fff; }
+.ridge-page { background: #f3f2ef; padding: 0; }
+
+/* The Burrow Intranet site. */
+.site { display: flex; flex-direction: column; min-height: 100%; }
+.site-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 8px 18px; background: #fff; border-bottom: 1px solid #e0dfdc; }
+.site-brand { display: flex; align-items: center; gap: 10px; }
+.site-brand strong { display: block; font: bold 19px Georgia, serif; color: #3b2a1a; }
+.site-brand span { font-size: 11px; color: #7a6a58; }
+.site-nav { display: flex; gap: 2px; }
+.site-link { border: 0; background: none; font: 13px 'Segoe UI', var(--read); color: #3b3b3b; padding: 6px 10px; border-radius: 4px; cursor: pointer; }
+.site-link:hover { background: #f0efec; }
+.site-link.on { color: #4e6b28; font-weight: 600; box-shadow: inset 0 -2px #6f9a3a; border-radius: 0; }
+.site-link.more { align-self: flex-start; color: #4e6b28; }
+.site-title { margin: 16px 18px 8px; font: 600 20px 'Segoe UI', var(--read); }
+.site-column { margin: 0 18px 16px; display: grid; gap: 10px; max-width: 640px; }
+.site-foot { margin-top: auto; padding: 10px 18px; font-size: 11px; color: #8a8a8a; text-align: center; }
+.site-people { list-style: none; margin: 0 18px 16px; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; }
+.site-people li { display: flex; gap: 10px; align-items: center; background: #fff; border-radius: 8px; padding: 8px 10px; box-shadow: 0 1px 2px #0002; }
+.site-people li div { display: flex; flex-direction: column; font-size: 12px; }
+.site-avatar { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; background: #c98d52; color: #fff; font-weight: bold; }
+.glance { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; margin: 4px 0 0; font-size: 12px; }
+.glance dt { color: #777; }
+.glance dd { margin: 0; }
+.ridge-error { margin: auto; padding: 60px 20px; text-align: center; color: #444; }
+.ridge-error .glyph { font-size: 40px; margin: 0; }
+
+/* The home page: the company's own feed, like a work social network. */
+.feed { display: grid; grid-template-columns: 180px minmax(0, 1fr) 210px; gap: 12px; padding: 12px 16px; align-items: start; }
+.feed-left, .feed-right, .feed-main { display: grid; gap: 10px; }
+.feed-me, .feed-company { display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; }
+.feed-me p { margin: 6px 0 0; }
+.feed-post { background: #fff; border-radius: 8px; padding: 12px 14px 4px; box-shadow: 0 1px 3px #0002; }
+.feed-post h3 { margin: 8px 0 4px; font: 600 15px 'Segoe UI', var(--read); }
+.feed-post > p { margin: 0 0 6px; }
+.post-head { display: flex; gap: 10px; align-items: center; }
+.post-head div { display: flex; flex-direction: column; line-height: 1.3; }
+.post-head .meta { font-size: 11px; }
+.post-avatar { width: 40px; height: 40px; border-radius: 50%; background: #e8e1cf; image-rendering: pixelated; object-fit: cover; }
+.post-avatar.letter { display: grid; place-items: center; background: #3a6ea5; color: #fff; font-weight: bold; }
+.post-avatar.big { width: 56px; height: 56px; font-size: 22px; }
+.post-counts { border-bottom: 1px solid #eee; padding-bottom: 6px; }
+.post-actions { display: flex; gap: 4px; padding: 2px 0; }
+.post-action { flex: 1; border: 0; background: none; padding: 6px; border-radius: 4px; font: 600 12px 'Segoe UI', var(--read); color: #666; cursor: pointer; }
+.post-action:hover:not(:disabled) { background: #f3f2ef; }
+.post-action.on { color: #0a66c2; }
+.post-action:disabled { cursor: default; opacity: 0.6; }
+
+/* The Oktopus wordmark, in the console's blue. */
+.okta-brand { display: inline-flex; color: #1662dd; }
+.oktopus-logo { display: block; }
+/* The company mark: navy line art, with a lighter star for a head. */
+.burrow-logo { color: #1d3f6e; }
+.burrow-logo .logo-star { color: #6f9cc8; }
+
+/* The intranet's news front page: the big story with its picture, then the rest in a grid. */
+.news-front { display: grid; grid-template-columns: minmax(0, 1fr) 230px; gap: 14px; padding: 14px 16px; align-items: start; }
+.news-main, .news-side { display: grid; gap: 12px; }
+.news-hero { background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 4px #0002; }
+.news-hero-text { padding: 12px 16px 14px; }
+.news-hero h1 { margin: 2px 0 6px; font: 700 24px Georgia, serif; color: #1b1a19; }
+.news-hero p { margin: 0 0 8px; font-size: 14px; line-height: 1.5; }
+.kicker { color: #b5452b; font: 700 11px 'Segoe UI', var(--read); text-transform: uppercase; letter-spacing: 0.08em; }
+.news-picture {
+  position: relative; display: grid; place-items: center; height: 110px; overflow: hidden;
+  background: radial-gradient(circle at 25% 20%, #ffffff55, transparent 45%), linear-gradient(135deg, var(--tone), color-mix(in srgb, var(--tone) 55%, #000));
+}
+.news-picture::after { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(115deg, #ffffff0a 0 14px, transparent 14px 30px); }
+.news-picture span { font-size: 38px; letter-spacing: 6px; filter: drop-shadow(0 3px 4px #0005); }
+.news-picture.big { height: 210px; }
+.news-picture.big span { font-size: 72px; letter-spacing: 12px; }
+.section-title { margin: 4px 0 0; font: 600 15px 'Segoe UI', var(--read); color: #444; }
+.news-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+.news-story { background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px #0002; }
+.news-story > div { padding: 8px 12px 10px; }
+.news-story h3 { margin: 0 0 4px; font: 700 15px Georgia, serif; }
+.news-story p { margin: 0 0 6px; font-size: 12px; line-height: 1.45; }
+.byline { display: flex; align-items: center; gap: 4px; color: #6e6e6e; font-size: 11px; margin: 0; }
+.feed-teaser { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: #fff; border-radius: 8px; box-shadow: 0 1px 3px #0002; font-weight: 600; }
+.card-title { margin: 0 0 6px; font: 600 12px 'Segoe UI', var(--read); color: #555; text-transform: uppercase; letter-spacing: 0.05em; }
+
+/* Burrow Feed. */
+.post-scene { margin: 4px 0 8px; padding: 14px; text-align: center; font-size: 34px; letter-spacing: 8px; background: linear-gradient(135deg, #f6efe2, #e9eef5); border-radius: 8px; }
+.post-comments { list-style: none; margin: 0; padding: 6px 0 8px; display: grid; gap: 6px; border-top: 1px solid #eee; }
+.post-comments li { display: flex; gap: 8px; align-items: flex-start; font-size: 12px; }
+.post-comments li > span { background: #f2f2f2; border-radius: 10px; padding: 5px 10px; }
+.feed-team { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.feed-team li { display: flex; gap: 8px; align-items: center; font-size: 12px; }
+.feed-team li > span { display: flex; flex-direction: column; line-height: 1.2; }
+.portrait { flex-shrink: 0; border-radius: 50%; }
+
+/* About: a cover picture and Burrow through the years. */
+.about-cover { display: grid; place-items: center; height: 120px; font-size: 44px; letter-spacing: 14px; background: linear-gradient(#bcd6ef, #e8f0e0 70%, #b8cf8f); }
+.history { list-style: none; margin: 0; padding: 0 0 0 12px; border-left: 3px solid #6f9cc8; display: grid; gap: 8px; }
+.history li { display: grid; grid-template-columns: 44px 1fr; gap: 8px; font-size: 13px; }
+.history strong { color: #1d3f6e; }

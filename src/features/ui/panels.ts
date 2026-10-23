@@ -1,4 +1,4 @@
-import { DAYS, DAY_SCRIPTS, JOBS, MANAGER, VILLAGERS } from '../game/data.ts';
+import { DAYS, DAY_SCRIPTS, JOBS, MANAGER, POLICY, VILLAGERS } from '../game/data.ts';
 import { runbookPages } from '../game/pages.ts';
 import { acceptOffer, apply, isWeekOver, missingFor, peopleWho } from '../game/rules.ts';
 import { SKILLS, type Skill } from '../game/types.ts';
@@ -7,6 +7,7 @@ import { browser } from './browser.ts';
 import { openApp } from './desktop.ts';
 import { directoryConsole } from './directory.ts';
 import { h } from './dom.ts';
+import { oktopus } from './oktopus.ts';
 
 export const SKILL_NAMES: Record<Skill, string> = { devices: 'Devices', networks: 'Networks', access: 'Access' };
 /** Burrow Mail: Mr. Grisby's memo each morning, newest first. At the end of the week, his offer. */
@@ -37,6 +38,11 @@ function mail(app: App): HTMLElement {
           memo.rule && h('p', { class: 'rule' }, `NEW RULE: ${memo.rule}`))),
   );
 }
+
+/** The IT Service Policy: the house rules every ticket is handled by. Each ticket says which one applies. */
+const policy = () => h('div', { class: 'policy', 'data-testid': 'policy' },
+  h('p', { class: 'meta' }, 'Burrow & Co. IT Service Policy. Rev 1 (written by you, because Sam never did).'),
+  h('ol', { class: 'policy-list' }, ...POLICY.map((rule) => h('li', {}, rule))));
 
 /** Sam's Recycle Bin: what Sam deleted on the way out, until you empty it. */
 const BINNED: [string, string, string][] = [
@@ -106,4 +112,4 @@ function jobs(app: App): HTMLElement {
 }
 
 /** What's inside each document and program window, apart from the Service Desk and Burrow Chat. */
-export const BODIES: Partial<Record<AppId, (app: App) => HTMLElement>> = { mail, runbook, resume, jobs, directory: directoryConsole, browser, trash };
+export const BODIES: Partial<Record<AppId, (app: App) => HTMLElement>> = { mail, runbook, policy, resume, jobs, directory: directoryConsole, okta: oktopus, browser, trash };
