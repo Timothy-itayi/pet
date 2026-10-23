@@ -178,9 +178,9 @@ export function computerSet(top: number): { group: Group; glass: Mesh; powerButt
   const glass = new Mesh(new PlaneGeometry(GLASS.w, GLASS.h), new MeshBasicMaterial({ color: new Color('#000000'), opacity: 0, blending: NoBlending }));
   glass.position.set(0, cy, bezelZ - 0.005);
   group.add(glass);
-  // Sam's note, stuck to the top corner of the bezel.
+  // Sam's note, stuck to the top of the bezel and hanging over its edge, clear of the glass so it never hides the screen.
   const monitorNote = samsNote();
-  monitorNote.position.set(bezelW / 2 - 0.05, cy + bezelH / 2 - 0.02, bezelZ + 0.027);
+  monitorNote.position.set(bezelW / 2 - 0.05, cy + GLASS.h / 2 + 0.052, bezelZ + 0.027);
   monitorNote.rotation.z = -0.12;
   group.add(monitorNote);
   group.traverse((o) => { if (o !== glass) { o.castShadow = true; o.receiveShadow = true; } });

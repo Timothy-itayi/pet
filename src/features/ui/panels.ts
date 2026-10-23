@@ -1,52 +1,67 @@
-import { ISSUES, JOBS, MANAGER, TOOLS, VILLAGERS } from '../game/data.ts';
-import { apply, isWeekOver, missingFor, peopleWho, scriptFor, type GameState } from '../game/rules.ts';
-import { SKILLS, type PageStatus, type Skill } from '../game/types.ts';
-import type { App, Panel } from './app.ts';
+import { DAYS, DAY_SCRIPTS, JOBS, MANAGER, POLICY, VILLAGERS } from '../game/data.ts';
+import { runbookPages } from '../game/pages.ts';
+import { acceptOffer, apply, isWeekOver, missingFor, peopleWho } from '../game/rules.ts';
+import { SKILLS, type Skill } from '../game/types.ts';
+import type { App, AppId } from './app.ts';
+import { browser } from './browser.ts';
+import { openApp } from './desktop.ts';
 import { directoryConsole } from './directory.ts';
 import { h } from './dom.ts';
-import { intranet } from './intranet.ts';
+import { oktopus } from './oktopus.ts';
 
 export const SKILL_NAMES: Record<Skill, string> = { devices: 'Devices', networks: 'Networks', access: 'Access' };
-const TITLES: Record<Panel, string> = {
-  inbox: 'Inbox', runbook: 'The Runbook', resume: 'resume.doc', jobs: 'Job Board',
-  directory: 'Active Registry Users and Computers', intranet: 'Burrow Intranet',
-};
-
-function inbox(app: App): HTMLElement {
-  const { state } = app;
-  if (isWeekOver(state)) return h('div', {}, h('p', {}, `From: ${MANAGER}`), h('p', {}, 'See my offer. You’ll love it.'));
-  const day = scriptFor(state.day);
-  return h('div', {},
-    h('p', { class: 'meta' }, `From: ${MANAGER} · Subject: Day ${state.day}`),
-    h('p', {}, day.memo),
-    day.rule && h('p', { class: 'rule' }, `NEW RULE: ${day.rule}`),
+/** Burrow Mail: Mr. Grisby's memo each morning, newest first. At the end of the week, his offer. */
+function mail(app: App): HTMLElement {
+  const { state, ui } = app;
+  const weekOver = isWeekOver(state);
+  const days = Array.from({ length: Math.min(state.day, DAYS) }, (_, i) => Math.min(state.day, DAYS) - i);
+  const open = weekOver ? 0 : ui.mailDay ?? days[0] ?? 1;
+  const memo = DAY_SCRIPTS[open - 1];
+  const item = (day: number, subject: string) => h('button', {
+    class: `mail-item${day === open ? ' on' : ''}`, 'aria-current': day === open ? 'true' : 'false', onclick: () => { ui.mailDay = day; app.rerender(); },
+  }, h('strong', {}, MANAGER), h('span', {}, subject));
+  return h('div', { class: 'mail', 'data-testid': 'mail' },
+    h('nav', { class: 'mail-list', 'aria-label': 'Inbox' },
+      weekOver && item(0, 'The Conversation'),
+      ...days.map((d) => item(d, `Day ${d}`))),
+    h('article', { class: 'mail-read' },
+      open === 0
+        ? h('div', {},
+          h('p', { class: 'meta' }, `From: ${MANAGER} \u00b7 Subject: The Conversation`),
+          h('p', {}, 'Great news! I can offer you a PAID position. Minimum wage. Same desk. Still no phone.'),
+          h('div', { class: 'row' },
+            h('button', { class: 'btn', 'data-testid': 'accept-offer', onclick: () => app.set(acceptOffer(state)) }, 'Accept the offer'),
+            h('button', { class: 'btn primary', onclick: () => openApp(app, 'jobs') }, 'Check the job board first')))
+        : memo && h('div', {},
+          h('p', { class: 'meta' }, `From: ${MANAGER} \u00b7 Subject: Day ${open}`),
+          h('p', {}, memo.memo),
+          memo.rule && h('p', { class: 'rule' }, `NEW RULE: ${memo.rule}`))),
   );
 }
 
-/** One page of the runbook as it stands now: the old page, or yours if you've rewritten it. */
-export interface RunbookPage {
-  title: string;
-  status: PageStatus;
-  text: string;
-  /** What the old runbook said, before your note replaced it. */
-  old?: string;
-  /** A page for one of your tools (it starts blank), not one of the old problems. */
-  tool?: string;
-}
+/** The IT Service Policy: the house rules every ticket is handled by. Each ticket says which one applies. */
+const policy = () => h('div', { class: 'policy', 'data-testid': 'policy' },
+  h('p', { class: 'meta' }, 'Burrow & Co. IT Service Policy. Rev 1 (written by you, because Sam never did).'),
+  h('ol', { class: 'policy-list' }, ...POLICY.map((rule) => h('li', {}, rule))));
 
-/** Every page, in order: the old problems first, then a page for each tool you've been given. It grows as you go. */
-export function runbookPages(state: GameState): RunbookPage[] {
-  const right = (notes: { text: string; right?: true }[]) => notes.find((n) => n.right)?.text ?? '';
-  return [
-    ...ISSUES.map((issue) => {
-      const status = state.runbook[issue.id] ?? issue.page.status;
-      return { title: issue.title, status, text: status === 'yours' ? right(issue.notes) : issue.page.text, old: issue.page.text };
-    }),
-    ...TOOLS.filter((tool) => state.tools.includes(tool.id)).map((tool): RunbookPage => {
-      const yours = state.runbook[`tool:${tool.id}`] === 'yours';
-      return { title: tool.name, status: yours ? 'yours' : 'missing', text: yours ? right(tool.notes) : '(No page yet. Use it once, then write it up.)', tool: tool.id };
-    }),
-  ];
+/** Sam's Recycle Bin: what Sam deleted on the way out, until you empty it. */
+const BINNED: [string, string, string][] = [
+  ['\u{1F4C4}', 'passwords_FINAL_v2.txt', 'Never store passwords in a file. Sam knew. Sam did it anyway.'],
+  ['\u2699', 'backup_DO_NOT_DELETE.bat', 'The server backup script. It ran every night. Until Sam deleted it.'],
+  ['\u{1F4DD}', 'resignation_letter_draft7.doc', 'Draft seven. The first six were angrier.'],
+  ['\u{1F4CA}', 'budget_2019_REAL.xls', 'Next to budget_2019.xls. Different numbers.'],
+  ['\u{1F431}', 'cat.gif', 'A cat falling off a printer.'],
+];
+
+function trash(app: App): HTMLElement {
+  const { ui } = app;
+  if (ui.trashEmptied) return h('p', { class: 'meta', 'data-testid': 'trash' }, 'The Recycle Bin is empty.');
+  return h('div', { class: 'trash', 'data-testid': 'trash' },
+    h('ul', { class: 'trash-list' }, ...BINNED.map(([glyph, name, about]) => h('li', {},
+      h('span', { class: 'glyph', 'aria-hidden': 'true' }, glyph), h('strong', {}, name), h('span', { class: 'meta' }, about)))),
+    h('div', { class: 'row' },
+      h('span', { class: 'meta' }, `${BINNED.length} objects`),
+      h('button', { class: 'btn', 'data-testid': 'empty-trash', onclick: () => { ui.trashEmptied = true; app.rerender(); } }, 'Empty Recycle Bin')));
 }
 
 function runbook(app: App): HTMLElement {
@@ -96,17 +111,5 @@ function jobs(app: App): HTMLElement {
   }));
 }
 
-const BODIES: Record<Panel, (app: App) => HTMLElement> = { inbox, runbook, resume, jobs, directory: directoryConsole, intranet };
-
-export function panel(app: App, which: Panel): HTMLElement {
-  const close = () => { app.ui.panel = undefined; app.rerender(); };
-  return h('section', {
-    class: `window window-${which}`, role: 'dialog', 'aria-label': TITLES[which], 'data-testid': `panel-${which}`,
-    onkeydown: (e) => { if ((e as KeyboardEvent).key === 'Escape') close(); },
-  },
-    h('header', { class: 'titlebar' },
-      h('span', {}, TITLES[which]),
-      h('button', { class: 'close', 'aria-label': 'Close', 'data-autofocus': true, onclick: close }, '×')),
-    h('div', { class: 'window-body' }, BODIES[which](app)),
-  );
-}
+/** What's inside each document and program window, apart from the Service Desk and Burrow Chat. */
+export const BODIES: Partial<Record<AppId, (app: App) => HTMLElement>> = { mail, runbook, policy, resume, jobs, directory: directoryConsole, okta: oktopus, browser, trash };

@@ -1,8 +1,32 @@
 import type { Department } from '../game/directory.ts';
 import type { GameState } from '../game/rules.ts';
+import type { OktaPage } from './oktopus.ts';
 import type { Power } from './power.ts';
 
-export type Panel = 'inbox' | 'runbook' | 'resume' | 'jobs' | 'directory' | 'intranet';
+/** The programs on the computer, each in its own window. */
+export type AppId = 'desk' | 'chat' | 'directory' | 'okta' | 'browser' | 'mail' | 'runbook' | 'policy' | 'resume' | 'jobs' | 'trash';
+
+/** An open window: where it is, and whether it's minimised to the taskbar or maximised. */
+export interface Win {
+  id: AppId;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  min?: boolean;
+  max?: boolean;
+}
+
+/** A notification in the corner of the screen. Clicking it opens `app`, on `ticket` if there is one. */
+export interface Toast {
+  id: number;
+  app: AppId;
+  from: string;
+  text: string;
+  ticket?: string;
+  /** Already on screen: it slid in once and shouldn't slide in again on every redraw. */
+  shown?: boolean;
+}
 
 /** Screen-only state that isn't worth saving. */
 export interface Ui {
@@ -27,19 +51,37 @@ export interface Ui {
   power: Power;
   /** When (performance.now()) you stepped away from the computer, to know if it has locked or gone to sleep. Cleared when you sit back down. */
   leftAt?: number;
-  panel?: Panel;
-  /** Tickets or chat, on the left of the help desk. */
-  tab?: 'tickets' | 'chat';
   /** The ticket open on the right of the desk. */
   selected?: string;
   /** The chat open on the right, when you're on the chat tab. */
   chat?: string;
-  /** Active Registry: the folder you're looking in (all of them when unset), the account picked, and the Reset Password box. */
+  /** Active Directory: the folder you're looking in (all of them when unset), the account picked, and the Reset Password box. */
   dirOu?: Department;
   dirUser?: string;
   dirReset?: { mustChange: boolean; unlock: boolean };
-  /** Active Registry's last message, e.g. "The password for Dot has been changed." */
+  /** Active Directory's last message, e.g. "The password for Dot has been changed." */
   dirSaid?: string;
+  /** Open windows, back to front. */
+  windows: Win[];
+  /** The Start menu is open. */
+  startOpen?: boolean;
+  /** Notifications showing in the corner, newest last. */
+  toasts: Toast[];
+  /** Oktopus: the page you're on, and the person, app or identity check you've opened there. */
+  oktaPage?: OktaPage;
+  oktaUser?: string;
+  oktaApp?: string;
+  oktaVerify?: string;
+  /** Burrow Chat: a channel you're reading, or a direct message (ui.chat) when unset. */
+  channel?: 'general' | 'service-desk';
+  /** The mail you're reading, by day (the newest when unset). */
+  mailDay?: number;
+  /** Ridge: open tabs (each with its own back/forward history), the one in front, and announcements you've liked. */
+  tabs?: { history: string[]; at: number }[];
+  tab?: number;
+  liked?: string[];
+  /** You emptied the Recycle Bin. Sam's files are gone for good. */
+  trashEmptied?: boolean;
   /** Player pause: stops the office clock. */
   paused: boolean;
 }

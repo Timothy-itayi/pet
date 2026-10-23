@@ -4,7 +4,7 @@ import type { App } from './app.ts';
 import { h } from './dom.ts';
 
 /**
- * Active Registry Users and Computers: the office's old directory console, laid out like the real thing.
+ * Active Directory Users and Computers: the office's old directory console, laid out like the real thing.
  * Folders on the left, accounts on the right, and the jobs IT does every day on the toolbar.
  */
 

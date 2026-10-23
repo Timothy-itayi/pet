@@ -30,6 +30,8 @@ export const AREAS = ['Kitchen', 'Meeting room', 'Finance corner', 'Open office'
 export type Area = (typeof AREAS)[number];
 
 export interface Fix {
+  /** Too serious to keep quiet: whoever it was for goes to Mr. Grisby about it. */
+  grave?: true;
   id: string;
   label: string;
   /** Shown when the player picks this fix and it's wrong. */
@@ -45,9 +47,17 @@ export interface Detail {
 /** 'yours' means you rewrote the page with an internal note. */
 export type PageStatus = 'ok' | 'outdated' | 'missing' | 'yours';
 
+/**
+ * Problems fixed in an admin console rather than by picking from a list. Active Directory: unlock, reset, disable.
+ * Oktopus: setting Marketing up, giving them their app, and a joiner, mover, leaver and lost phone.
+ */
+export type ConsoleFix = 'unlock' | 'reset' | 'disable' | 'okta-setup' | 'okta-app' | 'joiner' | 'mover' | 'leaver' | 'mfa';
+
 /** A kind of problem. Several tickets can be the same issue, which is what makes your notes useful. */
 export interface Issue {
   id: string;
+  /** The house rule (1-based, in POLICY) for how this kind of problem is handled. */
+  rule: number;
   title: string;
   skill: Skill;
   /** The old runbook's page for this issue, as you first find it. */
@@ -55,10 +65,10 @@ export interface Issue {
   fixes: Fix[];
   correctFix: string;
   /**
-   * Fixed in Active Registry rather than by picking from the list: unlock the account, or reset the password.
+   * Fixed in Active Directory rather than by picking from the list: unlock the account, or reset the password.
    * The ticket checks the account itself when you ask them to try again.
    */
-  console?: 'unlock' | 'reset';
+  console?: ConsoleFix;
   /** Internal-note choices after fixing. Exactly one is right. */
   notes: { text: string; right?: true }[];
   why: string;

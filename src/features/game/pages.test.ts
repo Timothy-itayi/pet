@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { ISSUES, TOOLS } from '../game/data.ts';
-import { newGame } from '../game/rules.ts';
-import { runbookPages } from './panels.ts';
+import { ISSUES, TOOLS } from './data.ts';
+import { newGame } from './rules.ts';
+import { runbookPages } from './pages.ts';
 
 describe('the runbook pages', () => {
   it('start as the old pages, one per problem', () => {

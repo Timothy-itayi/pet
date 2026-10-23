@@ -1,14 +1,13 @@
-import { COMPANY, DAYS, TOOLS, VILLAGERS } from '../game/data.ts';
-import { ticketById, type GameState } from '../game/rules.ts';
+import { COMPANY, DAYS, TOOLS } from '../game/data.ts';
+import { weekday, weekOf, type GameState } from '../game/rules.ts';
 import { ON_THE_WALL, ROOM_ITEMS, SIPS } from '../room3d/items.ts';
 import { closeInspect, goTo, inspectItem, isInspecting, pressMouse, sipMug, spinChair, swayPlant, turnInspected } from '../room3d/view.ts';
 import type { App } from './app.ts';
 import { closeBook, flipBook, openBook } from './book.ts';
+import { announceArrival } from './desktop.ts';
 import { clockText, h } from './dom.ts';
-import { chime } from './sound.ts';
 import { powerAway } from './power.ts';
 
-const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 /** What an item says, including loot in the tray. */
 function describe(app: App, id: string): { label: string; says: string } | undefined {
@@ -58,24 +57,18 @@ export function leaveComputer(app: App): void {
   const { ui } = app;
   ui.view = 'room';
   ui.shot = 'overview';
-  ui.panel = undefined;
+  ui.startOpen = false;
   ui.leftAt ??= performance.now();
   app.rerender();
 }
 
 /**
- * Something new has turned up: a ticket in the queue or a message on chat. The computer dings, and if you're
- * away from it, the room's caption says who it's from, so you know when to head back.
+ * Something new has turned up. Burrow Chat pops up a notification on the computer, and if you're away from it,
+ * the room's caption says who it's from, so you know when to head back.
  */
 export function announce(app: App, before: GameState, after: GameState): void {
-  const seen = new Set([...before.queue, ...before.chats]);
-  const id = [...after.queue, ...after.chats].findLast((x) => !seen.has(x));
-  if (!id) return;
-  chime();
-  if (app.ui.view === 'computer') return;
-  const t = ticketById(id);
-  const who = VILLAGERS[t.who].name;
-  app.ui.note = after.chats.includes(id) ? `Ping. ${who} sent you a message on Burrow Chat.` : `Ding. New ticket from ${who}: \u201C${t.title}\u201D.`;
+  const line = announceArrival(app, before, after);
+  if (line && app.ui.view !== 'computer') app.ui.note = line;
 }
 
 /** Tap the mouse from where you stand: the left button clicks, and a sleeping computer wakes up. The camera stays put. */
@@ -146,7 +139,7 @@ export function computerHud(app: App): HTMLElement {
 /** Keys in the room: Esc puts things back or steps back; arrows turn what you're holding. */
 export function roomKeys(app: App, e: KeyboardEvent): void {
   const { ui } = app;
-  if (ui.view !== 'room' || ui.panel) return;
+  if (ui.view !== 'room') return;
   // Reading the runbook: arrows turn the pages, Esc closes it (you're still holding it).
   if (ui.book !== undefined) {
     if (e.key === 'Escape') closeBook(app);
@@ -170,7 +163,7 @@ export function roomKeys(app: App, e: KeyboardEvent): void {
  */
 export function roomHud(app: App): HTMLElement {
   const { state, ui } = app;
-  const day = state.day > DAYS ? 'Saturday' : `${WEEKDAYS[state.day - 1]}, day ${state.day}`;
+  const day = state.day > DAYS ? 'Saturday' : `${weekday(state.day)}, week ${weekOf(state.day)}`;
   const dropped = TOOLS.find((t) => t.id === state.drop);
   const held = ui.inspecting ? describe(app, ui.inspecting) : undefined;
   const intro = ui.note ?? (dropped ? `Something new in your ticket tray. ${dropped.gift}`
