@@ -43,6 +43,7 @@ function statusBar(app: App): HTMLElement {
     state.escort && h('span', { class: 'where-you-are' }, `With ${VILLAGERS[ticketById(state.escort).who].name}`),
     h('span', {}, `Savings ${money(state.savings)}`),
     h('button', { class: 'btn small', onclick: () => { app.ui.panel = 'runbook'; app.rerender(); } }, 'Runbook'),
+    state.place === 'computer' && h('button', { class: 'btn small', 'data-testid': 'open-directory', onclick: () => { app.ui.panel = 'directory'; app.rerender(); } }, 'Active Registry'),
     state.place === 'computer' && h('button', { class: 'btn small', onclick: () => app.set(goTo(state, 'desktop')) }, 'Inbox & jobs'),
     state.place === 'computer' && h('button', { class: 'btn small', 'data-testid': 'back-to-desk', onclick: () => leaveComputer(app) }, 'Back to desk'),
   );
@@ -195,6 +196,14 @@ export function ticketView(app: App, t: Ticket): HTMLElement {
         h('h3', { id: 'fix-heading', class: 'small-heading' }, 'Fix it'),
         tool && h('button', { class: 'btn fix from-tool', 'data-testid': 'fix-tool', onclick: () => app.set(fix(state, t.id, 'tool')) },
           tool.fixLabel, h('span', { class: 'from-note-tag' }, state.runbook[`tool:${tool.id}`] === 'yours' ? tool.name : `${tool.name}: not in the runbook yet`)),
+        // Account tickets are fixed in Active Registry; here you open it on their account, then ask them to try again.
+        issue.console && h('p', { class: 'meta' }, 'Sort out their account in Active Registry, then ask them to try again.'),
+        issue.console && h('button', {
+          class: 'btn fix', 'data-testid': 'open-registry',
+          onclick: () => { Object.assign(app.ui, { panel: 'directory', dirOu: undefined, dirUser: t.who, dirReset: undefined, dirSaid: undefined }); app.rerender(); },
+        }, 'Open Active Registry on their account'),
+        issue.console && h('button', { class: `btn fix${known ? ' from-note' : ''}`, 'data-testid': 'fix-console', onclick: () => app.set(fix(state, t.id, 'console')) },
+          'Ask them to try signing in again', known && h('span', { class: 'from-note-tag' }, 'Your note says how')),
         ...fixes.map((f) => h('button', {
           class: `btn fix${known && f.id === issue.correctFix ? ' from-note' : ''}`, 'data-testid': `fix-${f.id}`,
           onclick: () => app.set(fix(state, t.id, f.id)),

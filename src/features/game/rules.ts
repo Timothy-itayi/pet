@@ -3,6 +3,7 @@ import {
   MESSY_SLIPS, OPEN, PATIENCE, REPLIES, REPLY_WITHIN, START_SAVINGS, TICKET_LANDS_AFTER, TICKETS, UPDATE_EVERY, VILLAGERS,
   WORKAROUND_RETURNS_AFTER, XP, type VillagerId,
 } from './data.ts';
+import { MINUTES_A_DAY, newAccounts, type Account } from './directory.ts';
 import { MOODS, type Issue, type Job, type Mood, type PageStatus, type Relation, type Skill, type Ticket, type Tool } from './types.ts';
 
 export type Phase = 'boot' | 'desktop' | 'desk' | 'dayEnd' | 'ending';
@@ -63,7 +64,7 @@ export interface Today {
 }
 
 export interface GameState {
-  version: 8;
+  version: 9;
   /** 1..DAYS while working; DAYS + 1 once the week is over. */
   day: number;
   phase: Phase;
@@ -89,6 +90,10 @@ export interface GameState {
   runbook: Record<string, PageStatus>;
   /** Tools on your desk. */
   tools: string[];
+  /** Everyone's account in Active Registry, by login. */
+  accounts: Record<string, Account>;
+  /** How many Burrow Intranet posts you've read. */
+  newsRead: number;
   /** A tool that turned up on your desk this morning, to show you when you sit down. */
   drop?: string;
   /** Fixed when the game starts, so the same choices give the same loot. */
@@ -185,6 +190,9 @@ function arrive(d: GameState, id: string, at: number): void {
   const window = !onChat ? REPLY_WITHIN[t.priority] : t.via === 'walkup' ? REPLY_WITHIN.walkup : REPLY_WITHIN.chat;
   // On chat they never start with the problem. They start by being friendly.
   const opener = onChat && !before ? [{ from: 'them' as const, text: v.opener, at }] : [];
+  // A lockout is real: their account in Active Registry is locked until you unlock it.
+  const account = d.accounts[t.who];
+  if (!before && account && issueOf(t).console === 'unlock') account.locked = true;
   d.tickets[id] = {
     status: 'new',
     mood,
@@ -319,7 +327,9 @@ export function newGame(seed = Math.floor(Math.random() * 2 ** 31)): GameState {
   const s: GameState = {
     seed,
     tools: [],
-    version: 8,
+    accounts: newAccounts(),
+    newsRead: 0,
+    version: 9,
     day: 1,
     phase: 'boot',
     clock: OPEN,
@@ -373,26 +383,49 @@ export function reply(s: GameState, id: string): GameState {
   });
 }
 
+/**
+ * What's still wrong with someone's account for an Active Registry ticket, in a sentence; undefined once it's sorted.
+ * Asked when you tell them to try signing in again.
+ */
+export function accountProblem(s: GameState, t: Ticket): string | undefined {
+  const fixBy = issueOf(t).console;
+  const a = s.accounts[t.who];
+  if (!fixBy || !a) return undefined;
+  if (!a.enabled) return 'Their account is disabled, so nothing will let them in. Enable it again in Active Registry.';
+  if (fixBy === 'unlock') return a.locked ? 'Still locked out. Find their account in Active Registry and unlock it.' : undefined;
+  const resetSinceTheyAsked = (a.resetAt ?? -1) >= t.day * MINUTES_A_DAY + clockTime(t.at);
+  if (!resetSinceTheyAsked) return 'They still don\u2019t have a password that works. Reset it in Active Registry.';
+  if (!a.mustChange) return 'You reset it, but didn\u2019t tick \u201CUser must change password at next logon\u201D. Now you know their password and they\u2019ll keep it. Reset it again so they choose their own.';
+  if (a.locked) return 'The new password won\u2019t work while the account is locked out.';
+  return undefined;
+}
+
 export function fix(s: GameState, id: string, fixId: string): GameState {
   const t = workable(s, id);
   if (!t || ticketState(s, id).tried.includes(fixId)) return s;
   const issue = issueOf(t);
   const tool = fixId === 'tool' ? toolFor(s, t) : undefined;
-  const chosen = tool ? { id: 'tool', label: tool.fixLabel, fail: undefined } : issue.fixes.find((f) => f.id === fixId);
+  // An Active Registry ticket has one move here: ask them to try again. The account itself says if it worked.
+  const problem = issue.console && fixId === 'console' ? accountProblem(s, t) : undefined;
+  const chosen = tool ? { id: 'tool', label: tool.fixLabel, fail: undefined }
+    : issue.console ? (fixId === 'console' ? { id: 'console', label: 'Asked them to try signing in again', fail: problem } : undefined)
+    : issue.fixes.find((f) => f.id === fixId);
   if (!chosen) return s;
   return act(s, (d) => {
     const st = ticketState(d, id);
     st.status = 'open';
     st.messages.push({ from: 'you', text: `${chosen.label}.`, at: d.clock });
-    if (tool || fixId === issue.correctFix) {
-      const minutes = tool ? COST.toolFix : isKnown(d, t) ? COST.knownFix : COST.fix;
+    if (tool || (issue.console ? !problem : fixId === issue.correctFix)) {
+      // The real work happened in Active Registry; checking it takes a moment.
+      const minutes = tool ? COST.toolFix : issue.console || isKnown(d, t) ? COST.knownFix : COST.fix;
       close(d, t, 'fix', XP.fix);
       const card = d.outcomes.at(-1);
       if (tool && card) card.tool = tool.id;
       advance(d, minutes);
       return;
     }
-    st.tried.push(fixId);
+    // You can ask again after fixing the account, so that move never gets used up.
+    if (!issue.console) st.tried.push(fixId);
     d.today.wrongFixes += 1;
     st.messages.push({ from: 'them', text: 'It’s still not working.', at: d.clock });
     d.notice = { ticketId: id, text: chosen.fail ?? 'That didn’t work.' };
@@ -401,6 +434,32 @@ export function fix(s: GameState, id: string, fixId: string): GameState {
     work(d, t, COST.wrongFix);
   });
 }
+
+/** Work in Active Registry on someone's account. On the office clock, it takes a few minutes. */
+function administer(s: GameState, login: string, minutes: number, change: (a: Account, d: GameState) => void): GameState {
+  if (!s.accounts[login]) return s;
+  return act(s, (d) => {
+    const a = d.accounts[login];
+    if (!a) return;
+    change(a, d);
+    if (d.phase === 'desk') advance(d, minutes);
+  });
+}
+
+export const unlockAccount = (s: GameState, login: string) => administer(s, login, COST.unlock, (a) => { a.locked = false; });
+
+export const setEnabled = (s: GameState, login: string, enabled: boolean) => administer(s, login, COST.unlock, (a) => { a.enabled = enabled; });
+
+/** Reset someone's password to a temporary one, as the Reset Password box does. */
+export const resetPassword = (s: GameState, login: string, { mustChange, unlock }: { mustChange: boolean; unlock: boolean }) =>
+  administer(s, login, COST.reset, (a, d) => {
+    a.resetAt = d.day * MINUTES_A_DAY + d.clock;
+    a.mustChange = mustChange;
+    if (unlock) a.locked = false;
+  });
+
+/** Mark every post on the Burrow Intranet up to today as read. */
+export const readNews = (s: GameState, posts: number): GameState => (s.newsRead >= posts ? s : { ...s, newsRead: posts });
 
 export function workaround(s: GameState, id: string): GameState {
   const t = ticketWork(s, id);
@@ -566,10 +625,12 @@ export function parseSave(raw: string | null): GameState | undefined {
   if (!raw) return undefined;
   try {
     const s = JSON.parse(raw) as Partial<GameState>;
+    // Saves from before Active Registry and the intranet: same game, with a fresh directory.
+    if ((s.version as number) === 8) Object.assign(s, { version: 9, accounts: newAccounts(), newsRead: 0 });
     const known = new Set(TICKETS.map((t) => t.id));
     const isObject = (x: unknown) => typeof x === 'object' && x !== null;
     const ok =
-      s.version === 8 && typeof s.seed === 'number' && Array.isArray(s.tools) && (s.place === 'computer' || s.place === 'floor') &&
+      s.version === 9 && typeof s.seed === 'number' && typeof s.newsRead === 'number' && Array.isArray(s.tools) && (s.place === 'computer' || s.place === 'floor') &&
       (s.escort === undefined || known.has(s.escort)) &&
       Array.isArray(s.chats) && s.chats.every((id) => known.has(id) && isObject(s.tickets?.[id])) &&
       typeof s.day === 'number' && s.day >= 1 && s.day <= DAYS + 1 &&
@@ -578,7 +639,7 @@ export function parseSave(raw: string | null): GameState | undefined {
       Array.isArray(s.arriving) && s.arriving.every((a) => known.has(a.id)) &&
       Array.isArray(s.returning) && s.returning.every((r) => known.has(r.id)) &&
       Array.isArray(s.outcomes) &&
-      [s.tickets, s.bonds, s.xp, s.runbook, s.today].every(isObject);
+      [s.tickets, s.bonds, s.xp, s.runbook, s.today, s.accounts].every(isObject);
     return ok ? (s as GameState) : undefined;
   } catch {
     return undefined;

@@ -1,7 +1,8 @@
+import type { Department } from '../game/directory.ts';
 import type { GameState } from '../game/rules.ts';
 import type { Power } from './power.ts';
 
-export type Panel = 'inbox' | 'runbook' | 'resume' | 'jobs';
+export type Panel = 'inbox' | 'runbook' | 'resume' | 'jobs' | 'directory' | 'intranet';
 
 /** Screen-only state that isn't worth saving. */
 export interface Ui {
@@ -33,6 +34,12 @@ export interface Ui {
   selected?: string;
   /** The chat open on the right, when you're on the chat tab. */
   chat?: string;
+  /** Active Registry: the folder you're looking in (all of them when unset), the account picked, and the Reset Password box. */
+  dirOu?: Department;
+  dirUser?: string;
+  dirReset?: { mustChange: boolean; unlock: boolean };
+  /** Active Registry's last message, e.g. "The password for Dot has been changed." */
+  dirSaid?: string;
   /** Player pause: stops the office clock. */
   paused: boolean;
 }

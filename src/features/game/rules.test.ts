@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { CHAT_LATER, CLOSE, DAILY_COST, DAYS, GOAL_VOUCHER, REPLIES, START_SAVINGS, VILLAGERS } from './data.ts';
 import {
-  acceptOffer, apply, askForTicket, clockTime, fix, goHome, goNow, goTo, issueOf, later, newGame, next, noteTarget, parseSave,
-  pushBack, relation, reply, tick, ticketById, ticketState, workaround, writeNote, type GameState,
+  accountProblem, acceptOffer, apply, askForTicket, clockTime, fix, goHome, goNow, goTo, issueOf, later, newGame, next, noteTarget, parseSave,
+  pushBack, relation, reply, resetPassword, setEnabled, tick, ticketById, ticketState, unlockAccount, workaround, writeNote, type GameState,
 } from './rules.ts';
 
 type Act = (s: GameState, id: string) => GameState;
@@ -10,12 +10,18 @@ const atDesk = () => goTo(newGame(), 'desk');
 /** Let the office clock run to a given time. */
 const until = (s: GameState, hm: string) => tick(s, clockTime(hm) - s.clock);
 const correct = (id: string) => issueOf(ticketById(id)).correctFix;
+/** For tickets fixed in Active Registry, do the account work first, the right way. */
+function admin(s: GameState, id: string): GameState {
+  const t = ticketById(id);
+  const by = issueOf(t).console;
+  return by === 'unlock' ? unlockAccount(s, t.who) : by === 'reset' ? resetPassword(s, t.who, { mustChange: true, unlock: true }) : s;
+}
 /** Do something about a ticket or chat: for a chat, say "on my way" first and go over in person. */
 function handle(s: GameState, id: string, act: Act): GameState {
   if (s.chats.includes(id)) s = goNow(s, id);
   return next(act(s, id));
 }
-const solve = (s: GameState, id: string) => handle(s, id, (x, i) => fix(x, i, correct(i)));
+const solve = (s: GameState, id: string) => handle(s, id, (x, i) => fix(admin(x, i), i, correct(i)));
 /** Run the clock to a time, dealing with everything that turns up on the way except the one under test. */
 function serveUntil(s: GameState, hm: string, except?: string): GameState {
   const target = clockTime(hm);
@@ -268,11 +274,47 @@ describe('money and endings', () => {
 
   it('a good week can get you hired by the library, but not Big Ocean yet', () => {
     let s = newGame();
-    const fixAndNote: Act = (x, id) => handle(x, id, (y, i) => writeNote(fix(y, i, correct(i)), 0));
+    const fixAndNote: Act = (x, id) => handle(x, id, (y, i) => writeNote(fix(admin(y, i), i, correct(i)), 0));
     while (s.day <= DAYS) s = playDay(s, fixAndNote);
     expect(apply(s, 'ocean')).toBe(s);
     expect(apply(s, 'library').ending).toBe('hired');
     expect(acceptOffer(s).ending).toBe('stay');
+  });
+});
+
+describe('Active Registry', () => {
+  /** Day 3, with Otis's lockout ticket in the queue. */
+  const otisLocked = () => {
+    let s = newGame();
+    while (s.day < 3) s = goHome(serveUntil(goTo(s, 'desk'), '17:00'));
+    return serveUntil(goTo(s, 'desk'), '15:41', 't306');
+  };
+
+  it('locks the account for real when a lockout ticket arrives, and only unlocking fixes it', () => {
+    let s = otisLocked();
+    expect(s.accounts.otis?.locked).toBe(true);
+    s = fix(s, 't306', 'console');
+    expect(s.notice?.text).toMatch(/Still locked out/);
+    expect(ticketState(s, 't306').status).toBe('open');
+    s = fix(unlockAccount(s, 'otis'), 't306', 'console');
+    expect(s.outcomes.at(-1)).toMatchObject({ ticketId: 't306', kind: 'fix' });
+  });
+
+  it('a forgotten password needs a reset that makes them choose their own', () => {
+    let s = newGame();
+    s = goHome(serveUntil(goTo(s, 'desk'), '17:00'));
+    s = serveUntil(goTo(s, 'desk'), '16:01', 't206');
+    expect(accountProblem(s, ticketById('t206'))).toMatch(/Reset it/);
+    s = resetPassword(s, 'biscuit', { mustChange: false, unlock: true });
+    expect(accountProblem(s, ticketById('t206'))).toMatch(/must change password at next logon/);
+    s = resetPassword(s, 'biscuit', { mustChange: true, unlock: true });
+    expect(accountProblem(s, ticketById('t206'))).toBeUndefined();
+    expect(setEnabled(s, 'biscuit', false).accounts.biscuit?.enabled).toBe(false);
+    expect(accountProblem(setEnabled(s, 'biscuit', false), ticketById('t206'))).toMatch(/disabled/);
+  });
+
+  it('starts with Sam\u2019s old account still switched on', () => {
+    expect(newGame().accounts.sam).toMatchObject({ enabled: true, title: 'IT Administrator' });
   });
 });
 
@@ -283,5 +325,10 @@ describe('saves', () => {
     expect(parseSave('{nope')).toBeUndefined();
     expect(parseSave(JSON.stringify({ ...s, version: 7 }))).toBeUndefined();
     expect(parseSave(JSON.stringify({ ...s, queue: ['not-a-ticket'] }))).toBeUndefined();
+    // A save from before Active Registry still loads, with everyone's accounts as Sam left them.
+    const older: Omit<Partial<GameState>, 'version'> & { version: number } = { ...s, version: 8 };
+    delete older.accounts;
+    delete older.newsRead;
+    expect(parseSave(JSON.stringify(older))).toMatchObject({ version: 9, newsRead: 0, accounts: newGame().accounts });
   });
 });
