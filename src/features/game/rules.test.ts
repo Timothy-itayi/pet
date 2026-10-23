@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { CLOSE, DAILY_COST, DAYS, GOAL_VOUCHER, ISSUES, REPLIES, START_SAVINGS, THANKS, TICKETS, TOOLS, VILLAGERS } from './data.ts';
+import { CLOSE, DAILY_COST, LOCKUP, DAYS, GOAL_VOUCHER, ISSUES, REPLIES, START_SAVINGS, THANKS, TICKETS, TOOLS, VILLAGERS } from './data.ts';
 import { addApp, addGroup, addRule, assignApp, createFromHr, resetMfa, setActive, updateFromHr } from './identity.ts';
 import { appsOf, groupsOf, newOkta } from './oktopus.ts';
 import {
-  accountProblem, acceptOffer, apply, ask, askForTicket, clockTime, fixFor, goHome, goTo, issueOf, newGame, next, noteProblem, noteTarget, parseSave,
+  accountProblem, acceptOffer, apply, ask, askForTicket, clockOut, clockTime, fixFor, goHome, goTo, issueOf, newGame, next, noteProblem, noteTarget, parseSave,
   pushBack, relation, reply, resetPassword, resolve, setEnabled, suggest, tick, ticketById, ticketState, unlockAccount, workaround, writeNote, type GameState,
 } from './rules.ts';
 
@@ -14,7 +14,7 @@ const until = (s: GameState, hm: string) => tick(s, clockTime(hm) - s.clock);
 const correct = (id: string) => (issueOf(ticketById(id)).console ? 'console' : fixFor(ticketById(id)));
 /** Let the clock run until the caller is done with what you asked, or a card comes up. */
 function waitForCaller(s: GameState, id: string): GameState {
-  while (s.tickets[id]?.caller && s.tickets[id]?.caller?.doing !== 'confirmed' && s.clock < CLOSE && !s.outcomes.length) s = tick(s, 1);
+  while (s.tickets[id]?.caller && s.tickets[id]?.caller?.doing !== 'confirmed' && s.clock < LOCKUP && !s.outcomes.length) s = tick(s, 1);
   return s;
 }
 /** Suggest something and wait to hear how it went. */
@@ -66,6 +66,12 @@ function serveUntil(s: GameState, hm: string, except?: string): GameState {
     s = s.outcomes.length ? next(s) : id ? solve(s, id) : tick(s, Math.min(1, target - s.clock));
   }
   return s;
+}
+/** Deal with everyone until 5pm, then go home on time. */
+function workDay(s: GameState): GameState {
+  s = serveUntil(goTo(s, 'desk'), '17:00');
+  while (s.outcomes.length) s = next(s);
+  return goHome(clockOut(s));
 }
 /** Deal with everyone the moment they turn up, then go home and come back for the next day. */
 function playDay(s: GameState, each: Act = solve): GameState {
@@ -131,14 +137,36 @@ describe('the queue and the clock', () => {
     expect(tick(s, 30)).toBe(s);
   });
 
-  it('ends the day at 5pm and carries anything unresolved over to tomorrow, no crosser', () => {
+  it('ends the day when the building locks at 6 and carries anything unresolved over to tomorrow, no crosser', () => {
     let s = reply(serveUntil(atDesk(), '9:50'), 't102');
     while (s.phase === 'desk') s = s.outcomes.length ? next(s) : tick(reply(s, 't102'), 50); // keep her updated all day
-    expect(s.clock).toBe(CLOSE);
+    expect(s.clock).toBe(LOCKUP);
+    expect(s.today.overtime).toBe(60);
     s = goTo(goHome(s), 'desk');
     expect(s.queue[0]).toBe('t102');
     expect(ticketState(s, 't102').messages[0]?.text).toMatch(/^Still waiting from yesterday/);
     expect(ticketState(s, 't102').mood).toBe(2);
+  });
+});
+
+describe('staying late', () => {
+  it('after 5pm nothing new comes in, but you can finish what you were on, and it counts', () => {
+    let s = until(serveUntil(atDesk(), '16:50', 't102'), '17:00');
+    expect(s.phase).toBe('desk');
+    const waiting = s.queue.length + s.chats.length + s.arriving.length;
+    s = fix(s, 't102', correct('t102'));
+    expect(s.clock).toBeGreaterThan(CLOSE);
+    expect(s.today.resolved).toBeGreaterThan(0);
+    s = next(s);
+    expect(s.queue.length + s.chats.length + s.arriving.length).toBe(waiting - 1);
+  });
+
+  it('you can only go home after 5, and the summary counts your unpaid overtime', () => {
+    let s = until(atDesk(), '16:59');
+    expect(clockOut(s)).toBe(s);
+    s = clockOut(tick(s, 21));
+    expect(s.phase).toBe('dayEnd');
+    expect(s.today.overtime).toBe(20);
   });
 });
 
@@ -372,7 +400,7 @@ describe('Active Directory', () => {
   /** Day 3, with Otis's lockout ticket in the queue. */
   const otisLocked = () => {
     let s = newGame();
-    while (s.day < 3) s = goHome(serveUntil(goTo(s, 'desk'), '17:00'));
+    while (s.day < 3) s = workDay(s);
     return serveUntil(goTo(s, 'desk'), '15:41', 't306');
   };
 
@@ -388,7 +416,7 @@ describe('Active Directory', () => {
 
   it('a forgotten password needs a reset that makes them choose their own', () => {
     let s = newGame();
-    s = goHome(serveUntil(goTo(s, 'desk'), '17:00'));
+    s = workDay(s);
     s = serveUntil(goTo(s, 'desk'), '16:01', 't206');
     expect(accountProblem(s, ticketById('t206'))).toMatch(/Reset it/);
     s = resetPassword(s, 'biscuit', { mustChange: false, unlock: true });
@@ -408,7 +436,7 @@ describe('Oktopus', () => {
   /** A given morning in week 2, with everything before it done properly. */
   function morningOf(day: number): GameState {
     let s = newGame();
-    while (s.day < day) s = goHome(serveUntil(goTo(s, 'desk'), '17:00'));
+    while (s.day < day) s = workDay(s);
     return goTo(s, 'desk');
   }
 

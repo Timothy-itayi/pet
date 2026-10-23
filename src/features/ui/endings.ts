@@ -18,6 +18,7 @@ export function dayEndScreen(app: App): HTMLElement {
       h('dt', {}, 'Complaints to Grisby'), h('dd', { 'data-testid': 'complaints' }, today.complaints),
       h('dt', {}, 'Experience earned'), h('dd', {}, `+${today.xp} XP`),
       h('dt', {}, 'Pay'), h('dd', {}, '$0 (unpaid internship)'),
+      today.overtime > 0 && h('dt', {}, 'Unpaid overtime'), today.overtime > 0 && h('dd', { 'data-testid': 'overtime' }, `${Math.round(today.overtime)} min`),
       today.voucher && h('dt', {}, 'Lunch voucher'), today.voucher && h('dd', {}, `+${money(GOAL_VOUCHER)}`),
       h('dt', {}, 'Bus fare and food'), h('dd', {}, `-${money(DAILY_COST)}`),
       h('dt', {}, 'Savings'), h('dd', { 'data-testid': 'savings' }, money(state.savings)),
