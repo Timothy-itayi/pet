@@ -32,7 +32,7 @@ function mount(into: HTMLElement, screen: HTMLElement, focus: boolean): void {
 const app: App = {
   state,
   // You start each visit looking at the desk. Mid-day, the computer is locked where you left it.
-  ui: { booted: false, view: 'room', shot: 'overview', windows: [], toasts: [], power: state.phase === 'boot' ? 'off' : 'locked', paused: false },
+  ui: { booted: false, view: 'room', shot: 'overview', windows: [], toasts: [], power: state.phase === 'boot' ? 'off' : 'locked' },
   hasSave: saved !== undefined,
   set(next) {
     const { ui } = app;
@@ -89,15 +89,16 @@ const app: App = {
 /** Did this tick change more than the clock? Then redraw; otherwise just move the times on. */
 const bigChange = (a: GameState, b: GameState) =>
   a.phase !== b.phase || a.outcomes.length !== b.outcomes.length || a.queue.join() !== b.queue.join() ||
-  a.chats.join() !== b.chats.join();
+  a.chats.join() !== b.chats.join() || a.notice !== b.notice ||
+  b.queue.some((id) => a.tickets[id]?.messages.length !== b.tickets[id]?.messages.length);
 
-// The office clock: it runs from when you log in until 5pm, and stops while paused, holding something, or in another tab.
+// The office clock: it runs from when you log in until 5pm, and stops while you're holding something or in another tab.
 setInterval(() => {
   const { ui } = app;
   // The computer's own clock runs regardless: left on while you're away, it locks itself and then sleeps, right there on the monitor.
   const power = powerAway(ui.power, ui.leftAt, performance.now());
   if (power !== ui.power) { ui.power = power; app.rerender(); }
-  if (!ui.booted || ui.paused || ui.inspecting || document.hidden) return;
+  if (!ui.booted || ui.inspecting || document.hidden) return;
   const next = tick(app.state, GAME_MINUTES_PER_SECOND);
   if (next === app.state) return;
   if (bigChange(app.state, next)) { announce(app, app.state, next); app.set(next); return; }

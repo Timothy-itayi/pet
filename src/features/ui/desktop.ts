@@ -5,7 +5,7 @@ import { isWeekOver, readNews, scriptFor, ticketById, type GameState } from '../
 import type { App, AppId, Toast, Win } from './app.ts';
 import { browserTitle } from './browser.ts';
 import { chatApp } from './chat.ts';
-import { outcomeCard, pausedCard, serviceDesk } from './desk.ts';
+import { openIncident, outcomeCard, serviceDesk } from './desk.ts';
 import { h } from './dom.ts';
 import { BODIES } from './panels.ts';
 import { leaveComputer } from './roomHud.ts';
@@ -17,7 +17,7 @@ import { chime } from './sound.ts';
  */
 
 const APPS: Record<AppId, { title: string; label: string; glyph: string; w: number; h: number; max?: boolean }> = {
-  desk: { title: 'Burrow Service Desk — Incidents', label: 'Service Desk', glyph: '\u{1F3AB}', w: 900, h: 620, max: true },
+  desk: { title: 'ServiceSoon — Service Desk', label: 'Service Desk', glyph: '\u{1F3AB}', w: 900, h: 620, max: true },
   chat: { title: 'Burrow Chat', label: 'Burrow Chat', glyph: '\u{1F4AC}', w: 780, h: 520 },
   directory: { title: 'Active Directory Users and Computers', label: 'Active Directory', glyph: '\u{1F5C2}', w: 860, h: 480 },
   okta: { title: 'Oktopus Admin \u2014 Ridge', label: 'Oktopus Admin', glyph: '\u{1F419}', w: 940, h: 640, max: true },
@@ -166,16 +166,19 @@ function dismiss(app: App, id: number): void {
 
 function openToast(app: App, t: Toast): void {
   app.ui.toasts = app.ui.toasts.filter((x) => x.id !== t.id);
-  if (t.ticket && t.app === 'desk') app.ui.selected = t.ticket;
+  if (t.ticket && t.app === 'desk') { openIncident(app, t.ticket); return; }
   if (t.ticket && t.app === 'chat') { app.ui.chat = t.ticket; app.ui.channel = undefined; }
   openApp(app, t.app);
 }
 
-/** Something new has turned up: Burrow Chat announces a ticket, or someone messages you directly. */
+/**
+ * Something new has turned up: Burrow Chat announces a ticket, someone messages you directly, or a caller gets
+ * back to you on their incident.
+ */
 export function announceArrival(app: App, before: GameState, after: GameState): string | undefined {
   const seen = new Set([...before.queue, ...before.chats]);
   const id = [...after.queue, ...after.chats].findLast((x) => !seen.has(x));
-  if (!id) return undefined;
+  if (!id) return announceReply(app, before, after);
   chime();
   const t = ticketById(id);
   const who = VILLAGERS[t.who].name;
@@ -184,6 +187,16 @@ export function announceArrival(app: App, before: GameState, after: GameState): 
     ? { app: 'chat', from: `Burrow Chat · ${who}`, text: ticketStateText(after, id) ?? 'Sent you a message', ticket: id }
     : { app: 'desk', from: 'Burrow Chat · #service-desk', text: `New ticket from ${who}: ${t.title}`, ticket: id });
   return direct ? `Ping. ${who} sent you a message on Burrow Chat.` : `Ding. New ticket from ${who}: “${t.title}”.`;
+}
+
+function announceReply(app: App, before: GameState, after: GameState): string | undefined {
+  const id = after.queue.find((x) => (after.tickets[x]?.messages.length ?? 0) > (before.tickets[x]?.messages.length ?? 0));
+  const said = id && after.tickets[id]?.messages.at(-1);
+  if (!id || !said || said.from !== 'them') return undefined;
+  chime();
+  const who = VILLAGERS[ticketById(id).who].name;
+  notify(app, { app: 'desk', from: `ServiceSoon \u00b7 ${who} replied`, text: said.text, ticket: id });
+  return `Ding. ${who} replied on their ticket.`;
 }
 
 /** What they said first: on chat, people start by being friendly, not with the problem. */
@@ -296,7 +309,7 @@ export function desktopScreen(app: App): HTMLElement {
     toasts(app),
     ui.startOpen && startMenu(app),
     taskbar(app),
-    outcome ? outcomeCard(app, outcome) : ui.paused && state.phase === 'desk' && pausedCard(app),
+    outcome && outcomeCard(app, outcome),
   );
   // Clicking anywhere else closes the Start menu, like it does on a real computer.
   screen.addEventListener('pointerdown', (e) => {

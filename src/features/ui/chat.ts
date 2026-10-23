@@ -4,7 +4,7 @@ import { askForTicket, moodName, ticketById, ticketState, type GameState } from 
 import type { Ticket } from '../game/types.ts';
 import { face } from '../art/sprites.ts';
 import type { App } from './app.ts';
-import { openApp } from './desktop.ts';
+import { openIncident } from './desk.ts';
 import { clockText, h } from './dom.ts';
 
 /**
@@ -26,14 +26,14 @@ function post(who: string, at: string, ...body: (HTMLElement | string | false)[]
 }
 
 function serviceDeskChannel(app: App): HTMLElement[] {
-  const { state, ui } = app;
+  const { state } = app;
   const tickets = announced(state);
   if (!tickets.length) return [h('p', { class: 'chat-empty' }, 'No tickets yet today. The Service Desk bot is waiting.')];
   return tickets.map((t) => {
     const waiting = state.queue.includes(t.id);
     return post('Service Desk', t.at, h('p', {}, `\u{1F3AB} New ticket from ${VILLAGERS[t.who].name}: `, h('strong', {}, t.title)),
       waiting
-        ? h('button', { class: 'btn small', 'data-testid': `open-ticket-${t.id}`, onclick: () => { ui.selected = t.id; openApp(app, 'desk'); } }, 'Open in Service Desk')
+        ? h('button', { class: 'btn small', 'data-testid': `open-ticket-${t.id}`, onclick: () => openIncident(app, t.id) }, 'Open in Service Desk')
         : h('p', { class: 'meta' }, ticketState(state, t.id).status === 'resolved' ? '✔ Resolved' : 'Set to pending'));
   });
 }
@@ -42,13 +42,13 @@ const generalChannel = (app: App) => newsFor(app.state.day).reverse().map((p) =>
 
 /** Where a conversation stands once you've answered it. */
 function after(app: App, t: Ticket): HTMLElement | false {
-  const { state, ui } = app;
+  const { state } = app;
   const st = ticketState(state, t.id);
   if (state.chats.includes(t.id)) return false;
   if (st.status === 'resolved') return h('p', { class: 'chat-status' }, '\u2714 Resolved');
   if (state.queue.includes(t.id)) {
     return h('p', { class: 'chat-status' }, 'Logged as a ticket. ',
-      h('button', { class: 'btn small', 'data-testid': `dm-open-${t.id}`, onclick: () => { ui.selected = t.id; openApp(app, 'desk'); } }, 'Open in Service Desk'));
+      h('button', { class: 'btn small', 'data-testid': `dm-open-${t.id}`, onclick: () => openIncident(app, t.id) }, 'Open in Service Desk'));
   }
   if (state.arriving.some((a) => a.id === t.id)) return h('p', { class: 'chat-status' }, 'Logging a ticket\u2026 it\u2019ll land in your queue soon.');
   return h('p', { class: 'chat-status' }, 'Waiting until tomorrow.');

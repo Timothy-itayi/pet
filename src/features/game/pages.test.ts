@@ -17,7 +17,9 @@ describe('the runbook pages', () => {
     s.runbook[issue.id] = 'yours';
     const page = runbookPages(s)[2];
     expect(page?.status).toBe('yours');
-    expect(page?.text).toBe(issue.notes.find((n) => n.right)?.text);
+    expect(page?.text).toBe(issue.note.example);
+    s.written[issue.id] = 'Restarted it and the updates went in. Fast again.';
+    expect(runbookPages(s)[2]?.text).toBe('Restarted it and the updates went in. Fast again.');
     expect(page?.old).toBe(issue.page.text);
   });
 

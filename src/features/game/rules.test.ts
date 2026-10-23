@@ -1,17 +1,26 @@
 import { describe, expect, it } from 'vitest';
-import { CLOSE, DAILY_COST, DAYS, GOAL_VOUCHER, REPLIES, START_SAVINGS, VILLAGERS } from './data.ts';
+import { CLOSE, DAILY_COST, DAYS, GOAL_VOUCHER, ISSUES, REPLIES, START_SAVINGS, THANKS, TICKETS, TOOLS, VILLAGERS } from './data.ts';
 import { addApp, addGroup, addRule, assignApp, createFromHr, resetMfa, setActive, updateFromHr } from './identity.ts';
 import { appsOf, groupsOf, newOkta } from './oktopus.ts';
 import {
-  accountProblem, acceptOffer, apply, askForTicket, clockTime, fix, goHome, goTo, issueOf, newGame, next, noteTarget, parseSave,
-  pushBack, relation, reply, resetPassword, setEnabled, tick, ticketById, ticketState, unlockAccount, workaround, writeNote, type GameState,
+  accountProblem, acceptOffer, apply, ask, askForTicket, clockTime, fixFor, goHome, goTo, issueOf, newGame, next, noteProblem, noteTarget, parseSave,
+  pushBack, relation, reply, resetPassword, resolve, setEnabled, suggest, tick, ticketById, ticketState, unlockAccount, workaround, writeNote, type GameState,
 } from './rules.ts';
 
 type Act = (s: GameState, id: string) => GameState;
 const atDesk = () => goTo(newGame(), 'desk');
 /** Let the office clock run to a given time. */
 const until = (s: GameState, hm: string) => tick(s, clockTime(hm) - s.clock);
-const correct = (id: string) => issueOf(ticketById(id)).correctFix;
+const correct = (id: string) => (issueOf(ticketById(id)).console ? 'console' : fixFor(ticketById(id)));
+/** Let the clock run until the caller is done with what you asked, or a card comes up. */
+function waitForCaller(s: GameState, id: string): GameState {
+  while (s.tickets[id]?.caller && s.tickets[id]?.caller?.doing !== 'confirmed' && s.clock < CLOSE && !s.outcomes.length) s = tick(s, 1);
+  return s;
+}
+/** Suggest something and wait to hear how it went. */
+const tryIt = (s: GameState, id: string, fixId: string) => waitForCaller(suggest(s, id, fixId), id);
+/** Suggest something and, if they say it worked, resolve it. */
+const fix = (s: GameState, id: string, fixId: string) => resolve(tryIt(s, id, fixId), id);
 /** Marketing on Oktopus the right way: people from HR, a department group filled by a rule. */
 function setUpMarketing(s: GameState): GameState {
   for (const login of ['juniper', 'wren', 'basil']) s = createFromHr(s, login);
@@ -103,9 +112,9 @@ describe('the queue and the clock', () => {
   it('a nemesis let down while Furious complains to the manager, once, and the ticket is still yours', () => {
     const start = atDesk();
     let s = serveUntil({ ...start, bonds: { ...start.bonds, juniper: -2 } }, '9:51', 't102');
-    s = fix(s, 't102', 'router');
+    s = tryIt(s, 't102', 'router');
     expect(ticketState(s, 't102').mood).toBe(3);
-    s = fix(s, 't102', 'isp');
+    s = tryIt(s, 't102', 'isp');
     expect(s.outcomes).toEqual([{ ticketId: 't102', kind: 'complaint', xp: 0, grave: false }]);
     expect(s.today.complaints).toBe(1);
     expect(next(s).queue).toContain('t102');
@@ -162,41 +171,105 @@ describe('chat', () => {
   });
 });
 
-describe('fixing', () => {
-  it('resolves on the right fix and earns experience', () => {
-    const before = dotsTicket();
-    const s = fix(before, 't101', 'jam');
-    expect(s.xp.devices).toBe(2);
-    expect(s.outcomes[0]).toMatchObject({ ticketId: 't101', kind: 'fix', xp: 2 });
-    expect(s.clock - before.clock).toBe(15);
+describe('troubleshooting with the caller', () => {
+  it('asking a question gets their answer a few office minutes later, and you can work on other things meanwhile', () => {
+    const before = dotsTicket(goTo(newGame(0), 'desk')); // a game where Dot takes 5 minutes to answer
+    let s = ask(before, 't101', 'screen');
+    expect(s.clock - before.clock).toBe(2);
+    expect(ticketState(s, 't101')).toMatchObject({ status: 'open', caller: { doing: 'answer', id: 'screen' } });
+    expect(ask(s, 't101', 'tray')).toBe(s); // one thing at a time
+    s = waitForCaller(s, 't101');
+    expect(s.clock - before.clock).toBeGreaterThanOrEqual(2);
+    expect(s.clock - before.clock).toBeLessThanOrEqual(5);
+    expect(ticketState(s, 't101').messages.at(-1)).toMatchObject({ from: 'them', text: 'PAPER JAM \u2013 TRAY 2. Ink: 70%' });
+    expect(ticketState(s, 't101').heard).toEqual(['screen']);
+    s = waitForCaller(ask(s, 't101', 'tray'), 't101'); // nothing to find in Dot's trays: she says so
+    expect(ticketState(s, 't101').messages.at(-1)?.text).toBe('Paper in both trays. Nothing stuck that I can see.');
   });
 
-  it('costs patience for a wrong fix', () => {
-    const s = fix(dotsTicket(), 't101', 'ink');
+  it('someone with an urgent ticket gets back to you quicker', () => {
+    const s = ask(serveUntil(atDesk(), '9:50'), 't102', 'others'); // Juniper's is high priority
+    expect(ticketState(s, 't102').caller).toBeUndefined();
+    expect(ticketState(s, 't102').messages.at(-1)).toMatchObject({ from: 'them', text: 'Everyone else is happily online.' });
+  });
+
+  it('every runbook example would pass as a typed note', () => {
+    for (const { note } of [...ISSUES, ...TOOLS]) expect(noteProblem(note, note.example), note.example).toBeUndefined();
+  });
+
+  it('resolves only once they confirm it works, and earns experience', () => {
+    let s = suggest(dotsTicket(), 't101', 'jam');
+    expect(resolve(s, 't101')).toBe(s);
+    s = waitForCaller(s, 't101');
+    expect(ticketState(s, 't101').caller).toEqual({ doing: 'confirmed', id: 'jam' });
+    expect(ticketState(s, 't101').messages.at(-1)?.text).toBe(THANKS[1]);
+    s = resolve(s, 't101');
+    expect(s.xp.devices).toBe(2);
+    expect(s.outcomes[0]).toMatchObject({ ticketId: 't101', kind: 'fix', xp: 2 });
+  });
+
+  it('costs patience for a wrong suggestion', () => {
+    const s = tryIt(dotsTicket(), 't101', 'ink');
     expect(s.notice?.text).toMatch(/still jammed/);
     expect(ticketState(s, 't101')).toMatchObject({ mood: 2, tried: ['ink'] });
+  });
+
+  it('turning it off and on again is always worth a go: when it isn\u2019t that, no harm done', () => {
+    const s = tryIt(dotsTicket(), 't101', 'offon');
+    expect(ticketState(s, 't101')).toMatchObject({ mood: 1, slips: 0, tried: ['offon'] });
+    expect(ticketState(s, 't101').messages.at(-1)?.text).toMatch(/beeped cheerfully/);
+    expect(s.today.wrongFixes).toBe(0);
+    expect(s.notice).toBeUndefined();
+  });
+
+  it('a dead mouse: fresh batteries first; when that doesn\u2019t do it, it\u2019s broken, so a spare', () => {
+    let s = goTo(playDay(newGame()), 'desk');
+    s = serveUntil(s, '11:21', 't205');
+    s = waitForCaller(ask(s, 't205', 'kind'), 't205');
+    expect(ticketState(s, 't205').messages.at(-1)?.text).toMatch(/^Wireless/);
+    s = tryIt(s, 't205', 'battery');
+    expect(ticketState(s, 't205').messages.at(-1)?.text).toMatch(/Fresh batteries in. Still nothing/);
+    expect(ticketState(s, 't205').slips).toBe(0);
+    s = resolve(tryIt(s, 't205', 'spare'), 't205');
+    expect(s.outcomes.at(-1)).toMatchObject({ ticketId: 't205', kind: 'fix' });
   });
 
   it('a grave mistake goes to the manager whoever it was for, and still has to be put right', () => {
     let s = newGame();
     while (s.day < 3) s = playDay(s);
-    s = fix(serveUntil(goTo(s, 'desk'), '14:01', 't304'), 't304', 'set'); // reading out Dot's new password
+    s = tryIt(serveUntil(goTo(s, 'desk'), '14:01', 't304'), 't304', 'set'); // reading out Dot's new password
     expect(s.outcomes.at(-1)).toMatchObject({ ticketId: 't304', kind: 'complaint', grave: true });
     expect(s.today.complaints).toBe(1);
     expect(s.queue).toContain('t304');
   });
 
-  it('turns the right internal note into a runbook page that makes the same problem quicker next time', () => {
+  it('turns a work note you type into a runbook page, if it says what was really wrong', () => {
     let s = fix(dotsTicket(), 't101', 'jam');
-    s = writeNote(s, 1);
-    expect(s.outcomes[0]?.wrongNote).toBe(1);
+    s = writeNote(s, 'fixed');
+    expect(s.outcomes[0]?.noteMiss).toMatch(/Write a sentence/);
+    s = writeNote(s, 'It was out of ink, ordered more.');
+    expect(s.outcomes[0]?.noteMiss).toMatch(/doesn\u2019t say what was really wrong/);
     expect(s.runbook['paper-jam']).toBe('ok');
-    s = next(writeNote(s, 0));
+    s = next(writeNote(s, '  Paper JAMMED in tray 2, the screen said so. Cleared it.  '));
     expect(s.runbook['paper-jam']).toBe('yours');
+    expect(s.written['paper-jam']).toBe('Paper JAMMED in tray 2, the screen said so. Cleared it.');
     expect(s.xp.devices).toBe(3);
-    s = playDay(s);
-    const pip = serveUntil(goTo(s, 'desk'), '13:31', 't203'); // Pip's printer: same problem
-    expect(fix(pip, 't203', 'jam').clock - pip.clock).toBe(5);
+  });
+
+  it('every clue can be found with a question, and every ticket\u2019s real fix can be suggested', () => {
+    for (const t of TICKETS) {
+      const issue = issueOf(t);
+      expect(issue.asks.length, issue.id).toBeGreaterThanOrEqual(3);
+      for (const d of t.details) if (d.ask) expect(issue.asks.map((a) => a.id), t.id).toContain(d.ask);
+      if (!issue.console) expect(issue.fixes.map((f) => f.id), t.id).toContain(fixFor(t));
+    }
+  });
+
+  it('loads a save from before you could ask questions', () => {
+    const s = dotsTicket();
+    const old = JSON.parse(JSON.stringify(s)) as { tickets: Record<string, { heard?: string[] }> };
+    delete old.tickets.t101?.heard;
+    expect(parseSave(JSON.stringify(old))?.tickets.t101?.heard).toEqual([]);
   });
 });
 
@@ -207,7 +280,7 @@ describe('friends and nemeses', () => {
     s = playDay(s);
     s = serveUntil(goTo(s, 'desk'), '11:20', 't205'); // Dot's mouse on day 2; usually Annoyed, normal priority
     expect(ticketState(s, 't205').mood).toBe(0);
-    s = fix(s, 't205', 'driver');
+    s = tryIt(s, 't205', 'driver');
     expect(s.notice?.text).toMatch(/encouraging smile/);
     expect(ticketState(s, 't205').mood).toBe(0);
   });
@@ -264,11 +337,11 @@ describe('the day-3 loot drop', () => {
     s = dotsTicket(s);
     const before = s.clock;
     s = fix(s, 't101', 'tool');
-    expect(s.clock - before).toBe(5);
+    expect(s.clock - before).toBeLessThanOrEqual(8);
     const card = s.outcomes[0];
     expect(card?.tool).toBe('tweezers');
     expect(card && noteTarget(s, card)?.title).toMatch(/tweezers/);
-    s = writeNote(s, 0);
+    s = writeNote(s, 'The tweezers reach paper deep in the tray.');
     expect(s.runbook['tool:tweezers']).toBe('yours');
     expect(s.runbook['paper-jam']).toBe('ok'); // one note per fix
   });
@@ -290,7 +363,7 @@ describe('money and endings', () => {
     expect(apply(fixesOnly, 'ocean')).toBe(fixesOnly);
     expect(apply(fixesOnly, 'library').ending).toBe('hired');
     expect(acceptOffer(fixesOnly).ending).toBe('stay');
-    const withNotes = play((x, id) => handle(x, id, (y, i) => writeNote(fix(admin(y, i), i, correct(i)), 0)));
+    const withNotes = play((x, id) => handle(x, id, (y, i) => writeNote(fix(admin(y, i), i, correct(i)), noteTarget(y, { ticketId: i, kind: 'fix', xp: 0 })?.note.example ?? '')));
     expect(apply(withNotes, 'ocean').ending).toBe('hired');
   });
 });
@@ -306,7 +379,7 @@ describe('Active Directory', () => {
   it('locks the account for real when a lockout ticket arrives, and only unlocking fixes it', () => {
     let s = otisLocked();
     expect(s.accounts.otis?.locked).toBe(true);
-    s = fix(s, 't306', 'console');
+    s = tryIt(s, 't306', 'console');
     expect(s.notice?.text).toMatch(/Still locked out/);
     expect(ticketState(s, 't306').status).toBe('open');
     s = fix(unlockAccount(s, 'otis'), 't306', 'console');
