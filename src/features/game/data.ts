@@ -24,7 +24,19 @@ export const GAME_MINUTES_PER_SECOND = 0.8;
 /** After you ask someone on chat to log a ticket, minutes until it lands in your queue. */
 export const TICKET_LANDS_AFTER = 30;
 /** Clock minutes each action takes. A fix is faster when your own note tells you what to do. */
-export const COST = { update: 2, fix: 15, knownFix: 5, toolFix: 5, wrongFix: 15, workaround: 10, push: 2, note: 3, askForTicket: 2, unlock: 1, reset: 3 } as const;
+export const COST = { update: 2, ask: 2, suggest: 2, resolve: 3, workaround: 10, push: 2, note: 3, askForTicket: 2, unlock: 1, reset: 3 } as const;
+/**
+ * Office minutes the caller takes, from-to: to answer a question, and to try what you suggested (quicker with a
+ * tool of yours). Meanwhile you can work on other tickets.
+ */
+export const CALLER = {
+  low: { answer: [2, 5], tryIt: [5, 10], tool: [2, 3] },
+  normal: { answer: [2, 5], tryIt: [5, 10], tool: [2, 3] },
+  // It's urgent for them too, so they're quick to get back to you.
+  high: { answer: [1, 2], tryIt: [3, 5], tool: [1, 2] },
+} as const;
+/** What they say when your suggestion works, by mood. */
+export const THANKS = ['That\u2019s got it! Thank you!', 'It works now. Thanks.', 'Finally. It works.', 'It works. Don\u2019t expect a thank-you.'] as const;
 /** The one morning in week 1 when something turns up on your desk. Loot is rare. */
 export const DROP_DAY = 3;
 export const REPLIES = {

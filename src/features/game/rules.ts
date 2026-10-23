@@ -1,11 +1,11 @@
 import {
-  BOND, CLOSE, COST, DAILY_COST, DAYS, DAY_SCRIPTS, DROP_DAY, TOOLS, GOAL_VOUCHER, ISSUES, JOBS, MAX_PUSHES,
-  MESSY_SLIPS, OPEN, REPLIES, START_SAVINGS, TICKET_LANDS_AFTER, TICKETS, VILLAGERS,
+  BOND, CALLER, CLOSE, COST, DAILY_COST, DAYS, DAY_SCRIPTS, DROP_DAY, TOOLS, GOAL_VOUCHER, ISSUES, JOBS, MAX_PUSHES,
+  MESSY_SLIPS, OPEN, REPLIES, START_SAVINGS, THANKS, TICKET_LANDS_AFTER, TICKETS, VILLAGERS,
   WORKAROUND_RETURNS_AFTER, XP, type VillagerId,
 } from './data.ts';
 import { MINUTES_A_DAY, newAccounts, type Account } from './directory.ts';
 import { appsOf, groupsOf, hrOn, newOkta, type Okta } from './oktopus.ts';
-import { MOODS, type Issue, type Job, type Mood, type PageStatus, type Relation, type Skill, type Ticket, type Tool } from './types.ts';
+import { MOODS, type ConsoleFix, type Fix, type Issue, type Note, type Job, type Mood, type PageStatus, type Relation, type Skill, type Ticket, type Tool } from './types.ts';
 
 export type Phase = 'boot' | 'desktop' | 'desk' | 'dayEnd' | 'ending';
 export type Ending = 'hired' | 'burnout' | 'stay';
@@ -34,6 +34,13 @@ export interface TicketState {
   asked?: boolean;
   /** They've already been to Mr. Grisby about this one. */
   complained?: boolean;
+  /** Questions they've answered. What they said is in the messages. */
+  heard: string[];
+  /**
+   * What the caller is doing for you: answering a question or trying a suggestion, until they reply at `until`;
+   * or done, having confirmed a suggestion works. Nothing: it's your move. One thing at a time, like a real call.
+   */
+  caller?: { doing: 'answer' | 'try'; id: string; until: number } | { doing: 'confirmed'; id: string };
 }
 
 export interface Outcome {
@@ -42,9 +49,9 @@ export interface Outcome {
   /** A complaint about a grave mistake, rather than about waiting. */
   grave?: boolean;
   xp: number;
-  /** After a fix: whether you wrote the internal note, and which wrong one you tried last. */
+  /** After a fix: whether you wrote the work note, and what was wrong with your last try at it. */
   noted?: boolean;
-  wrongNote?: number;
+  noteMiss?: string;
   /** Fixed with a tool from your desk: its runbook page is the note to write. */
   tool?: string;
 }
@@ -84,6 +91,8 @@ export interface GameState {
   today: Today;
   /** Runbook pages: one per issue, plus 'tool:<id>' for each tool you own. */
   runbook: Record<string, PageStatus>;
+  /** The runbook pages you've written, in your own words, by page. */
+  written: Record<string, string>;
   /** Tools on your desk. */
   tools: string[];
   /** Everyone's account in Active Directory, by login. */
@@ -203,6 +212,9 @@ function arrive(d: GameState, id: string, at: number): void {
     pushes: before?.pushes ?? 0,
     workedAround: before?.workedAround ?? false,
     tried: before?.tried ?? [],
+    heard: before?.heard ?? [],
+    // Anything they were in the middle of is forgotten overnight; a confirmed fix stays confirmed.
+    caller: before?.caller?.doing === 'confirmed' ? before.caller : undefined,
     messages: [...opener, { from: 'them', text: greeting + again + t.message, at }],
     logged: before?.logged || !onChat,
     asked: before?.asked,
@@ -224,6 +236,7 @@ function close(d: GameState, t: Ticket, kind: Outcome['kind'], xp: number): void
   if (kind === 'fix') changeBond(d, t.who, st.slips === 0 ? BOND.clean : st.slips >= MESSY_SLIPS ? BOND.messy : 0);
   const counted = isTicket(d, t);
   st.status = kind === 'push' || kind === 'asked' ? 'pending' : 'resolved';
+  st.caller = undefined;
   d.queue = d.queue.filter((id) => id !== t.id);
   d.chats = d.chats.filter((id) => id !== t.id);
   const skill = issueOf(t).skill;
@@ -266,6 +279,10 @@ function slip(d: GameState, t: Ticket): void {
 /** Run the office clock forward: people's tickets and messages arrive on time. */
 function advance(d: GameState, minutes: number): void {
   d.clock = Math.min(d.clock + minutes, CLOSE);
+  for (const id of [...d.queue]) {
+    const c = d.tickets[id]?.caller;
+    if (c && c.doing !== 'confirmed' && c.until <= d.clock) hear(d, ticketById(id), c);
+  }
   for (const a of d.arriving.filter((x) => x.at <= d.clock).sort((x, y) => x.at - y.at)) arrive(d, a.id, a.at);
   d.arriving = d.arriving.filter((x) => x.at > d.clock);
   // At closing time the day ends, unless a card is still up; dismissing the last card ends it.
@@ -318,6 +335,7 @@ export function newGame(seed = Math.floor(Math.random() * 2 ** 31)): GameState {
   const s: GameState = {
     seed,
     tools: [],
+    written: {},
     accounts: newAccounts(),
     newsRead: 0,
     okta: newOkta(),
@@ -432,40 +450,122 @@ function oktaProblem(s: GameState, t: Ticket, fixBy: Exclude<NonNullable<Issue['
   }
 }
 
-export function fix(s: GameState, id: string, fixId: string): GameState {
-  const t = workable(s, id);
-  if (!t || ticketState(s, id).tried.includes(fixId)) return s;
+/** The suggestion that really fixes this ticket: usually the issue's fix, unless this one's cause is different. */
+export const fixFor = (t: Ticket) => t.fixedBy ?? issueOf(t).correctFix;
+
+/** After work in a console, the move is to check with the caller that it's sorted. */
+const CONSOLE_CHECK: Record<ConsoleFix, string> = {
+  unlock: 'Ask them to try signing in again',
+  reset: 'Ask them to sign in with the temporary password and choose their own',
+  mfa: 'Ask her to sign in and set up her new phone',
+  disable: 'Ask them to check nobody can sign in as Sam now',
+  'okta-setup': 'Ask them to check Marketing are all set up',
+  'okta-app': 'Ask them to check Hootsweet is on their dashboard',
+  joiner: 'Ask them to check Fern can sign in',
+  mover: 'Ask them to check Basil has the right access',
+  leaver: 'Ask them to check Wren can\u2019t sign in',
+};
+
+/** Everything you could suggest on a ticket: your tool, a check after console work, and the usual fixes. */
+export function suggestions(s: GameState, t: Ticket): Fix[] {
   const issue = issueOf(t);
-  const tool = fixId === 'tool' ? toolFor(s, t) : undefined;
-  // An Active Directory ticket has one move here: ask them to try again. The account itself says if it worked.
-  const problem = issue.console && fixId === 'console' ? accountProblem(s, t) : undefined;
-  const chosen: { id: string; label: string; fail?: string; grave?: true } | undefined = tool ? { id: 'tool', label: tool.fixLabel }
-    : issue.console ? (fixId === 'console' ? { id: 'console', label: 'Asked them to try signing in again', fail: problem } : undefined)
-    : issue.fixes.find((f) => f.id === fixId);
-  if (!chosen) return s;
+  const tool = toolFor(s, t);
+  return [
+    ...(tool ? [{ id: 'tool', label: tool.fixLabel }] : []),
+    ...(issue.console ? [{ id: 'console', label: CONSOLE_CHECK[issue.console] }] : []),
+    ...issue.fixes,
+  ];
+}
+
+/** How long the caller takes, between lo and hi minutes: fixed by the game's seed, so a replay is the same. */
+function callerMinutes(d: GameState, t: Ticket, [lo, hi]: readonly [number, number]): number {
+  const n = [...`${t.id}${ticketState(d, t.id).messages.length}`].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 9973, d.seed % 9973);
+  return lo + (n % (hi - lo + 1));
+}
+
+/** It's your move on this ticket: it's in your queue and the caller isn't busy with something you asked. */
+function yourMove(s: GameState, id: string): Ticket | undefined {
+  const t = workable(s, id);
+  return t && !ticketState(s, id).caller ? t : undefined;
+}
+
+/** Ask the caller a question. They reply in a few minutes; work on something else meanwhile. */
+export function ask(s: GameState, id: string, askId: string): GameState {
+  const t = yourMove(s, id);
+  const q = t && issueOf(t).asks.find((a) => a.id === askId);
+  if (!t || !q || ticketState(s, id).heard.includes(askId)) return s;
   return act(s, (d) => {
     const st = ticketState(d, id);
     st.status = 'open';
-    st.messages.push({ from: 'you', text: `${chosen.label}.`, at: d.clock });
-    if (tool || (issue.console ? !problem : fixId === issue.correctFix)) {
-      // The real work happened in Active Directory; checking it takes a moment.
-      const minutes = tool ? COST.toolFix : issue.console || isKnown(d, t) ? COST.knownFix : COST.fix;
-      close(d, t, 'fix', XP.fix);
-      const card = d.outcomes.at(-1);
-      if (tool && card) card.tool = tool.id;
-      advance(d, minutes);
-      return;
-    }
-    // You can ask again after fixing the account, so that move never gets used up.
-    if (!issue.console) st.tried.push(fixId);
-    d.today.wrongFixes += 1;
-    st.messages.push({ from: 'them', text: 'It’s still not working.', at: d.clock });
-    d.notice = { ticketId: id, text: chosen.fail ?? 'That didn’t work.' };
-    if (relation(d, t.who) === 'friend') d.notice.text += ' They give you an encouraging smile anyway.';
-    else slip(d, t);
-    // Some mistakes are too serious to keep quiet, whoever it was for.
-    if (chosen.grave) complain(d, t, true);
-    advance(d, COST.wrongFix);
+    st.messages.push({ from: 'you', text: q.text, at: d.clock });
+    st.caller = { doing: 'answer', id: askId, until: d.clock + callerMinutes(d, t, CALLER[t.priority].answer) };
+    advance(d, COST.ask);
+  });
+}
+
+/** Suggest something for them to try. They go and try it, and tell you how it went. */
+export function suggest(s: GameState, id: string, fixId: string): GameState {
+  const t = yourMove(s, id);
+  const f = t && suggestions(s, t).find((x) => x.id === fixId);
+  // A check after console work can be repeated; anything else, once is enough.
+  if (!t || !f || (fixId !== 'console' && ticketState(s, id).tried.includes(fixId))) return s;
+  return act(s, (d) => {
+    const st = ticketState(d, id);
+    st.status = 'open';
+    const text = fixId === 'console' ? 'I\u2019ve made the change on my side. Could you check it\u2019s working now?' : `Suggested: ${f.label}.`;
+    st.messages.push({ from: 'you', text, at: d.clock });
+    st.caller = { doing: 'try', id: fixId, until: d.clock + callerMinutes(d, t, CALLER[t.priority][fixId === 'tool' ? 'tool' : 'tryIt']) };
+    advance(d, COST.suggest);
+  });
+}
+
+/**
+ * The caller gets back to you: an answer to your question, or how your suggestion went. It worked; it was worth a
+ * try but wasn't it (no harm done); or it was the wrong call, and they're let down.
+ */
+function hear(d: GameState, t: Ticket, c: { doing: 'answer' | 'try'; id: string; until: number }): void {
+  const st = ticketState(d, t.id);
+  const issue = issueOf(t);
+  const said = (text: string) => st.messages.push({ from: 'them', text, at: c.until });
+  st.caller = undefined;
+  if (c.doing === 'answer') {
+    st.heard.push(c.id);
+    said(t.details.filter((x) => x.ask === c.id).map((x) => x.text).join(' ') || (issue.asks.find((a) => a.id === c.id)?.none ?? '\u2026'));
+    return;
+  }
+  const f = suggestions(d, t).find((x) => x.id === c.id);
+  const problem = c.id === 'console' ? accountProblem(d, t) : undefined;
+  if (c.id === 'tool' || (c.id === 'console' ? !problem : c.id === fixFor(t))) {
+    st.caller = { doing: 'confirmed', id: c.id };
+    said(f?.works ?? THANKS[st.mood]);
+    return;
+  }
+  // You can check again after more console work, so that one never gets used up.
+  if (c.id !== 'console') st.tried.push(c.id);
+  if (f?.ruledOut || (c.id !== 'console' && c.id === issue.correctFix)) {
+    said(f?.ruledOut ?? 'Tried that. Still not working.');
+    return;
+  }
+  d.today.wrongFixes += 1;
+  said('It\u2019s still not working.');
+  d.notice = { ticketId: t.id, text: problem ?? f?.fail ?? 'That didn\u2019t work.' };
+  if (relation(d, t.who) === 'friend') d.notice.text += ' They give you an encouraging smile anyway.';
+  else slip(d, t);
+  // Some mistakes are too serious to keep quiet, whoever it was for.
+  if (f?.grave) complain(d, t, true);
+}
+
+/** Once they've confirmed it works, resolve it. */
+export function resolve(s: GameState, id: string): GameState {
+  const t = workable(s, id);
+  const c = t && ticketState(s, id).caller;
+  if (!t || c?.doing !== 'confirmed') return s;
+  return act(s, (d) => {
+    close(d, t, 'fix', XP.fix);
+    const card = d.outcomes.at(-1);
+    const tool = c.id === 'tool' ? toolFor(d, t) : undefined;
+    if (tool && card) card.tool = tool.id;
+    advance(d, COST.resolve);
   });
 }
 
@@ -534,35 +634,40 @@ export function pushBack(s: GameState, id: string): GameState {
  * What the note after a fix is about: the tool you used, if its runbook page isn't written yet;
  * otherwise the problem itself, if you haven't written that page. Undefined if there's nothing left to write.
  */
-export function noteTarget(s: GameState, o: Outcome): { page: string; title: string; notes: Issue['notes'] } | undefined {
+export function noteTarget(s: GameState, o: Outcome): { page: string; title: string; note: Note } | undefined {
   if (o.kind !== 'fix' || o.noted) return undefined;
   const tool = TOOLS.find((x) => x.id === o.tool);
-  if (tool && s.runbook[`tool:${tool.id}`] !== 'yours') return { page: `tool:${tool.id}`, title: tool.name, notes: tool.notes };
+  if (tool && s.runbook[`tool:${tool.id}`] !== 'yours') return { page: `tool:${tool.id}`, title: tool.name, note: tool.note };
   const issue = issueOf(ticketById(o.ticketId));
-  if (s.runbook[issue.id] !== 'yours') return { page: issue.id, title: issue.title, notes: issue.notes };
+  if (s.runbook[issue.id] !== 'yours') return { page: issue.id, title: issue.title, note: issue.note };
   return undefined;
 }
 
-/** After a fix, record the cause. The right note rewrites the runbook page, so next time it's a known issue. */
-export function writeNote(s: GameState, noteIndex: number): GameState {
+/** What's wrong with a typed note, in a sentence; undefined if it's a good one. */
+export function noteProblem(note: Note, text: string): string | undefined {
+  if (text.trim().split(/\s+/).length < 3) return 'Write a sentence or two: what was really wrong, and what fixed it.';
+  const says = (key: string) => new RegExp(`\\b${key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'i').test(text);
+  return note.keys.some(says) ? undefined : 'That doesn\u2019t say what was really wrong. Look back at what they told you and what fixed it.';
+}
+
+/** After a fix, write down what happened. A good note becomes the runbook page, so next time it's a known issue. */
+export function writeNote(s: GameState, text: string): GameState {
   const o = s.outcomes[0];
-  if (!o || o.kind !== 'fix' || o.noted) return s;
-  const t = ticketById(o.ticketId);
-  const issue = issueOf(t);
-  const target = noteTarget(s, o);
-  const note = target?.notes[noteIndex];
-  if (!target || !note) return s;
+  const target = o && noteTarget(s, o);
+  if (!o || !target) return s;
+  const issue = issueOf(ticketById(o.ticketId));
   return act(s, (d) => {
     const first = d.outcomes[0];
     if (!first) return;
-    if (!note.right) { first.wrongNote = noteIndex; return; }
+    first.noteMiss = noteProblem(target.note, text);
+    if (first.noteMiss) return;
     d.runbook[target.page] = 'yours';
+    d.written[target.page] = text.trim();
     d.xp[issue.skill] += XP.note;
     d.today.xp += XP.note;
     d.today.notes += 1;
     first.xp += XP.note;
     first.noted = true;
-    first.wrongNote = undefined;
     d.clock = Math.min(d.clock + COST.note, CLOSE);
   });
 }
@@ -655,6 +760,10 @@ export function parseSave(raw: string | null): GameState | undefined {
     if ((s.version as number) === 9) Object.assign(s, { version: 10, okta: newOkta() });
     // Saves from when you could go over in person, and people stormed off: back at your desk, nobody stormed off.
     if ((s.version as number) === 10) normaliseV10(s as Partial<GameState> & { escort?: string; place?: string });
+    // Saves from before you could ask questions: nothing asked yet.
+    for (const st of Object.values(s.tickets ?? {})) st.heard ??= [];
+    // Saves from before you typed your notes: the pages you wrote show the example text.
+    s.written ??= {};
     const known = new Set(TICKETS.map((t) => t.id));
     const isObject = (x: unknown) => typeof x === 'object' && x !== null;
     const ok =

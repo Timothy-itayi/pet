@@ -7,17 +7,22 @@ export const ISSUES: Issue[] = [
     title: 'Printer not printing',
     skill: 'devices',
     page: { status: 'ok', text: 'Read the printer’s own screen first. If it says jam, clear the tray it names.' },
+    asks: [
+      { id: 'screen', text: 'What does the printer’s little screen say?', none: 'It just says Ready. It’s lying.' },
+      { id: 'tray', text: 'Can you open the paper trays and have a look inside?', none: 'Paper in both trays. Nothing stuck that I can see.' },
+      { id: 'others', text: 'Is it just you, or can nobody print?', none: 'Nobody can. Otis has been glaring at it.' },
+    ],
     fixes: [
+      { id: 'offon', label: 'Turn it off and on again', ruledOut: 'Turned it off and on. It beeped cheerfully, then went straight back to its error.' },
       { id: 'jam', label: 'Clear the paper jam in the tray the printer names' },
       { id: 'ink', label: 'Order a new ink cartridge', fail: 'The new ink arrives. The printer is still jammed.' },
       { id: 'driver', label: 'Reinstall the printer driver', fail: 'Twenty minutes later... still jammed.' },
     ],
     correctFix: 'jam',
-    notes: [
-      { text: 'Printer screen said paper jam. Cleared the tray. Ink was fine.', right: true },
-      { text: 'Printer out of ink. Ordered more.' },
-      { text: 'Driver was broken. Reinstalled it.' },
-    ],
+    note: {
+      example: 'Printer screen said paper jam. Cleared the tray. Ink was fine.',
+      keys: ['jam', 'stuck', 'wedged', 'crumpled'],
+    },
     why: 'Believe the device before the description. The printer’s own screen said paper jam. People describe what they think is wrong, not what is wrong.',
   },
   {
@@ -26,17 +31,22 @@ export const ISSUES: Issue[] = [
     title: 'Laptop has no internet',
     skill: 'networks',
     page: { status: 'missing', text: '(This page has been torn out.)' },
+    asks: [
+      { id: 'settings', text: 'Can you open Settings and check the network page for me?', none: 'It looks… normal? I don’t know what normal is.' },
+      { id: 'others', text: 'Is anyone near you having the same problem?', none: 'Now you mention it, everyone else seems fine.' },
+      { id: 'changed', text: 'Did anything change since it last worked?', none: 'Nothing. It was fine on Friday.' },
+    ],
     fixes: [
+      { id: 'offon', label: 'Turn it off and on again', ruledOut: 'Restarted it. Still no internet. There’s a little aeroplane in the corner, if that matters.' },
       { id: 'airplane', label: 'Turn off airplane mode' },
       { id: 'router', label: 'Restart the office router', fail: 'You knocked everyone else offline. Their laptop is still offline.' },
       { id: 'isp', label: 'Contact the internet provider', fail: 'The provider says the internet is fine. It is.' },
     ],
     correctFix: 'airplane',
-    notes: [
-      { text: 'Only one laptop offline: airplane mode was on. Turned it off.', right: true },
-      { text: 'Whole office internet down. Restarted the router.' },
-      { text: 'Internet provider outage.' },
-    ],
+    note: {
+      example: 'Only one laptop offline: airplane mode was on. Turned it off.',
+      keys: ['airplane', 'aeroplane', 'aircraft', 'flight mode', 'plane mode'],
+    },
     why: 'Check the scope first: is it one person or everyone? If everyone else is fine, the problem is on that one device. Airplane mode turns off Wi-Fi completely.',
   },
   {
@@ -45,17 +55,21 @@ export const ISSUES: Issue[] = [
     title: 'Laptop running slow',
     skill: 'devices',
     page: { status: 'outdated', text: 'Slow laptop? Request a new laptop from Purchasing. (Written 2009)' },
+    asks: [
+      { id: 'uptime', text: 'When did you last restart it? Any updates waiting?', none: 'Restart? I just close the lid.' },
+      { id: 'apps', text: 'Is it slow in one program, or everything?', none: 'Everything. The mouse pointer takes naps.' },
+      { id: 'disk', text: 'How full is the hard drive?', none: 'It says 41% used. Is that a lot?' },
+    ],
     fixes: [
       { id: 'restart', label: 'Restart it and install the waiting updates' },
       { id: 'new', label: 'Order a new laptop', fail: 'Budget freeze. Mr. Grisby honks at the order form.' },
       { id: 'delete', label: 'Delete files to free up space', fail: 'Their holiday photos are gone. Still slow.' },
     ],
     correctFix: 'restart',
-    notes: [
-      { text: 'Laptop hadn’t restarted in weeks. Restart plus updates fixed it. Don’t order new ones.', right: true },
-      { text: 'Laptop too old. Needs replacing.' },
-      { text: 'Disk full. Deleted files.' },
-    ],
+    note: {
+      example: 'Laptop hadn’t restarted in weeks. Restart plus updates fixed it. Don’t order new ones.',
+      keys: ['restart', 'reboot', 'update', 'turned it off', 'turn it off'],
+    },
     why: 'A restart plus updates fixes most slow laptops. The old runbook said to buy a new one, but it was written in 2009, and there’s a budget freeze.',
   },
   {
@@ -64,17 +78,22 @@ export const ISSUES: Issue[] = [
     title: 'Laptop won’t charge',
     skill: 'devices',
     page: { status: 'outdated', text: 'Laptop won’t charge? The battery is dead. Order a replacement.' },
+    asks: [
+      { id: 'charger', text: 'Which charger are you using? What does it say on it?', none: 'The one that was in the drawer. It fits!' },
+      { id: 'sticker', text: 'Is there a sticker on the laptop that mentions power or watts?', none: 'There’s a sticker. It says “Do not lick”. That’s all.' },
+      { id: 'age', text: 'How old is the battery?', none: 'Two years? It was fine last week.' },
+    ],
     fixes: [
+      { id: 'offon', label: 'Turn it off and on again', ruledOut: 'Restarted it. It says “Plugged in, slow charger”. Still 3%.' },
       { id: 'swap', label: 'Swap to a 65W laptop charger' },
       { id: 'battery', label: 'Order a new battery', fail: 'Budget freeze. And the battery was fine.' },
       { id: 'reset', label: 'Reset the laptop to factory settings', fail: 'All their files are gone. Battery: 3%.' },
     ],
     correctFix: 'swap',
-    notes: [
-      { text: 'Was using a small phone charger. Laptops need 65W or more.', right: true },
-      { text: 'Battery dead. Ordered a new one.' },
-      { text: 'Software fault. Reset the laptop.' },
-    ],
+    note: {
+      example: 'Was using a small phone charger. Laptops need 65W or more.',
+      keys: ['charger', '65w', '65 w', 'watt'],
+    },
     why: 'Laptops need more power than phones. A small phone charger can’t keep up, so the battery barely moves. Check the charger against the laptop’s sticker.',
   },
   {
@@ -83,17 +102,22 @@ export const ISSUES: Issue[] = [
     title: 'Adding a printer',
     skill: 'devices',
     page: { status: 'outdated', text: 'Install the printer driver from the CD in the top drawer.' },
+    asks: [
+      { id: 'ports', text: 'What ports does your laptop have? Is there a disc drive?', none: 'Two little oval ones. No disc drive.' },
+      { id: 'how', text: 'How are you trying to install it?', none: 'With the CD that came in the box.' },
+      { id: 'printer', text: 'Which printer is it, exactly?', none: 'The big grey one by the window.' },
+    ],
     fixes: [
+      { id: 'offon', label: 'Turn it off and on again', ruledOut: 'Restarted. The CD still doesn’t fit anywhere.' },
       { id: 'download', label: 'Download the current driver from the printer maker’s website' },
       { id: 'cd', label: 'Find a laptop with a CD drive', fail: 'The oldest laptop in the building has no CD drive either.' },
       { id: 'usb', label: 'Run a long USB cable to the printer', fail: 'Facilities has asked you to stop.' },
     ],
     correctFix: 'download',
-    notes: [
-      { text: 'New laptops have no CD drive. Get drivers from the maker’s website.', right: true },
-      { text: 'Used the CD in the top drawer.' },
-      { text: 'Printer broken. Needs replacing.' },
-    ],
+    note: {
+      example: 'New laptops have no CD drive. Get drivers from the maker’s website.',
+      keys: ['website', 'download', 'online', 'maker', 'manufacturer', 'no cd', 'no disc'],
+    },
     why: 'Runbooks go out of date. Get drivers from the maker’s website so they’re current and safe.',
   },
   {
@@ -102,17 +126,22 @@ export const ISSUES: Issue[] = [
     title: 'On Wi-Fi but can’t reach work files',
     skill: 'networks',
     page: { status: 'ok', text: 'Staff devices use Burrow-Staff. Burrow-Guest only reaches the internet, never the shared drive or printers.' },
+    asks: [
+      { id: 'network', text: 'Which Wi-Fi network are you connected to?', none: 'The one that works. I don’t know its name.' },
+      { id: 'password', text: 'Did someone give you the Wi-Fi password?', none: 'I just picked the one with the easy password.' },
+      { id: 'drive', text: 'Can you open anything on the shared drive at all?', none: 'Nothing. It says “not found”, like it’s gone on holiday.' },
+    ],
     fixes: [
+      { id: 'offon', label: 'Turn it off and on again', ruledOut: 'Restarted. It joined the same Wi-Fi again. Shared drive still “not found”.' },
       { id: 'staff', label: 'Connect them to Burrow-Staff' },
       { id: 'router', label: 'Restart the router', fail: 'Everyone drops offline. They’re back on Burrow-Guest.' },
       { id: 'remap', label: 'Remove and re-add the shared drive', fail: 'Still “not found”. The guest network can’t see it.' },
     ],
     correctFix: 'staff',
-    notes: [
-      { text: 'Was on Burrow-Guest. Guest can’t see work files. Moved to Burrow-Staff.', right: true },
-      { text: 'Shared drive was down.' },
-      { text: 'Router needed a restart.' },
-    ],
+    note: {
+      example: 'Was on Burrow-Guest. Guest can’t see work files. Moved to Burrow-Staff.',
+      keys: ['guest', 'burrow-staff', 'staff wi-fi', 'staff wifi', 'staff network', 'wrong network', 'wrong wi'],
+    },
     why: 'Guest networks are kept apart from company files on purpose, so visitors can’t reach them. Staff need to be on the staff network.',
   },
   {
@@ -121,17 +150,22 @@ export const ISSUES: Issue[] = [
     title: 'Screen says “no signal”',
     skill: 'devices',
     page: { status: 'missing', text: '(Coffee stain. Unreadable.)' },
+    asks: [
+      { id: 'screen', text: 'What does the screen itself say?', none: 'It’s blue and says something. I didn’t read it.' },
+      { id: 'cable', text: 'Which socket is the cable plugged into? They’re labelled.', none: 'The one it fits in?' },
+      { id: 'power', text: 'Is the screen on? Any light on the front?', none: 'Yes, it’s on. Little blue light and everything.' },
+    ],
     fixes: [
+      { id: 'offon', label: 'Turn it off and on again', ruledOut: 'Restarted the laptop. The screen still says No signal.' },
       { id: 'input', label: 'Switch the screen’s input to the port the cable is in' },
       { id: 'replace', label: 'Swap in a different screen', fail: 'Budget freeze. There is no different screen.' },
       { id: 'driver', label: 'Update the graphics driver', fail: 'Updated. Still “No signal”.' },
     ],
     correctFix: 'input',
-    notes: [
-      { text: '“No signal” = screen looking at the wrong port. Switch input to match the cable.', right: true },
-      { text: 'Monitor broken.' },
-      { text: 'Graphics driver out of date.' },
-    ],
+    note: {
+      example: '“No signal” = screen looking at the wrong port. Switch input to match the cable.',
+      keys: ['input', 'hdmi', 'port', 'source', 'socket'],
+    },
     why: 'Screens and projectors with several ports only show one at a time. “No signal” often means it’s looking at the wrong port, not that it’s broken.',
   },
   {
@@ -140,17 +174,22 @@ export const ISSUES: Issue[] = [
     title: 'Prints going to the wrong printer',
     skill: 'devices',
     page: { status: 'missing', text: '(Torn out. Someone wrote “sorry” in the margin.)' },
+    asks: [
+      { id: 'settings', text: 'Can you check Settings › Printers? Which one is ticked as the default?', none: 'There’s a tick next to one of them. Which one matters?' },
+      { id: 'near', text: 'Did anything come out of the printer near you?', none: 'Nothing. Not even a sad beep.' },
+      { id: 'others', text: 'Can other people print to the printer near you?', none: 'Yes, Pip printed a whole cookbook this morning.' },
+    ],
     fixes: [
+      { id: 'offon', label: 'Turn it off and on again', ruledOut: 'Restarted it and printed again. Still nothing here.' },
       { id: 'default', label: 'Set their default printer to the one near their desk' },
       { id: 'restart', label: 'Restart the printer near their desk', fail: 'It restarts. Finance now has four more copies of the report.' },
       { id: 'toner', label: 'Replace the toner', fail: 'The toner was fine. The prints are upstairs.' },
     ],
     correctFix: 'default',
-    notes: [
-      { text: 'Prints vanishing = going to another printer. Check and set the default printer.', right: true },
-      { text: 'Printer needed a restart.' },
-      { text: 'Toner empty.' },
-    ],
+    note: {
+      example: 'Prints vanishing = going to another printer. Check and set the default printer.',
+      keys: ['default', 'wrong printer', 'another printer', 'other printer', 'finance', 'upstairs'],
+    },
     why: 'Printing goes to whatever printer is set as the default. If prints vanish, check where they’re actually being sent.',
   },
   {
@@ -159,17 +198,21 @@ export const ISSUES: Issue[] = [
     title: 'Someone asks for admin rights',
     skill: 'access',
     page: { status: 'outdated', text: 'Need software? Give the user admin rights so they can install it themselves.' },
+    asks: [
+      { id: 'what', text: 'What exactly do you need to install?', none: 'Just one thing for work. It says I need to be an administrator.' },
+      { id: 'portal', text: 'Have you looked in the Company Portal?', none: 'The what?' },
+      { id: 'why', text: 'What do you need it for?', none: 'Work! Mostly work. Partly work.' },
+    ],
     fixes: [
       { id: 'portal', label: 'Install the app for them from the Company Portal' },
       { id: 'admin', grave: true, label: 'Give them full admin rights', fail: 'Against company rules. And they’ve now installed a game.' },
       { id: 'share', grave: true, label: 'Lend them your login', fail: 'Never share logins. Now everything they do looks like you did it.' },
     ],
     correctFix: 'portal',
-    notes: [
-      { text: 'Apps in the Company Portal need no admin rights. Install from there. Least privilege.', right: true },
-      { text: 'Gave admin rights.' },
-      { text: 'Shared my login for a minute.' },
-    ],
+    note: {
+      example: 'Apps in the Company Portal need no admin rights. Install from there. Least privilege.',
+      keys: ['portal', 'no admin', 'without admin', 'least privilege'],
+    },
     why: 'Least privilege: give people only the access they need for the job. They needed one app, not control of the whole laptop. The old runbook page was dangerous.',
   },
   {
@@ -178,17 +221,22 @@ export const ISSUES: Issue[] = [
     title: 'Desk PC has no network',
     skill: 'networks',
     page: { status: 'ok', text: 'No network on a desk PC? Check the cable at both ends.' },
+    asks: [
+      { id: 'screen', text: 'What does it say when you hover over the network icon?', none: 'Something about a cable.' },
+      { id: 'under', text: 'Can you look under the desk, where the cable goes into the wall?', none: 'It’s dark under there. I’m not going under there.' },
+      { id: 'cleaners', text: 'Has anyone been near your desk lately?', none: 'The cleaners came last night. They’re very thorough.' },
+    ],
     fixes: [
+      { id: 'offon', label: 'Turn it off and on again', ruledOut: 'Restarted. Still “Network cable unplugged”. It’s very sure about that.' },
       { id: 'plug', label: 'Plug the network cable back in' },
       { id: 'wifi', label: 'Buy a Wi-Fi card for the PC', fail: 'Budget freeze.' },
       { id: 'reinstall', label: 'Reinstall the operating system', fail: 'Four hours later: “Network cable unplugged.”' },
     ],
     correctFix: 'plug',
-    notes: [
-      { text: 'Cable knocked out (cleaners). Check the physical stuff first.', right: true },
-      { text: 'Operating system broken.' },
-      { text: 'Network card failed.' },
-    ],
+    note: {
+      example: 'Cable knocked out (cleaners). Check the physical stuff first.',
+      keys: ['cable', 'unplugged', 'plugged', 'plug'],
+    },
     why: 'Check the physical stuff first: is it plugged in, is it switched on? The PC told you exactly what was wrong.',
   },
   {
@@ -197,17 +245,21 @@ export const ISSUES: Issue[] = [
     title: 'Can’t get into email',
     skill: 'access',
     page: { status: 'outdated', text: 'Password problems: IT sets a new password and tells the user what it is.' },
+    asks: [
+      { id: 'error', text: 'What does the message say, word for word?', none: 'Something about my password.' },
+      { id: 'where', text: 'Is it just your email, or everything?', none: 'Just email so far. My laptop let me in fine this morning.' },
+      { id: 'changed', text: 'When did you last change your password?', none: 'Change it? Was I supposed to?' },
+    ],
     fixes: [
       { id: 'walk', label: 'Walk them through changing their own password' },
       { id: 'expiry', grave: true, label: 'Turn off password expiry just for them', fail: 'Security rules apply to everyone. The security team is not happy.' },
       { id: 'set', grave: true, label: 'Set a new password for them and read it out', fail: 'Now you know their password. Never set someone else’s password for them.' },
     ],
     correctFix: 'walk',
-    notes: [
-      { text: 'Password expired. Owner changes it themselves; IT never learns it.', right: true },
-      { text: 'Set a new password for them.' },
-      { text: 'Email server down.' },
-    ],
+    note: {
+      example: 'Password expired. Owner changes it themselves; IT never learns it.',
+      keys: ['expired', 'expiry', 'expire'],
+    },
     why: 'Nothing was broken: the password had expired. People change their own passwords, so only they know them. The old runbook page had it backwards.',
   },
   {
@@ -216,18 +268,24 @@ export const ISSUES: Issue[] = [
     title: 'Mouse stopped working',
     skill: 'devices',
     page: { status: 'missing', text: '(Nobody ever wrote this one down.)' },
+    asks: [
+      { id: 'kind', text: 'What kind of mouse is it? Wired or wireless?', none: 'It’s… a mouse. Grey.' },
+      { id: 'keyboard', text: 'Does your keyboard still work?', none: 'Yes, typing’s fine. It’s just the mouse.' },
+      { id: 'dropped', text: 'Has it been dropped or knocked lately?', none: 'Not that I know of.' },
+    ],
     fixes: [
-      { id: 'battery', label: 'Swap the mouse’s batteries' },
+      { id: 'offon', label: 'Turn it off and on again', ruledOut: 'Restarted. The pointer is still frozen in the corner.' },
+      { id: 'battery', label: 'Swap the mouse’s batteries', ruledOut: 'Fresh batteries in. Still nothing. Not even a flicker.' },
+      { id: 'spare', label: 'Give them a spare mouse from the supply cupboard', fail: 'Mr. Grisby sees the spare going out. “Did you even try batteries?” He takes it back.' },
       { id: 'driver', label: 'Reinstall the mouse driver', fail: 'Driver reinstalled. The mouse is still dark.' },
       { id: 'new', label: 'Order a new mouse', fail: 'Budget freeze. Not even a mouse. It was in the memo.' },
     ],
     correctFix: 'battery',
-    notes: [
-      { text: 'Wireless mouse dead = flat battery. Spare AAs in the kitchen drawer.', right: true },
-      { text: 'Mouse driver corrupted.' },
-      { text: 'Mouse broken. Needs replacing.' },
-    ],
-    why: 'Wireless mice and keyboards run on batteries. If the light is off, try fresh batteries before anything else.',
+    note: {
+      example: 'Wireless mouse dead: fresh batteries first (kitchen drawer). Still dead: a spare from the supply cupboard.',
+      keys: ['batter', 'spare', 'broken', 'replace'],
+    },
+    why: 'Wireless mice and keyboards run on batteries. If the light is off, try fresh batteries before anything else. Only if that doesn’t do it is the mouse itself broken: then a spare from the cupboard.',
   },
   {
     id: 'caps-lock',
@@ -235,17 +293,21 @@ export const ISSUES: Issue[] = [
     title: 'Password suddenly “wrong”',
     skill: 'access',
     page: { status: 'missing', text: '(Torn out.)' },
+    asks: [
+      { id: 'keyboard', text: 'Is the Caps Lock light on, on your keyboard?', none: 'There’s no light on. Should there be?' },
+      { id: 'error', text: 'What exactly does the login screen say?', none: 'Wrong password. But it’s right!' },
+      { id: 'changed', text: 'Did you change your password recently?', none: 'No. Same one for ages.' },
+    ],
     fixes: [
       { id: 'caps', label: 'Turn off Caps Lock and try again' },
       { id: 'reset', label: 'Reset their password', fail: 'They now have a new password and still can’t type it. Caps Lock is on.' },
       { id: 'unlock', label: 'Unlock their account', fail: 'It wasn’t locked. Yet. One more try and it will be.' },
     ],
     correctFix: 'caps',
-    notes: [
-      { text: '“Password wrong”: check Caps Lock before resetting anything.', right: true },
-      { text: 'Account locked. Unlocked it.' },
-      { text: 'Forgot password. Reset it.' },
-    ],
+    note: {
+      example: '“Password wrong”: check Caps Lock before resetting anything.',
+      keys: ['caps'],
+    },
     why: 'Passwords care about capital letters. Check Caps Lock first: it saves a reset, and too many wrong tries can lock the account.',
   },
   {
@@ -254,14 +316,18 @@ export const ISSUES: Issue[] = [
     title: 'Account locked out',
     skill: 'access',
     page: { status: 'outdated', text: 'Locked out? Reset their password and tell them the new one.' },
+    asks: [
+      { id: 'error', text: 'What exactly does the login screen say?', none: 'Something about being locked.' },
+      { id: 'devices', text: 'Did you change your password lately? Is a phone still using the old one?', none: 'No, nothing’s changed.' },
+      { id: 'keyboard', text: 'Is the Caps Lock light on?', none: 'No.' },
+    ],
     fixes: [],
     correctFix: 'console',
     console: 'unlock',
-    notes: [
-      { text: 'Locked out after too many tries. Unlocked it in Active Directory; their password was fine.', right: true },
-      { text: 'Locked out. Reset the password and read it out.' },
-      { text: 'Locked out. Disabled and re-enabled the account.' },
-    ],
+    note: {
+      example: 'Locked out after too many tries. Unlocked it in Active Directory; their password was fine.',
+      keys: ['locked', 'lockout', 'lock out', 'unlock', 'too many'],
+    },
     why: 'A lockout means too many wrong tries, not a forgotten password. Unlock the account and they can use the password they already know. A reset was never needed.',
   },
   {
@@ -270,14 +336,18 @@ export const ISSUES: Issue[] = [
     title: 'Forgot their password',
     skill: 'access',
     page: { status: 'outdated', text: 'Forgotten password: set it to Welcome1 and tell them. Everyone knows Welcome1.' },
+    asks: [
+      { id: 'error', text: 'What exactly does the login screen say?', none: 'That my password is wrong.' },
+      { id: 'changed', text: 'Did you change your password recently?', none: 'On Friday. To something very clever. I can’t remember what.' },
+      { id: 'keyboard', text: 'Is the Caps Lock light on?', none: 'No, I checked. I’m not an amateur.' },
+    ],
     fixes: [],
     correctFix: 'console',
     console: 'reset',
-    notes: [
-      { text: 'Forgot password: reset in Active Directory with “must change at next logon”, so only they know the new one.', right: true },
-      { text: 'Set their password to Welcome1.' },
-      { text: 'Unlocked the account.' },
-    ],
+    note: {
+      example: 'Forgot password: reset in Active Directory with “must change at next logon”, so only they know the new one.',
+      keys: ['reset', 'forgot', 'forgotten', 'must change', 'temporary'],
+    },
     why: 'When someone really has forgotten, IT sets a temporary password and ticks “User must change password at next logon”. They choose their own the moment they sign in, so IT never knows it.',
   },
   {
@@ -286,14 +356,18 @@ export const ISSUES: Issue[] = [
     title: 'A leaver who was never removed',
     skill: 'access',
     page: { status: 'missing', text: '(No page. Leavers: IT usually finds out eventually.)' },
+    asks: [
+      { id: 'who', text: 'Who else knows Sam’s password?', none: 'Nobody should. Sam kept it on a sticky note. On the monitor.' },
+      { id: 'when', text: 'When did Sam leave?', none: 'Last week. We had cake. Biscuit made it.' },
+      { id: 'asked', text: 'Has anyone asked to use Sam’s account?', none: 'Certainly not. Not that I recall. Possibly Marlo.' },
+    ],
     fixes: [],
     correctFix: 'console',
     console: 'disable',
-    notes: [
-      { text: 'Leaver: disable their account the day they go. Sam\u2019s stayed on for a week and someone used it.', right: true },
-      { text: 'Reset the leaver\u2019s password.' },
-      { text: 'Nothing to do: they\u2019ve left.' },
-    ],
+    note: {
+      example: 'Leaver: disable their account the day they go. Sam\u2019s stayed on for a week and someone used it.',
+      keys: ['disable', 'switch off', 'switched off', 'turn off', 'turned off', 'still enabled', 'still on'],
+    },
     why: 'When someone leaves, their account is switched off on their last day. An account nobody uses but anybody could sign in to is how break-ins start. HR said Sam left; Active Directory never heard.',
   },
   {
@@ -302,14 +376,18 @@ export const ISSUES: Issue[] = [
     title: 'Set up Oktopus for Marketing',
     skill: 'access',
     page: { status: 'missing', text: '(New system. No page yet. Write the first one.)' },
+    asks: [
+      { id: 'who', text: 'Who’s in Marketing, exactly?', none: 'Whoever HR says. HR knows these things. I pay them to.' },
+      { id: 'when', text: 'When do you need it ready?', none: 'Today. The investors are asking.' },
+      { id: 'apps', text: 'Which apps will they need?', none: 'Hootsweet, for the social media. One thing at a time, though.' },
+    ],
     fixes: [],
     correctFix: 'console',
     console: 'okta-setup',
-    notes: [
-      { text: 'Oktopus setup: import people from the HR file, then a DEPT- group per department, filled by a rule on department.', right: true },
-      { text: 'Typed everyone into Oktopus by hand.' },
-      { text: 'Put Marketing in a group by adding them one at a time.' },
-    ],
+    note: {
+      example: 'Oktopus setup: import people from the HR file, then a DEPT- group per department, filled by a rule on department.',
+      keys: ['hr', 'group', 'rule', 'import'],
+    },
     why: 'HR is the source of truth: people come into Oktopus from the HR file, not typed in by hand. Groups like DEPT-Marketing are filled by rules, so when HR changes someone\u2019s department, their groups change with it.',
   },
   {
@@ -318,14 +396,18 @@ export const ISSUES: Issue[] = [
     title: 'App missing from Oktopus',
     skill: 'access',
     page: { status: 'missing', text: '(New system. No page yet.)' },
+    asks: [
+      { id: 'which', text: 'Which app is it?', none: 'Hootsweet! For the social posts.' },
+      { id: 'who', text: 'Who needs it: just you, or the whole team?', none: 'All of Marketing. And anyone who joins us.' },
+      { id: 'dashboard', text: 'What do you see when you sign in to Oktopus?', none: 'An empty dashboard. Very clean. Very empty.' },
+    ],
     fixes: [],
     correctFix: 'console',
     console: 'okta-app',
-    notes: [
-      { text: 'New app: add it from the catalog, give it an APP-{App}-Users group filled from the department group, assign the app to that group.', right: true },
-      { text: 'Assigned the app to Everyone.' },
-      { text: 'Assigned the app to each person by hand.' },
-    ],
+    note: {
+      example: 'New app: add it from the catalog, give it an APP-{App}-Users group filled from the department group, assign the app to that group.',
+      keys: ['group', 'assign', 'catalog', 'catalogue'],
+    },
     why: 'Apps are assigned to groups, never to people one by one. A group like APP-Hootsweet-Users, filled by a rule from DEPT-Marketing, means everyone in Marketing gets it automatically, and nobody else does.',
   },
   {
@@ -334,14 +416,18 @@ export const ISSUES: Issue[] = [
     title: 'New starter needs access',
     skill: 'access',
     page: { status: 'missing', text: '(New system. No page yet.)' },
+    asks: [
+      { id: 'start', text: 'When does Fern start?', none: 'Today! She’s sitting at her desk with nothing to log in to.' },
+      { id: 'role', text: 'What will she be doing?', none: 'Social media. So she needs everything Marketing has.' },
+      { id: 'hr', text: 'Is she in the HR file yet?', none: 'HR said they added her this morning.' },
+    ],
     fixes: [],
     correctFix: 'console',
     console: 'joiner',
-    notes: [
-      { text: 'Joiner: HR adds them first; create them in Oktopus from the HR row and the group rules give them their apps.', right: true },
-      { text: 'Joiner: copied Juniper\u2019s access and gave it to the new person.' },
-      { text: 'Joiner: made them an account with all the apps, just in case.' },
-    ],
+    note: {
+      example: 'Joiner: HR adds them first; create them in Oktopus from the HR row and the group rules give them their apps.',
+      keys: ['hr', 'create', 'created', 'joiner', 'new starter', 'group'],
+    },
     why: 'A joiner starts in HR. IT creates them from their HR row, and the rules do the rest: the right department group, and with it the right apps. Nothing assigned by hand means nothing forgotten when they move or leave.',
   },
   {
@@ -350,14 +436,18 @@ export const ISSUES: Issue[] = [
     title: 'Someone moved teams',
     skill: 'access',
     page: { status: 'missing', text: '(New system. No page yet.)' },
+    asks: [
+      { id: 'team', text: 'Which team is Basil moving to?', none: 'Sales. Mine. He starts with us today.' },
+      { id: 'apps', text: 'Does he still need Marketing’s apps?', none: 'No. Sales doesn’t post on social media. Not after last time.' },
+      { id: 'hr', text: 'Has HR updated his record?', none: 'They said so. They say a lot of things.' },
+    ],
     fixes: [],
     correctFix: 'console',
     console: 'mover',
-    notes: [
-      { text: 'Mover: update their profile from HR. The rules swap their groups, so old access goes and new access comes.', right: true },
-      { text: 'Mover: deactivated them and made a new account.' },
-      { text: 'Mover: added the new team\u2019s apps and kept the old ones too.' },
-    ],
+    note: {
+      example: 'Mover: update their profile from HR. The rules swap their groups, so old access goes and new access comes.',
+      keys: ['hr', 'profile', 'mover', 'moved', 'sales', 'group'],
+    },
     why: 'A mover keeps their account but not their old team\u2019s access. Update their profile from HR and the group rules move them: out of DEPT-Marketing and its apps, into DEPT-Sales. Keeping old access “just in case” is how people end up with access to everything.',
   },
   {
@@ -366,14 +456,18 @@ export const ISSUES: Issue[] = [
     title: 'Someone has left',
     skill: 'access',
     page: { status: 'missing', text: '(New system. No page yet.)' },
+    asks: [
+      { id: 'when', text: 'When was Wren’s last day?', none: 'Yesterday. She took the good mug.' },
+      { id: 'access', text: 'Can she still get into anything?', none: 'I hope not. Someone posted on the company Hootsweet this morning.' },
+      { id: 'laptop', text: 'Has she handed her laptop back?', none: 'It’s on my desk. The mug is not.' },
+    ],
     fixes: [],
     correctFix: 'console',
     console: 'leaver',
-    notes: [
-      { text: 'Leaver: deactivate them in Oktopus on their last day. Their sessions end and every app goes with them.', right: true },
-      { text: 'Leaver: removed them from each app one at a time.' },
-      { text: 'Leaver: changed their password.' },
-    ],
+    note: {
+      example: 'Leaver: deactivate them in Oktopus on their last day. Their sessions end and every app goes with them.',
+      keys: ['deactivat', 'leaver', 'last day', 'left', 'offboard'],
+    },
     why: 'Deactivating a leaver in Oktopus ends their sessions and takes away every app at once. That\u2019s the point of one sign-in: one place to switch someone off.',
   },
   {
@@ -382,14 +476,18 @@ export const ISSUES: Issue[] = [
     title: 'Lost or new phone',
     skill: 'access',
     page: { status: 'missing', text: '(New system. No page yet.)' },
+    asks: [
+      { id: 'phone', text: 'What happened to your old phone?', none: 'It went in the pond. Long story. Ducks were involved.' },
+      { id: 'verify', text: 'Can you confirm your employee number?', none: 'EMP-1004. Same as always.' },
+      { id: 'where', text: 'Where are you right now?', none: 'At my desk. Look up! I’m waving.' },
+    ],
     fixes: [],
     correctFix: 'console',
     console: 'mfa',
-    notes: [
-      { text: 'New phone: check it\u2019s really them against HR (employee ID, manager), then reset their sign-in methods in Oktopus.', right: true },
-      { text: 'New phone: turned off MFA for them.' },
-      { text: 'New phone: reset it as soon as anyone asked.' },
-    ],
+    note: {
+      example: 'New phone: check it\u2019s really them against HR (employee ID, manager), then reset their sign-in methods in Oktopus.',
+      keys: ['hr', 'verif', 'check', 'employee', 'emp-', 'new phone', 'really her', 'really them'],
+    },
     why: 'When someone loses their phone, IT resets their sign-in methods so they can set up the new one. But only after checking it\u2019s really them, against the HR record, not against whatever the caller says.',
   },
   {
@@ -398,17 +496,21 @@ export const ISSUES: Issue[] = [
     title: 'Suspicious MFA reset request',
     skill: 'access',
     page: { status: 'missing', text: '(New system. No page yet.)' },
+    asks: [
+      { id: 'phone', text: 'What happened to your old phone?', none: 'I lost it!! Please hurry, I’m locked out!!' },
+      { id: 'verify', text: 'Can you confirm your employee number?', none: 'I don’t have it handy. Can you just reset it? It’s really urgent!!' },
+      { id: 'where', text: 'Where are you right now?', none: 'At my desk, obviously. Hurry please!!' },
+    ],
     fixes: [
       { id: 'reset', grave: true, label: 'Reset her sign-in methods so she can get in', fail: 'You just handed Juniper\u2019s account to a stranger. Her real self is in a workshop, phone on silent.' },
-      { id: 'verify', label: 'Don\u2019t reset. Call Juniper on the number in her HR record and check' },
+      { id: 'verify', label: 'Don\u2019t reset. Call Juniper on the number in her HR record and check', works: 'Juniper, out of her workshop: “That wasn\u2019t me! My phone\u2019s right here. Thank you for checking.”' },
       { id: 'forward', label: 'Forward it to Mr. Grisby to decide', fail: 'Mr. Grisby replied “sure, do it”. He did not read it.' },
     ],
     correctFix: 'verify',
-    notes: [
-      { text: 'MFA reset from outside the company: never reset. Call them back on the number HR has.', right: true },
-      { text: 'Reset it: she said it was urgent.' },
-      { text: 'Asked the manager.' },
-    ],
+    note: {
+      example: 'MFA reset from outside the company: never reset. Call them back on the number HR has.',
+      keys: ['phish', 'fake', 'scam', 'impersonat', 'gmall', 'not her', 'not juniper', 'outside', 'not a burrow', 'call', 'verif', 'check'],
+    },
     why: 'This is how accounts get taken over: someone pretends to be staff, from an address that isn\u2019t ours, in a hurry. Check with the real person, using contact details you already have, never the ones in the request.',
   },
 ];
@@ -420,7 +522,7 @@ export const TICKETS: Ticket[] = [
     title: 'The printer is broken',
     message: 'The printer’s out of ink. I pressed print three times and nothing!',
     details: [
-      { label: 'Printer screen', text: 'PAPER JAM – TRAY 2. Ink: 70%' },
+      { label: 'Printer screen', text: 'PAPER JAM – TRAY 2. Ink: 70%', ask: 'screen' },
       { label: 'Print queue', text: '3 jobs waiting from Dot’s laptop' },
     ],
     workaround: 'Send it to the printer upstairs for now',
@@ -430,8 +532,8 @@ export const TICKETS: Ticket[] = [
     title: 'The internet is down!!',
     message: 'Internet down for the WHOLE office. Please fix ASAP.',
     details: [
-      { label: 'Around the office', text: 'Everyone else is happily online.' },
-      { label: 'Juniper’s laptop', text: 'Airplane mode: ON' },
+      { label: 'Around the office', text: 'Everyone else is happily online.', ask: 'others' },
+      { label: 'Juniper’s laptop', text: 'Airplane mode: ON', ask: 'settings' },
     ],
     workaround: 'Let her use the hot-desk PC for now',
   },
@@ -440,7 +542,7 @@ export const TICKETS: Ticket[] = [
     title: 'Mouse stopped working',
     message: 'Oh! You’re here! Can you look at my mouse real quick? It just stopped.',
     details: [
-      { label: 'Mouse', text: 'Wireless. The little light underneath is off.' },
+      { label: 'Mouse', text: 'Wireless. The little light underneath is off.', ask: 'kind' },
       { label: 'Kitchen drawer', text: 'A pack of AA batteries, next to the tea bags.' },
     ],
     workaround: '',
@@ -451,7 +553,7 @@ export const TICKETS: Ticket[] = [
     title: 'My laptop is SO slow',
     message: 'It takes five minutes to open email. I need a new laptop.',
     details: [
-      { label: 'Laptop info', text: 'Last restarted: 41 days ago. 12 updates waiting.' },
+      { label: 'Laptop info', text: 'Last restarted: 41 days ago. 12 updates waiting.', ask: 'uptime' },
       { label: 'Memo on his monitor', text: 'Budget freeze: no new hardware. – Grisby' },
     ],
     workaround: 'Close his 47 browser tabs for now',
@@ -461,8 +563,8 @@ export const TICKETS: Ticket[] = [
     title: 'Battery dead, won’t charge',
     message: 'Battery is broken, charging all day and still at 3%. Need a new battery!',
     details: [
-      { label: 'Charger on his desk', text: 'USB-C phone charger, 20W' },
-      { label: 'Laptop sticker', text: 'Use a 65W or higher USB-C charger.' },
+      { label: 'Charger on his desk', text: 'USB-C phone charger, 20W', ask: 'charger' },
+      { label: 'Laptop sticker', text: 'Use a 65W or higher USB-C charger.', ask: 'sticker' },
     ],
     workaround: 'Lend him your own charger for the day',
   },
@@ -471,8 +573,8 @@ export const TICKETS: Ticket[] = [
     title: 'Printer just blinks at me',
     message: 'The printer blinks orange and won’t print. Is it angry? Ribbit.',
     details: [
-      { label: 'Printer screen', text: 'PAPER JAM – TRAY 1' },
-      { label: 'Tray 1', text: 'A crumpled sheet is wedged at the back.' },
+      { label: 'Printer screen', text: 'PAPER JAM – TRAY 1', ask: 'screen' },
+      { label: 'Tray 1', text: 'A crumpled sheet is wedged at the back.', ask: 'tray' },
     ],
     workaround: 'Print it on the upstairs printer',
   },
@@ -481,8 +583,8 @@ export const TICKETS: Ticket[] = [
     title: 'Projector shows nothing',
     message: 'My meeting starts in five minutes and the projector just says no signal. Hoo.',
     details: [
-      { label: 'Projector', text: 'No signal – HDMI 1' },
-      { label: 'Wall plate', text: 'His laptop cable is plugged into the socket marked HDMI 2.' },
+      { label: 'Projector', text: 'No signal – HDMI 1', ask: 'screen' },
+      { label: 'Wall plate', text: 'His laptop cable is plugged into the socket marked HDMI 2.', ask: 'cable' },
     ],
     workaround: '',
   },
@@ -492,8 +594,8 @@ export const TICKETS: Ticket[] = [
     title: 'Can’t add the printer',
     message: 'My new laptop can’t print. I followed the runbook! I found the CD!',
     details: [
-      { label: 'Laptop sticker', text: 'Ports: 2× USB-C. No disc drive.' },
-      { label: 'In his hand', text: 'A very shiny printer CD from 2011.' },
+      { label: 'Laptop sticker', text: 'Ports: 2× USB-C. No disc drive.', ask: 'ports' },
+      { label: 'In his hand', text: 'A very shiny printer CD from 2011.', ask: 'how' },
     ],
     workaround: 'Email the files to Dot and have her print them',
   },
@@ -502,8 +604,8 @@ export const TICKETS: Ticket[] = [
     title: 'Wi-Fi works but shared drive doesn’t',
     message: 'Internet works fine but the shared drive says “not found”. Hoo.',
     details: [
-      { label: 'Otis’s Wi-Fi', text: 'Connected to: Burrow-Guest' },
-      { label: 'Sticky note', text: 'Forgot staff Wi-Fi password. Used the easy one.' },
+      { label: 'Otis’s Wi-Fi', text: 'Connected to: Burrow-Guest', ask: 'network' },
+      { label: 'Sticky note', text: 'Forgot staff Wi-Fi password. Used the easy one.', ask: 'password' },
     ],
     workaround: 'Copy the files he needs onto a USB stick',
   },
@@ -512,8 +614,8 @@ export const TICKETS: Ticket[] = [
     title: 'My second screen is broken',
     message: 'The new screen just says no signal. I think it’s broken!',
     details: [
-      { label: 'Monitor', text: 'No signal – HDMI 2' },
-      { label: 'Back of the monitor', text: 'Cable plugged into: HDMI 1' },
+      { label: 'Monitor', text: 'No signal – HDMI 2', ask: 'screen' },
+      { label: 'Back of the monitor', text: 'Cable plugged into: HDMI 1', ask: 'cable' },
     ],
     workaround: 'Tell her one screen is plenty for today',
   },
@@ -522,7 +624,7 @@ export const TICKETS: Ticket[] = [
     title: 'Email won’t let me in',
     message: 'Email keeps asking me for something. I don’t know what it wants.',
     details: [
-      { label: 'Email app', text: 'Your password has expired. Change it to continue.' },
+      { label: 'Email app', text: 'Your password has expired. Change it to continue.', ask: 'error' },
     ],
     workaround: 'Let her read email on her phone for now',
   },
@@ -531,8 +633,8 @@ export const TICKETS: Ticket[] = [
     title: 'Password stopped working',
     message: 'You! Quick. My password stopped working. I haven’t changed it. I’ve typed it four times.',
     details: [
-      { label: 'His keyboard', text: 'The Caps Lock light is on.' },
-      { label: 'Login screen', text: 'Password incorrect. 1 try left before your account is locked.' },
+      { label: 'His keyboard', text: 'The Caps Lock light is on.', ask: 'keyboard' },
+      { label: 'Login screen', text: 'Password incorrect. 1 try left before your account is locked.', ask: 'error' },
     ],
     workaround: '',
   },
@@ -542,7 +644,7 @@ export const TICKETS: Ticket[] = [
     title: 'My printing keeps vanishing',
     message: 'Printed my report 4 times, never comes out at the kitchen printer. (My desk is by the kitchen, floor 1.)',
     details: [
-      { label: 'Print settings', text: 'Default printer: FINANCE-Floor2' },
+      { label: 'Print settings', text: 'Default printer: FINANCE-Floor2', ask: 'settings' },
       { label: 'Finance', text: 'Someone upstairs has four copies of a report about biscuits.' },
     ],
     workaround: 'Ask Finance to carry his prints down',
@@ -562,8 +664,8 @@ export const TICKETS: Ticket[] = [
     title: 'No internet on my laptop',
     message: 'I flew to my sister’s at the weekend. Now nothing loads. Hoo.',
     details: [
-      { label: 'Otis’s laptop', text: 'Airplane mode: ON (since Saturday)' },
-      { label: 'Around the office', text: 'Everyone else is online.' },
+      { label: 'Otis’s laptop', text: 'Airplane mode: ON (since Saturday)', ask: 'settings' },
+      { label: 'Around the office', text: 'Everyone else is online.', ask: 'others' },
     ],
     workaround: 'Let him use the hot-desk PC',
   },
@@ -572,7 +674,7 @@ export const TICKETS: Ticket[] = [
     title: 'Laptop is crawling',
     message: 'My laptop takes forever to do anything. Can I have Marlo’s old one?',
     details: [
-      { label: 'Laptop info', text: 'Last restarted: 26 days ago. 8 updates waiting.' },
+      { label: 'Laptop info', text: 'Last restarted: 26 days ago. 8 updates waiting.', ask: 'uptime' },
     ],
     workaround: 'Close everything she isn’t using',
   },
@@ -581,7 +683,7 @@ export const TICKETS: Ticket[] = [
     title: 'Finance printer stuck',
     message: 'Since you’re walking past: the finance printer’s out of ink. Again. Probably.',
     details: [
-      { label: 'Printer screen', text: 'PAPER JAM – TRAY 1. Ink: 81%' },
+      { label: 'Printer screen', text: 'PAPER JAM – TRAY 1. Ink: 81%', ask: 'screen' },
     ],
     workaround: '',
   },
@@ -591,8 +693,8 @@ export const TICKETS: Ticket[] = [
     title: 'Whole internet is down (again)',
     message: 'Internet totally gone on my desk PC since the cleaners came.',
     details: [
-      { label: 'PC screen', text: 'Network cable unplugged.' },
-      { label: 'Under the desk', text: 'A network cable lies on the floor next to the vacuum marks.' },
+      { label: 'PC screen', text: 'Network cable unplugged.', ask: 'screen' },
+      { label: 'Under the desk', text: 'A network cable lies on the floor next to the vacuum marks.', ask: 'under' },
     ],
     workaround: 'Let him work from the hot-desk PC',
   },
@@ -601,7 +703,7 @@ export const TICKETS: Ticket[] = [
     title: 'The boss’s email is broken',
     message: 'My email is BROKEN. Fix it. And don’t make me change any passwords, I don’t do that.',
     details: [
-      { label: 'Email app', text: 'Your password expired 3 days ago. Change it to continue.' },
+      { label: 'Email app', text: 'Your password expired 3 days ago. Change it to continue.', ask: 'error' },
       { label: 'Under his keyboard', text: 'A sticky note with his old password on it.' },
     ],
     workaround: 'Read his emails out to him from his phone',
@@ -611,7 +713,7 @@ export const TICKETS: Ticket[] = [
     title: 'Can’t open the team folder',
     message: 'The team folder says it doesn’t exist! But it does! I saw it yesterday!',
     details: [
-      { label: 'Biscuit’s Wi-Fi', text: 'Connected to: Burrow-Guest' },
+      { label: 'Biscuit’s Wi-Fi', text: 'Connected to: Burrow-Guest', ask: 'network' },
     ],
     workaround: 'Email him the files he needs',
   },
@@ -620,7 +722,7 @@ export const TICKETS: Ticket[] = [
     title: 'Printer’s broken AGAIN',
     message: 'The printer is broken again. I bet it’s the ink this time.',
     details: [
-      { label: 'Printer screen', text: 'PAPER JAM – TRAY 2. Ink: 64%' },
+      { label: 'Printer screen', text: 'PAPER JAM – TRAY 2. Ink: 64%', ask: 'screen' },
     ],
     workaround: 'Send it to the printer upstairs',
   },
@@ -629,8 +731,8 @@ export const TICKETS: Ticket[] = [
     title: 'Meeting room screen is blank',
     message: 'The big client is HERE and the screen is blank! Please please please.',
     details: [
-      { label: 'Big screen', text: 'No signal – HDMI 2' },
-      { label: 'Wall plate', text: 'Her cable is plugged into the socket marked HDMI 1.' },
+      { label: 'Big screen', text: 'No signal – HDMI 2', ask: 'screen' },
+      { label: 'Wall plate', text: 'Her cable is plugged into the socket marked HDMI 1.', ask: 'cable' },
     ],
     workaround: '',
   },
@@ -641,8 +743,8 @@ export const TICKETS: Ticket[] = [
     title: 'Locked out of my own laptop',
     message: 'My password is wrong. It’s never wrong. I am typing it VERY carefully. Ribbit.',
     details: [
-      { label: 'Pip’s keyboard', text: 'The Caps Lock light is on. There’s a crumb wedged next to the key.' },
-      { label: 'Login screen', text: 'Password incorrect. 2 tries left.' },
+      { label: 'Pip’s keyboard', text: 'The Caps Lock light is on. There’s a crumb wedged next to the key.', ask: 'keyboard' },
+      { label: 'Login screen', text: 'Password incorrect. 2 tries left.', ask: 'error' },
     ],
     workaround: 'Let him use the hot-desk PC for now',
   },
@@ -651,7 +753,7 @@ export const TICKETS: Ticket[] = [
     title: 'Printer ate my handout',
     message: 'The printer stopped halfway through my handouts. I think it needs more ink?',
     details: [
-      { label: 'Printer screen', text: 'PAPER JAM – TRAY 1. Ink: 88%' },
+      { label: 'Printer screen', text: 'PAPER JAM – TRAY 1. Ink: 88%', ask: 'screen' },
     ],
     workaround: 'Send the rest to the printer upstairs',
   },
@@ -660,17 +762,19 @@ export const TICKETS: Ticket[] = [
     title: 'Mouse died mid-spreadsheet',
     message: 'My mouse stopped in the middle of the quarterly numbers. I didn’t save. Please hurry.',
     details: [
-      { label: 'Mouse', text: 'Wireless. No light underneath. Clicking does nothing.' },
+      { label: 'Mouse', text: 'Wireless. No light underneath. Clicking does nothing.', ask: 'kind' },
       { label: 'Supply cupboard', text: 'A box of AA batteries, mostly full.' },
+      { label: 'Mouse history', text: 'It fell off the desk yesterday. Twice. It made a crunchy noise.', ask: 'dropped' },
     ],
     workaround: 'Lend her the spare wired mouse from the cupboard',
+    fixedBy: 'spare',
   },
   {
     id: 't206', day: 2, at: '16:00', who: 'biscuit', via: 'tray', priority: 'normal', issue: 'forgot-password', mood: 1,
     title: 'Forgot my password',
     message: 'I had a really nice long weekend and now I can’t remember my password. At all. Was it biscuits? It wasn’t biscuits.',
     details: [
-      { label: 'Login screen', text: 'The user name or password is incorrect. (3 tries so far)' },
+      { label: 'Login screen', text: 'The user name or password is incorrect. (3 tries so far)', ask: 'error' },
       { label: 'Active Directory', text: 'Account: biscuit. Not locked out.' },
     ],
     workaround: 'Let him use the hot-desk PC',
@@ -680,7 +784,7 @@ export const TICKETS: Ticket[] = [
     title: 'Order me the most expensive computer',
     message: 'My computer is SLOW. Order me the most expensive one. Budget freeze doesn’t apply to me. Honk.',
     details: [
-      { label: 'Laptop info', text: 'Last restarted: 63 days ago. 19 updates waiting.' },
+      { label: 'Laptop info', text: 'Last restarted: 63 days ago. 19 updates waiting.', ask: 'uptime' },
       { label: 'On his desk', text: 'A framed photo of himself next to a bigger framed photo of himself.' },
     ],
     workaround: 'Close the 30 videos he has paused in the background',
@@ -690,8 +794,8 @@ export const TICKETS: Ticket[] = [
     title: 'Account locked',
     message: 'I changed my password on Monday. Now it says my account is locked. I know my password perfectly well. Hoo.',
     details: [
-      { label: 'Login screen', text: 'This account has been locked out. Contact your administrator.' },
-      { label: 'His phone', text: 'The email app has been trying his OLD password every five minutes since Monday.' },
+      { label: 'Login screen', text: 'This account has been locked out. Contact your administrator.', ask: 'error' },
+      { label: 'His phone', text: 'The email app has been trying his OLD password every five minutes since Monday.', ask: 'devices' },
     ],
     workaround: 'Let him use the hot-desk PC',
   },
@@ -700,8 +804,8 @@ export const TICKETS: Ticket[] = [
     title: 'Now it says LOCKED',
     message: 'My password was wrong so I kept trying it. Very carefully. Lots of times. Now it says locked. Ribbit.',
     details: [
-      { label: 'Pip’s keyboard', text: 'The Caps Lock light is on. Again.' },
-      { label: 'Login screen', text: 'This account has been locked out. Contact your administrator.' },
+      { label: 'Pip’s keyboard', text: 'The Caps Lock light is on. Again.', ask: 'keyboard' },
+      { label: 'Login screen', text: 'This account has been locked out. Contact your administrator.', ask: 'error' },
     ],
     workaround: 'Let him use the hot-desk PC',
   },
@@ -710,8 +814,8 @@ export const TICKETS: Ticket[] = [
     title: 'Laptop stuck at 4%',
     message: 'It’s charging but it’s not CHARGING. 4% all morning. Is it hungry?',
     details: [
-      { label: 'Charger on his desk', text: 'USB-C, 18W. Says “phone” on it.' },
-      { label: 'Laptop sticker', text: 'Use a 65W or higher USB-C charger.' },
+      { label: 'Charger on his desk', text: 'USB-C, 18W. Says “phone” on it.', ask: 'charger' },
+      { label: 'Laptop sticker', text: 'Use a 65W or higher USB-C charger.', ask: 'sticker' },
     ],
     workaround: 'Lend him your own charger for the afternoon',
   },
@@ -720,8 +824,8 @@ export const TICKETS: Ticket[] = [
     title: 'Tidied my desk, now no internet',
     message: 'I tidied my cables. They look beautiful. My computer no longer has the internet.',
     details: [
-      { label: 'PC screen', text: 'Network cable unplugged.' },
-      { label: 'Under his desk', text: 'Neat coils of cable, all zip-tied. One blue cable plugged into nothing.' },
+      { label: 'PC screen', text: 'Network cable unplugged.', ask: 'screen' },
+      { label: 'Under his desk', text: 'Neat coils of cable, all zip-tied. One blue cable plugged into nothing.', ask: 'under' },
     ],
     workaround: 'Let him work from the hot-desk PC',
   },
@@ -730,7 +834,7 @@ export const TICKETS: Ticket[] = [
     title: 'My prints go upstairs',
     message: 'Every time I print, it comes out on the floor above. I have climbed those stairs six times today. Hoo.',
     details: [
-      { label: 'Print settings', text: 'Default printer: FINANCE-Floor2' },
+      { label: 'Print settings', text: 'Default printer: FINANCE-Floor2', ask: 'settings' },
     ],
     workaround: 'Ask Finance to bring his prints down',
   },
@@ -749,7 +853,7 @@ export const TICKETS: Ticket[] = [
     title: 'Password gone after holiday',
     message: 'Two weeks in the sun and my password has evaporated. I need to send a quote in an hour.',
     details: [
-      { label: 'Login screen', text: 'The user name or password is incorrect.' },
+      { label: 'Login screen', text: 'The user name or password is incorrect.', ask: 'error' },
       { label: 'Active Directory', text: 'Account: marlo. Not locked out.' },
     ],
     workaround: 'Let him send the quote from Dot’s computer',
@@ -759,8 +863,8 @@ export const TICKETS: Ticket[] = [
     title: 'Shared drive vanished',
     message: 'The shared drive is GONE. All the files. Gone. Ribbit ribbit ribbit.',
     details: [
-      { label: 'Pip’s Wi-Fi', text: 'Connected to: Burrow-Guest' },
-      { label: 'Sticky note on his laptop', text: 'Guest Wi-Fi password: biscuits123' },
+      { label: 'Pip’s Wi-Fi', text: 'Connected to: Burrow-Guest', ask: 'network' },
+      { label: 'Sticky note on his laptop', text: 'Guest Wi-Fi password: biscuits123', ask: 'password' },
     ],
     workaround: 'Copy the files he needs onto a USB stick',
   },
@@ -789,21 +893,21 @@ export const TICKETS: Ticket[] = [
     id: 't603', day: 6, at: '10:15', who: 'dot', via: 'tray', priority: 'normal', issue: 'paper-jam', mood: 1,
     title: 'Printer’s got the Monday blues',
     message: 'The printer has stopped. On a Monday. It knows.',
-    details: [{ label: 'Printer screen', text: 'PAPER JAM – TRAY 1. Ink: 66%' }],
+    details: [{ label: 'Printer screen', text: 'PAPER JAM – TRAY 1. Ink: 66%', ask: 'screen' }],
     workaround: 'Send it to the printer upstairs',
   },
   {
     id: 't604', day: 6, at: '11:40', who: 'biscuit', via: 'walkup', where: 'Kitchen', priority: 'normal', issue: 'airplane-mode', mood: 1,
     title: 'No internet in the kitchen',
     message: 'The internet works everywhere except my laptop! Is the kitchen cursed?',
-    details: [{ label: 'Biscuit’s laptop', text: 'Airplane mode: ON' }],
+    details: [{ label: 'Biscuit’s laptop', text: 'Airplane mode: ON', ask: 'settings' }],
     workaround: 'Let him use the hot-desk PC',
   },
   {
     id: 't605', day: 6, at: '15:30', who: 'pip', via: 'tray', priority: 'normal', issue: 'locked-out', mood: 1,
     title: 'Locked out after the weekend',
     message: 'I tried my password a few times this morning. Well. Several. Now it’s locked. Ribbit.',
-    details: [{ label: 'Login screen', text: 'This account has been locked out. Contact your administrator.' }],
+    details: [{ label: 'Login screen', text: 'This account has been locked out. Contact your administrator.', ask: 'error' }],
     workaround: 'Let him use the hot-desk PC',
   },
   {
@@ -821,8 +925,8 @@ export const TICKETS: Ticket[] = [
     title: 'Projector says no',
     message: 'Pitch in ten minutes. The projector has decided it has no signal. I have a signal. I am the signal.',
     details: [
-      { label: 'Projector', text: 'No signal – HDMI 2' },
-      { label: 'Wall plate', text: 'His cable is in the socket marked HDMI 1.' },
+      { label: 'Projector', text: 'No signal – HDMI 2', ask: 'screen' },
+      { label: 'Wall plate', text: 'His cable is in the socket marked HDMI 1.', ask: 'cable' },
     ],
     workaround: 'Pitch from his laptop screen',
   },
@@ -831,7 +935,7 @@ export const TICKETS: Ticket[] = [
     title: 'Password forgotten after a long weekend',
     message: 'A restful weekend has erased my password entirely. Hoo.',
     details: [
-      { label: 'Login screen', text: 'The user name or password is incorrect.' },
+      { label: 'Login screen', text: 'The user name or password is incorrect.', ask: 'error' },
       { label: 'Active Directory', text: 'Account: otis. Not locked out.' },
     ],
     workaround: 'Let him use the hot-desk PC',
@@ -840,14 +944,14 @@ export const TICKETS: Ticket[] = [
     id: 't704', day: 7, at: '14:00', who: 'dot', via: 'walkup', where: 'Finance corner', priority: 'normal', issue: 'mouse-battery', mood: 1,
     title: 'Mouse has died again',
     message: 'My mouse is dead. Again. Do mice have batteries? Asking for a mouse.',
-    details: [{ label: 'Mouse', text: 'Wireless. No light underneath.' }],
+    details: [{ label: 'Mouse', text: 'Wireless. No light underneath.', ask: 'kind' }],
     workaround: 'Lend her the spare wired mouse',
   },
   {
     id: 't705', day: 7, at: '15:45', who: 'biscuit', via: 'tray', priority: 'low', issue: 'default-printer', mood: 0,
     title: 'Prints keep going upstairs',
     message: 'Every time I print something it goes to Finance. Finance have started keeping my prints. They know about my biscuit spreadsheet.',
-    details: [{ label: 'Print settings', text: 'Default printer: FINANCE-Floor2' }],
+    details: [{ label: 'Print settings', text: 'Default printer: FINANCE-Floor2', ask: 'settings' }],
     workaround: 'Ask Finance to bring them down',
   },
   {
@@ -864,28 +968,28 @@ export const TICKETS: Ticket[] = [
     id: 't802', day: 8, at: '10:40', who: 'pip', via: 'tray', priority: 'low', issue: 'slow-laptop', mood: 0,
     title: 'Laptop slower than me',
     message: 'My laptop is slower than me. I am a frog. Ribbit.',
-    details: [{ label: 'Laptop info', text: 'Last restarted: 33 days ago. 14 updates waiting.' }],
+    details: [{ label: 'Laptop info', text: 'Last restarted: 33 days ago. 14 updates waiting.', ask: 'uptime' }],
     workaround: 'Close everything he isn’t using',
   },
   {
     id: 't803', day: 8, at: '11:30', who: 'juniper', via: 'walkup', where: 'Open office', priority: 'normal', issue: 'caps-lock', mood: 1,
     title: 'Password wrong, apparently',
     message: 'My password says it’s wrong. It is NOT wrong. I have been typing it for three years.',
-    details: [{ label: 'Juniper’s keyboard', text: 'The Caps Lock light is on.' }],
+    details: [{ label: 'Juniper’s keyboard', text: 'The Caps Lock light is on.', ask: 'keyboard' }],
     workaround: 'Let her use the hot-desk PC',
   },
   {
     id: 't804', day: 8, at: '13:15', who: 'grisby', via: 'tray', priority: 'high', issue: 'password-expired', mood: 1,
     title: 'Email wants a new password',
     message: 'My email says my password has expired. Passwords don’t expire. They’re words. Fix it. Don’t make me pick one.',
-    details: [{ label: 'Email app', text: 'Your password has expired. Change it to continue.' }],
+    details: [{ label: 'Email app', text: 'Your password has expired. Change it to continue.', ask: 'error' }],
     workaround: 'Read his emails out to him from his phone',
   },
   {
     id: 't805', day: 8, at: '14:30', who: 'dot', via: 'tray', priority: 'normal', issue: 'guest-wifi', mood: 1,
     title: 'Finance folder has vanished',
     message: 'The Finance folder is gone. All of Finance. Please tell me it’s not gone.',
-    details: [{ label: 'Dot’s Wi-Fi', text: 'Connected to: Burrow-Guest' }],
+    details: [{ label: 'Dot’s Wi-Fi', text: 'Connected to: Burrow-Guest', ask: 'network' }],
     workaround: 'Email her the files she needs',
   },
   {
@@ -893,8 +997,8 @@ export const TICKETS: Ticket[] = [
     title: 'Laptop won’t charge past 6%',
     message: 'My laptop has been charging all afternoon and is at 6%. I fear it is broken. Hoo.',
     details: [
-      { label: 'Charger', text: 'USB-C, 20W. A phone charger.' },
-      { label: 'Laptop sticker', text: 'Use a 65W or higher USB-C charger.' },
+      { label: 'Charger', text: 'USB-C, 20W. A phone charger.', ask: 'charger' },
+      { label: 'Laptop sticker', text: 'Use a 65W or higher USB-C charger.', ask: 'sticker' },
     ],
     workaround: 'Lend him your charger',
   },
@@ -923,21 +1027,21 @@ export const TICKETS: Ticket[] = [
     id: 't903', day: 9, at: '11:20', who: 'biscuit', via: 'tray', priority: 'normal', issue: 'locked-out', mood: 1,
     title: 'Locked out (oops)',
     message: 'I may have tried my password eleven times. In a row. Now it says locked. Sorry!!',
-    details: [{ label: 'Login screen', text: 'This account has been locked out. Contact your administrator.' }],
+    details: [{ label: 'Login screen', text: 'This account has been locked out. Contact your administrator.', ask: 'error' }],
     workaround: 'Let him use the hot-desk PC',
   },
   {
     id: 't904', day: 9, at: '13:40', who: 'marlo', via: 'walkup', where: 'Open office', priority: 'normal', issue: 'paper-jam', mood: 1,
     title: 'Printer eating contracts',
     message: 'The printer has eaten a contract. Half a contract. The important half.',
-    details: [{ label: 'Printer screen', text: 'PAPER JAM – TRAY 2. Ink: 71%' }],
+    details: [{ label: 'Printer screen', text: 'PAPER JAM – TRAY 2. Ink: 71%', ask: 'screen' }],
     workaround: 'Send it to the printer upstairs',
   },
   {
     id: 't905', day: 9, at: '15:00', who: 'pip', via: 'tray', priority: 'normal', issue: 'cable-unplugged', mood: 1,
     title: 'Desk PC offline again',
     message: 'My PC has no internet. The cleaners were here. I see a pattern. Ribbit.',
-    details: [{ label: 'Under the desk', text: 'The network cable is lying on the floor.' }],
+    details: [{ label: 'Under the desk', text: 'The network cable is lying on the floor.', ask: 'under' }],
     workaround: 'Let him use the hot-desk PC',
   },
   {
@@ -972,7 +1076,7 @@ export const TICKETS: Ticket[] = [
     title: 'Password gone after holiday',
     message: 'Back from a week away and my password has gone with the sunburn.',
     details: [
-      { label: 'Login screen', text: 'The user name or password is incorrect.' },
+      { label: 'Login screen', text: 'The user name or password is incorrect.', ask: 'error' },
       { label: 'Active Directory', text: 'Account: dot. Not locked out.' },
     ],
     workaround: 'Let her use the hot-desk PC',
@@ -982,8 +1086,8 @@ export const TICKETS: Ticket[] = [
     title: 'Big screen blank before the board',
     message: 'The board meeting is in five minutes and the big screen is blank. Again. I’m starting to take it personally.',
     details: [
-      { label: 'Big screen', text: 'No signal – HDMI 1' },
-      { label: 'Wall plate', text: 'His cable is in the socket marked HDMI 2.' },
+      { label: 'Big screen', text: 'No signal – HDMI 1', ask: 'screen' },
+      { label: 'Wall plate', text: 'His cable is in the socket marked HDMI 2.', ask: 'cable' },
     ],
     workaround: 'Present from his laptop',
   },
@@ -992,8 +1096,8 @@ export const TICKETS: Ticket[] = [
     title: 'New laptop won’t print',
     message: 'My new laptop can’t find the printer. I found a printer CD in the drawer! The laptop has no hole for it.',
     details: [
-      { label: 'Laptop sticker', text: 'Ports: 2× USB-C. No disc drive.' },
-      { label: 'In his paws', text: 'A printer CD from 2012.' },
+      { label: 'Laptop sticker', text: 'Ports: 2× USB-C. No disc drive.', ask: 'ports' },
+      { label: 'In his paws', text: 'A printer CD from 2012.', ask: 'how' },
     ],
     workaround: 'Email the files to Dot to print',
   },
@@ -1001,14 +1105,18 @@ export const TICKETS: Ticket[] = [
     id: 't1006', day: 10, at: '14:45', who: 'pip', via: 'walkup', where: 'Open office', priority: 'normal', issue: 'airplane-mode', mood: 1,
     title: 'Internet gone after a flight',
     message: 'I went to a pond conference. Flew there. Flew back. Now no internet. Ribbit.',
-    details: [{ label: 'Pip’s laptop', text: 'Airplane mode: ON (since Wednesday)' }],
+    details: [{ label: 'Pip’s laptop', text: 'Airplane mode: ON (since Wednesday)', ask: 'settings' }],
     workaround: 'Let him use the hot-desk PC',
   },
   {
     id: 't1007', day: 10, at: '16:00', who: 'otis', via: 'tray', priority: 'low', issue: 'mouse-battery', mood: 0,
     title: 'Mouse has gone quiet',
     message: 'My mouse no longer responds. Neither does my stapler, but that is a separate matter. Hoo.',
-    details: [{ label: 'Mouse', text: 'Wireless. The light underneath is off.' }],
+    details: [
+      { label: 'Mouse', text: 'Wireless. The light underneath is off.', ask: 'kind' },
+      { label: 'Mouse history', text: 'Biscuit sat on it at the Friday meeting. Hoo.', ask: 'dropped' },
+    ],
     workaround: 'Lend him the spare wired mouse',
+    fixedBy: 'spare',
   },
 ];

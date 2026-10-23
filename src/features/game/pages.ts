@@ -15,15 +15,14 @@ export interface RunbookPage {
 
 /** Every page, in order: the old problems first, then a page for each tool you've been given. It grows as you go. */
 export function runbookPages(state: GameState): RunbookPage[] {
-  const right = (notes: { text: string; right?: true }[]) => notes.find((n) => n.right)?.text ?? '';
   return [
     ...ISSUES.map((issue) => {
       const status = state.runbook[issue.id] ?? issue.page.status;
-      return { title: issue.title, status, text: status === 'yours' ? right(issue.notes) : issue.page.text, old: issue.page.text };
+      return { title: issue.title, status, text: status === 'yours' ? state.written[issue.id] ?? issue.note.example : issue.page.text, old: issue.page.text };
     }),
     ...TOOLS.filter((tool) => state.tools.includes(tool.id)).map((tool): RunbookPage => {
       const yours = state.runbook[`tool:${tool.id}`] === 'yours';
-      return { title: tool.name, status: yours ? 'yours' : 'missing', text: yours ? right(tool.notes) : '(No page yet. Use it once, then write it up.)', tool: tool.id };
+      return { title: tool.name, status: yours ? 'yours' : 'missing', text: yours ? state.written[`tool:${tool.id}`] ?? tool.note.example : '(No page yet. Use it once, then write it up.)', tool: tool.id };
     }),
   ];
 }

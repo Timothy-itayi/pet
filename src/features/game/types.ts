@@ -36,12 +36,34 @@ export interface Fix {
   label: string;
   /** Shown when the player picks this fix and it's wrong. */
   fail?: string;
+  /** A sensible step to try first that just wasn't the cause this time: what they say after trying it. No harm done. */
+  ruledOut?: string;
+  /** What they say when it works, if not the usual thanks. */
+  works?: string;
+}
+
+/** A work note the player types, which becomes a runbook page. It counts if it says what was really wrong. */
+export interface Note {
+  /** A good note: what the page says if yours wasn't saved (an older save). */
+  example: string;
+  /** Words that show you know what was really wrong, matched from the start of a word. A note needs one. */
+  keys: string[];
+}
+
+/** A question you can ask the caller while troubleshooting. */
+export interface Ask {
+  id: string;
+  text: string;
+  /** Their answer when this ticket has nothing to say about it. */
+  none: string;
 }
 
 /** Something you can see on the ticket: what's on their screen, a sticker, a cable. */
 export interface Detail {
   label: string;
   text: string;
+  /** The question that gets the caller to tell you this. Without one, IT can see it already (HR, the portal, a log). */
+  ask?: string;
 }
 
 /** 'yours' means you rewrote the page with an internal note. */
@@ -62,15 +84,18 @@ export interface Issue {
   skill: Skill;
   /** The old runbook's page for this issue, as you first find it. */
   page: { status: Exclude<PageStatus, 'yours'>; text: string };
+  /** Questions that find out what's really going on. */
+  asks: Ask[];
   fixes: Fix[];
+  /** The usual fix. A ticket can have a different real cause: see Ticket.fixedBy. */
   correctFix: string;
   /**
    * Fixed in Active Directory rather than by picking from the list: unlock the account, or reset the password.
    * The ticket checks the account itself when you ask them to try again.
    */
   console?: ConsoleFix;
-  /** Internal-note choices after fixing. Exactly one is right. */
-  notes: { text: string; right?: true }[];
+  /** The work note you type after fixing it. */
+  note: Note;
   why: string;
 }
 
@@ -91,6 +116,8 @@ export interface Ticket {
   details: Detail[];
   workaround: string;
   mood: Mood;
+  /** When this one's cause isn't the usual one: the suggestion that actually fixes it. */
+  fixedBy?: string;
 }
 
 export interface Job {
@@ -122,6 +149,6 @@ export interface Tool {
   gift: string;
   issue: string;
   fixLabel: string;
-  /** Choices for its runbook page after you first use it. Exactly one is right. */
-  notes: { text: string; right?: true }[];
+  /** Its runbook page, which you type after you first use it. */
+  note: Note;
 }

@@ -51,6 +51,12 @@ export interface Ui {
   power: Power;
   /** When (performance.now()) you stepped away from the computer, to know if it has locked or gone to sleep. Cleared when you sit back down. */
   leftAt?: number;
+  /** ServiceSoon: the list or incident form you're looking at, the form's tab, and the resolution you've picked. */
+  snView?: 'list' | 'resolved' | 'form';
+  snTab?: 'notes' | 'resolution';
+  snCode?: 'fix' | 'workaround';
+  /** The work note you're typing on a card, kept across redraws. */
+  noteDraft?: string;
   /** The ticket open on the right of the desk. */
   selected?: string;
   /** The chat open on the right, when you're on the chat tab. */
@@ -82,8 +88,6 @@ export interface Ui {
   liked?: string[];
   /** You emptied the Recycle Bin. Sam's files are gone for good. */
   trashEmptied?: boolean;
-  /** Player pause: stops the office clock. */
-  paused: boolean;
 }
 
 export interface App {
