@@ -19,6 +19,10 @@ export const XP = { fix: 2, workaround: 1, note: 1 } as const;
 /** The office clock, in minutes since midnight. */
 export const OPEN = 9 * 60;
 export const CLOSE = 17 * 60;
+/** Half an hour before closing, a heads-up that the day is nearly over. */
+export const CLOSING_SOON = CLOSE - 30;
+/** After 5pm nothing new comes in, but you can stay late to finish up, unpaid, until the building locks. */
+export const LOCKUP = 18 * 60;
 /** How fast the office clock runs: a full day takes about 10 real minutes. */
 export const GAME_MINUTES_PER_SECOND = 0.8;
 /** After you ask someone on chat to log a ticket, minutes until it lands in your queue. */

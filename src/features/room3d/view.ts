@@ -176,6 +176,7 @@ export const roomReady = () => Boolean(v.room);
 
 export function showRoom(on: boolean): void {
   if (v.renderer) v.renderer.domElement.hidden = !on;
+  if (v.css) v.css.domElement.hidden = !on;
 }
 
 /** Glide the camera to a view. Resolves when it arrives. */

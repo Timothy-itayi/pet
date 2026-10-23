@@ -1,5 +1,5 @@
-import { COMPANY, DAYS, TOOLS } from '../game/data.ts';
-import { weekday, weekOf, type GameState } from '../game/rules.ts';
+import { CLOSE, COMPANY, DAYS, TOOLS } from '../game/data.ts';
+import { canClockOut, clockOut, weekday, weekOf, type GameState } from '../game/rules.ts';
 import { ON_THE_WALL, ROOM_ITEMS, SIPS } from '../room3d/items.ts';
 import { closeInspect, goTo, inspectItem, isInspecting, pressMouse, sipMug, spinChair, swayPlant, turnInspected } from '../room3d/view.ts';
 import type { App } from './app.ts';
@@ -98,6 +98,8 @@ function sip(app: App): string {
 /** Click something in the room. Some things you pick up; most you use where they are. */
 export function pickInRoom(app: App, id: string): void {
   const { ui } = app;
+  // The day is over: nothing to do at the desk until tomorrow.
+  if (app.state.phase === 'dayEnd') return;
   ui.note = undefined;
   const item = ROOM_ITEMS.find((i) => i.id === id);
   const says = item?.says(app.state.day);
@@ -191,6 +193,9 @@ export function roomHud(app: App): HTMLElement {
     }, '\u2190'),
     !held && h('section', { class: 'room-bottom' },
       h('p', { class: 'hover-label', 'aria-hidden': 'true', 'data-hover': true }),
-      h('p', { class: 'caption', 'aria-live': 'polite', 'data-testid': 'caption' }, intro)),
+      h('p', { class: 'caption', 'aria-live': 'polite', 'data-testid': 'caption' }, intro),
+      state.phase === 'desk' && state.clock >= CLOSE && h('div', { class: 'room-actions' }, h('button', {
+        class: 'btn primary', 'data-testid': 'clock-out', disabled: !canClockOut(state), onclick: () => app.set(clockOut(state)),
+      }, 'Go home'))),
   );
 }

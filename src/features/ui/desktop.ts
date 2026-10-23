@@ -1,7 +1,7 @@
-import { MANAGER, VILLAGERS } from '../game/data.ts';
+import { CLOSE, MANAGER, VILLAGERS } from '../game/data.ts';
 import { newsFor } from '../game/news.ts';
 import { OKTOPUS_DAY } from '../game/oktopus.ts';
-import { isWeekOver, readNews, scriptFor, ticketById, type GameState } from '../game/rules.ts';
+import { canClockOut, clockOut, isWeekOver, readNews, scriptFor, ticketById, type GameState } from '../game/rules.ts';
 import type { App, AppId, Toast, Win } from './app.ts';
 import { browserTitle } from './browser.ts';
 import { chatApp } from './chat.ts';
@@ -295,6 +295,15 @@ function taskbar(app: App): HTMLElement {
       h('span', { class: 'tray-clock', 'data-real-clock': true, 'data-testid': 'tray-clock', title: Intl.DateTimeFormat().resolvedOptions().timeZone }, realTime())));
 }
 
+/** After 5pm: nothing new comes in. Finish what you're on, then go home, or security locks up at 6. */
+function closingBar(app: App): HTMLElement {
+  return h('div', { class: 'closing-bar', role: 'status', 'data-testid': 'closing-bar' },
+    h('p', {}, 'The office is closed. No new tickets. Finish what you\u2019re on, then go home. Security locks up at 6.'),
+    h('button', {
+      class: 'btn primary', 'data-testid': 'clock-out', disabled: !canClockOut(app.state), onclick: () => app.set(clockOut(app.state)),
+    }, 'Go home'));
+}
+
 export function desktopScreen(app: App): HTMLElement {
   const { state, ui } = app;
   const outcome = state.outcomes[0];
@@ -307,6 +316,7 @@ export function desktopScreen(app: App): HTMLElement {
     })),
     ...ui.windows.map((w, i) => windowEl(app, w, i + 2)),
     toasts(app),
+    state.phase === 'desk' && state.clock >= CLOSE && closingBar(app),
     ui.startOpen && startMenu(app),
     taskbar(app),
     outcome && outcomeCard(app, outcome),

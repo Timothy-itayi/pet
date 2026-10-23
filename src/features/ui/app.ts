@@ -34,6 +34,8 @@ export interface Ui {
   booted: boolean;
   /** Looking around the room, or sitting at the computer. */
   view: 'room' | 'computer';
+  /** The day is over: the computer shuts down and the camera pulls back before the day's summary shows. */
+  windingDown?: boolean;
   /** The camera is gliding into the computer screen. */
   flying?: boolean;
   /** Which part of the room you're looking at. */

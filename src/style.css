@@ -304,7 +304,9 @@ img.sprite.tiny { width: 40px; height: 40px; }
 /* The 3D room behind everything */
 body:has(.room-canvas:not([hidden])) { background: #120d0a; }
 .room-canvas { position: fixed; inset: 0; z-index: 1; display: block; transition: filter 0.4s ease; }
-.room-canvas.blurred { filter: blur(6px) brightness(0.4) saturate(0.8); }
+.room-canvas.blurred, body.day-over .room-canvas, body.day-over .screen-layer { filter: blur(6px) brightness(0.4) saturate(0.8); }
+body.day-over .room-canvas { pointer-events: none; }
+.room-canvas[hidden], .screen-layer[hidden] { display: none; }
 .inspect-canvas { position: fixed; inset: 0; z-index: 2; display: block; cursor: grab; }
 .inspect-canvas:active { cursor: grabbing; }
 #app { position: relative; z-index: 3; }
@@ -1113,3 +1115,10 @@ input.ridge-address:focus { border-color: #0078d4; background: #fff; }
 .sn-kb h3 { margin: 2px 0 4px; font: 600 13px 'Segoe UI', Arial, sans-serif; }
 .sn-kb p { margin: 0; font-size: 12px; }
 .sn-kb-panel .policy-line { margin: 0; font-size: 12px; }
+
+/* After 5pm: the office is closed, finish up and go home. */
+.crt-screen .closing-bar {
+  position: absolute; left: 50%; top: 10px; transform: translateX(-50%); z-index: 910; width: min(640px, calc(100% - 20px));
+  display: flex; align-items: center; gap: 12px; padding: 8px 12px; background: #fff8c4; border: 1px solid #b59f2a; box-shadow: 2px 2px 0 #0003;
+}
+.crt-screen .closing-bar p { margin: 0; flex: 1; font-size: 13px; }

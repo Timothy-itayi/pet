@@ -1,5 +1,5 @@
 import {
-  BOND, CALLER, CLOSE, COST, DAILY_COST, DAYS, DAY_SCRIPTS, DROP_DAY, TOOLS, GOAL_VOUCHER, ISSUES, JOBS, MAX_PUSHES,
+  BOND, CALLER, CLOSE, COST, LOCKUP, DAILY_COST, DAYS, DAY_SCRIPTS, DROP_DAY, TOOLS, GOAL_VOUCHER, ISSUES, JOBS, MAX_PUSHES,
   MESSY_SLIPS, OPEN, REPLIES, START_SAVINGS, THANKS, TICKET_LANDS_AFTER, TICKETS, VILLAGERS,
   WORKAROUND_RETURNS_AFTER, XP, type VillagerId,
 } from './data.ts';
@@ -65,6 +65,8 @@ export interface Today {
   notes: number;
   xp: number;
   voucher: boolean;
+  /** Minutes you stayed past 5pm, unpaid. */
+  overtime: number;
   /** Who became a friend or nemesis today, or stopped being one. */
   bonds: { who: VillagerId; now: Relation }[];
 }
@@ -172,7 +174,7 @@ const isTicket = (s: GameState, t: Ticket) => t.via === 'tray' || Boolean(s.tick
 const byChat = (t: Ticket) => t.via !== 'tray';
 
 const emptyToday = (): Today => ({
-  resolved: 0, pushed: 0, wrongFixes: 0, complaints: 0, notes: 0, xp: 0, voucher: false, bonds: [],
+  resolved: 0, pushed: 0, wrongFixes: 0, complaints: 0, notes: 0, xp: 0, voucher: false, bonds: [], overtime: 0,
 });
 
 /** Each action copies the state, so the caller can keep or drop the old one. */
@@ -278,15 +280,15 @@ function slip(d: GameState, t: Ticket): void {
 
 /** Run the office clock forward: people's tickets and messages arrive on time. */
 function advance(d: GameState, minutes: number): void {
-  d.clock = Math.min(d.clock + minutes, CLOSE);
+  d.clock = Math.min(d.clock + minutes, LOCKUP);
   for (const id of [...d.queue]) {
     const c = d.tickets[id]?.caller;
     if (c && c.doing !== 'confirmed' && c.until <= d.clock) hear(d, ticketById(id), c);
   }
   for (const a of d.arriving.filter((x) => x.at <= d.clock).sort((x, y) => x.at - y.at)) arrive(d, a.id, a.at);
   d.arriving = d.arriving.filter((x) => x.at > d.clock);
-  // At closing time the day ends, unless a card is still up; dismissing the last card ends it.
-  if (d.clock >= CLOSE && !d.outcomes.length) finishDay(d);
+  // When the building locks, the day ends, unless a card is still up; dismissing the last card ends it.
+  if (d.clock >= LOCKUP && !d.outcomes.length) finishDay(d);
 }
 
 function startDay(d: GameState): void {
@@ -327,6 +329,7 @@ export const toolFor = (s: GameState, t: Ticket): Tool | undefined =>
 
 function finishDay(d: GameState): void {
   d.phase = 'dayEnd';
+  d.today.overtime = Math.max(0, d.clock - CLOSE);
   d.today.voucher = d.today.resolved >= scriptFor(d.day).goal;
   d.savings += (d.today.voucher ? GOAL_VOUCHER : 0) - DAILY_COST;
 }
@@ -363,7 +366,7 @@ export const goTo = (s: GameState, phase: Phase) => act(s, (d) => { d.phase = ph
 
 /** Real time passing at the desk. The clock stops while a card is up or you're elsewhere. */
 export function tick(s: GameState, minutes: number): GameState {
-  if (s.phase !== 'desk' || s.outcomes.length || s.clock >= CLOSE) return s;
+  if (s.phase !== 'desk' || s.outcomes.length || s.clock >= LOCKUP) return s;
   return act(s, (d) => advance(d, minutes));
 }
 
@@ -668,14 +671,14 @@ export function writeNote(s: GameState, text: string): GameState {
     d.today.notes += 1;
     first.xp += XP.note;
     first.noted = true;
-    d.clock = Math.min(d.clock + COST.note, CLOSE);
+    d.clock = Math.min(d.clock + COST.note, LOCKUP);
   });
 }
 
 /** Dismiss the card on top. If the day ran out meanwhile, it ends now. */
 export const next = (s: GameState) => act(s, (d) => {
   d.outcomes.shift();
-  if (!d.outcomes.length && d.clock >= CLOSE && d.phase === 'desk') finishDay(d);
+  if (!d.outcomes.length && d.clock >= LOCKUP && d.phase === 'desk') finishDay(d);
 });
 
 /** The rule: every request is a ticket. It annoys them, but the request comes back through your queue, where it counts. */
@@ -696,6 +699,10 @@ export function askForTicket(s: GameState, id: string): GameState {
     advance(d, COST.askForTicket);
   });
 }
+
+/** After 5pm, once no card is up: stop for the day, whatever's left waits until tomorrow. */
+export const canClockOut = (s: GameState) => s.phase === 'desk' && s.clock >= CLOSE && !s.outcomes.length;
+export const clockOut = (s: GameState) => (canClockOut(s) ? act(s, finishDay) : s);
 
 /** Leave the day-end screen: either an ending, or tomorrow's boot-up. */
 export function goHome(s: GameState): GameState {
@@ -764,6 +771,8 @@ export function parseSave(raw: string | null): GameState | undefined {
     for (const st of Object.values(s.tickets ?? {})) st.heard ??= [];
     // Saves from before you typed your notes: the pages you wrote show the example text.
     s.written ??= {};
+    // Saves from before you could stay late: no overtime yet.
+    if (s.today) s.today.overtime ??= 0;
     const known = new Set(TICKETS.map((t) => t.id));
     const isObject = (x: unknown) => typeof x === 'object' && x !== null;
     const ok =
