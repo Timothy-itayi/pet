@@ -681,8 +681,7 @@ body:has(.book) .inspect-canvas { visibility: hidden; }
   .sheet { animation: none; }
 }
 
-/* Active Registry Users and Computers: an old console, folders on the left, accounts on the right. */
-.crt-screen .window-directory { width: min(860px, calc(100% - 32px)); }
+/* Active Directory Users and Computers: an old console, folders on the left, accounts on the right. */
 .crt-screen .window-directory .window-body { padding: 0; }
 .ad { display: flex; flex-direction: column; font: 12px var(--read); color: var(--os-text); background: var(--os-face); }
 .ad-menu { display: flex; gap: 14px; padding: 3px 8px; border-bottom: 1px solid var(--os-mid); }
@@ -714,15 +713,130 @@ body:has(.book) .inspect-canvas { visibility: hidden; }
 .ad-dialog .row { justify-content: flex-end; }
 .ad-lockout { margin: 0; }
 
-/* The Burrow Intranet: a company homepage from around 2001. */
-.crt-screen .window-intranet { width: min(640px, calc(100% - 32px)); }
-.intranet-head { display: flex; align-items: baseline; gap: 12px; padding: 8px 12px; margin: -16px -16px 12px; background: linear-gradient(#3a6ea5, #0a246a); color: #fff; }
-.intranet-head strong { font: bold 20px Georgia, serif; }
-.news { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
-.post { padding: 8px 10px; background: #fff; border: 1px solid var(--os-line); }
-.post h3 { margin: 0 0 2px; color: #0a246a; font-size: 15px; }
-.post p { margin: 4px 0 0; }
-
-/* A new intranet post, waiting in the corner until you read it. */
-.crt-screen .news-toast { top: 16px; bottom: auto; flex-direction: column; gap: 2px; align-items: flex-start; cursor: pointer; text-align: left; font: 12px var(--read); color: var(--os-text); }
 .icon .unread { margin-left: 4px; }
+
+/* ---- BurrowOS windows: dragged by the title bar, minimised to the taskbar, maximised to fill the screen. ---- */
+.crt-screen .desktop { overflow: hidden; }
+.crt-screen .win {
+  position: absolute; transform: none; max-height: none; max-width: calc(100% - 8px);
+  display: flex; flex-direction: column; min-width: 0;
+}
+.crt-screen .win[hidden] { display: none; }
+.crt-screen .win.max { left: 0 !important; top: 0 !important; width: 100% !important; height: calc(100% - 30px) !important; max-width: none; }
+.crt-screen .win .titlebar { display: flex; align-items: center; justify-content: space-between; gap: 8px; cursor: default; user-select: none; touch-action: none; }
+.crt-screen .win:not(.front) .titlebar { background: linear-gradient(90deg, #808080, #b5b5b5); color: #d4d0c8; }
+.crt-screen .win-title { display: flex; align-items: center; gap: 6px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.crt-screen .win-glyph { font-size: 13px; }
+.crt-screen .win-controls { display: flex; gap: 2px; flex-shrink: 0; }
+.crt-screen .win-controls .close:last-child { margin-left: 2px; }
+.crt-screen .win .window-body { flex: 1; min-height: 0; overflow: auto; padding: 12px; }
+.crt-screen .window-desk .window-body, .crt-screen .window-chat .window-body, .crt-screen .window-directory .window-body,
+.crt-screen .window-browser .window-body, .crt-screen .window-mail .window-body { padding: 0; display: flex; flex-direction: column; }
+.crt-screen .window-desk .desk, .crt-screen .window-chat .chat-app, .crt-screen .window-browser .ridge, .crt-screen .window-mail .mail { flex: 1; min-height: 0; }
+.crt-screen .desk { display: flex; flex-direction: column; height: auto; }
+.crt-screen .desk-closed { margin: auto; padding: 24px; color: var(--os-mid); }
+.crt-screen .queue-title { margin: 0 0 8px; }
+
+/* The taskbar: Start, a button for each open window, and the clock. */
+.crt-screen .desktop > .taskbar { position: absolute; left: 0; right: 0; bottom: 0; height: 30px; flex-wrap: nowrap; z-index: 900; }
+.crt-screen .start { font: bold 12px var(--read); color: var(--os-text); background: var(--os-face); cursor: pointer; height: 23px; }
+.crt-screen .start.on { border-color: var(--os-dark) var(--os-light) var(--os-light) var(--os-dark); box-shadow: inset 1px 1px var(--os-mid); }
+.crt-screen .task-buttons { display: flex; gap: 3px; min-width: 0; flex: 1; }
+.crt-screen .task {
+  display: flex; align-items: center; gap: 5px; min-width: 0; max-width: 160px; flex: 0 1 160px; height: 23px; padding: 0 8px;
+  font: 12px var(--read); color: var(--os-text); background: var(--os-face); cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  border: 1px solid; border-color: var(--os-light) var(--os-dark) var(--os-dark) var(--os-light); box-shadow: inset -1px -1px var(--os-mid);
+}
+.crt-screen .task.on { font-weight: bold; background: repeating-conic-gradient(#fff 0 25%, var(--os-face) 0 50%) 0 0 / 2px 2px; border-color: var(--os-dark) var(--os-light) var(--os-light) var(--os-dark); box-shadow: inset 1px 1px var(--os-mid); }
+.crt-screen .tray { align-items: center; height: 23px; font: 12px var(--read); }
+
+/* The Start menu: the tall banner down the side, programs, documents, and the ways to stop for the day. */
+.crt-screen .start-menu {
+  position: absolute; left: 2px; bottom: 30px; z-index: 950; display: flex; min-width: 240px;
+  background: var(--os-face); border: 2px solid; border-color: #dfdfdf var(--os-dark) var(--os-dark) #dfdfdf; box-shadow: 2px 2px 0 #000;
+}
+.crt-screen .start-banner { width: 26px; background: linear-gradient(#0a246a, #3a6ea5); display: flex; align-items: flex-end; justify-content: center; padding-bottom: 8px; }
+.crt-screen .start-banner span { writing-mode: vertical-rl; transform: rotate(180deg); color: #fff; font: bold 16px var(--read); letter-spacing: 0.04em; }
+.crt-screen .start-items { flex: 1; display: flex; flex-direction: column; padding: 2px 0; }
+.crt-screen .start-user { margin: 0; padding: 6px 10px; font: bold 12px var(--read); border-bottom: 1px solid var(--os-mid); }
+.crt-screen .start-heading { margin: 4px 0 0; padding: 2px 10px; font: 11px var(--read); color: var(--os-mid); }
+.crt-screen .start-item {
+  display: flex; align-items: center; gap: 10px; padding: 4px 12px 4px 10px; font: 12px var(--read); color: var(--os-text);
+  background: none; border: 0; text-align: left; cursor: pointer;
+}
+.crt-screen .start-item .glyph { font-size: 16px; width: 20px; text-align: center; }
+.crt-screen .start-item:hover, .crt-screen .start-item:focus-visible { background: #0a246a; color: #fff; outline: none; }
+.crt-screen .start-items hr { width: calc(100% - 8px); border: 0; border-top: 1px solid var(--os-mid); border-bottom: 1px solid #fff; margin: 4px; }
+
+/* Notifications, stacked in the corner above the clock. */
+.crt-screen .toasts { position: absolute; right: 8px; bottom: 38px; z-index: 920; display: flex; flex-direction: column; gap: 6px; width: 300px; }
+.crt-screen .toasts .toast { position: static; display: flex; padding: 0; max-width: none; animation: toast-in 0.25s ease-out; }
+@keyframes toast-in { from { opacity: 0; transform: translateY(8px); } }
+.crt-screen .toast-body { flex: 1; display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; background: none; border: 0; text-align: left; font: 12px var(--read); color: var(--os-text); cursor: pointer; }
+.crt-screen .toast-close { background: none; border: 0; font-size: 14px; padding: 4px 8px; cursor: pointer; align-self: flex-start; }
+.crt-screen .overlay { z-index: 980; }
+@media (prefers-reduced-motion: reduce) { .crt-screen .toasts .toast { animation: none; } }
+
+/* Burrow Chat: a dark aubergine sidebar of channels and people, the conversation on the right. */
+.chat-app { display: grid; grid-template-columns: 190px 1fr; font: 13px var(--read); color: var(--os-text); }
+.chat-side { background: #3f0e40; color: #cfc3cf; padding: 10px 0; display: flex; flex-direction: column; gap: 1px; overflow: auto; }
+.chat-workspace { margin: 0 0 10px; padding: 0 14px 10px; color: #fff; font-weight: bold; font-size: 15px; border-bottom: 1px solid #5d2c5d; }
+.chat-section { margin: 8px 0 2px; padding: 0 14px; font-size: 12px; color: #a991a9; }
+.chat-link { display: flex; justify-content: space-between; align-items: center; padding: 3px 14px; background: none; border: 0; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.chat-link:hover { background: #350d36; }
+.chat-link.on { background: #1164a3; color: #fff; }
+.chat-side .chat-empty { margin: 0; padding: 2px 14px; font-size: 12px; color: #a991a9; }
+.chat-channel { display: flex; flex-direction: column; min-height: 0; background: #fff; }
+.chat-channel-head { display: flex; gap: 10px; align-items: baseline; padding: 10px 14px; border-bottom: 1px solid #ddd; }
+.chat-feed { list-style: none; margin: 0; padding: 8px 14px; overflow: auto; display: grid; gap: 12px; align-content: start; }
+.chat-post { display: grid; grid-template-columns: 34px 1fr; gap: 8px; }
+.chat-post p { margin: 0 0 2px; }
+.chat-who { display: flex; gap: 8px; align-items: baseline; }
+.chat-avatar { width: 34px; height: 34px; border-radius: 4px; background: #e8912d; color: #fff; display: grid; place-items: center; font-weight: bold; }
+.chat-feed .chat-empty { color: var(--os-mid); }
+.chat-app .chat-view { margin: 0; border: 0; }
+
+/* Ridge: the browser, open on the intranet's news start page. */
+.ridge { display: flex; flex-direction: column; font: 13px 'Segoe UI', var(--read); color: #1b1a19; background: #f3f3f3; }
+.ridge-tabs { display: flex; gap: 2px; padding: 6px 8px 0; background: #dfe3e8; }
+.ridge-tab { padding: 5px 14px; border-radius: 8px 8px 0 0; background: #cfd5dc; }
+.ridge-tab.on { background: #f9f9f9; }
+.ridge-bar { display: flex; align-items: center; gap: 10px; padding: 5px 10px; background: #f9f9f9; border-bottom: 1px solid #ddd; }
+.ridge-nav { color: #666; letter-spacing: 6px; }
+.ridge-address { flex: 1; padding: 3px 12px; border-radius: 14px; background: #eef0f2; color: #444; }
+.ridge-page { flex: 1; overflow: auto; padding: 14px 18px; background: linear-gradient(#cfe1f3, #f3f3f3 240px); }
+.ridge-hello { margin: 0 0 8px; text-align: center; font-size: 15px; color: #2b3a55; }
+.ridge-search { margin: 0 auto 12px; max-width: 460px; padding: 8px 16px; border-radius: 20px; background: #fff; color: #888; box-shadow: 0 1px 4px #0002; }
+.ridge-tiles { display: flex; justify-content: center; gap: 10px; margin-bottom: 14px; }
+.ridge-tile { display: flex; flex-direction: column; align-items: center; gap: 2px; width: 96px; padding: 8px 4px; border: 0; border-radius: 8px; background: #ffffffcc; font: 12px 'Segoe UI', var(--read); cursor: pointer; }
+.ridge-tile .glyph { font-size: 22px; }
+.ridge-tile.off { opacity: 0.65; cursor: default; }
+.ridge-tile .meta { font-size: 10px; text-align: center; }
+.ridge-feed { display: grid; grid-template-columns: 1fr 240px; gap: 12px; }
+.ridge-main, .ridge-side { display: grid; gap: 10px; align-content: start; }
+.ridge-card { background: #fff; border-radius: 8px; padding: 10px 14px; box-shadow: 0 1px 3px #0002; }
+.ridge-card h2, .ridge-card h3 { margin: 2px 0 4px; font-family: 'Segoe UI', var(--read); }
+.ridge-card p { margin: 0; }
+.ridge-card.hero { background: linear-gradient(135deg, #1d3f6e, #3a6ea5); color: #fff; }
+.ridge-card.hero .meta { color: #cfe1f3; }
+.stock-line { display: flex; justify-content: space-between; gap: 6px; }
+.stock-line.small { font-size: 11px; color: #555; }
+.up { color: #107c10; }
+.down { color: #a4262c; }
+.spark { width: 100%; height: 48px; }
+.spark polyline { fill: none; stroke: #0078d4; stroke-width: 2.5; }
+.weather { font-size: 18px; }
+.ridge-list { margin: 4px 0 0; padding-left: 16px; }
+
+/* Burrow Mail: the list on the left, the message on the right. */
+.mail { display: grid; grid-template-columns: 170px 1fr; font: 13px var(--read); }
+.mail-list { display: flex; flex-direction: column; border-right: 1px solid var(--os-line); background: #fff; }
+.mail-item { display: flex; flex-direction: column; align-items: flex-start; padding: 6px 10px; background: none; border: 0; border-bottom: 1px solid var(--os-line); font: inherit; text-align: left; cursor: pointer; }
+.mail-item.on { background: #cce4f7; }
+.mail-read { padding: 12px 16px; background: #fff; }
+
+/* The Recycle Bin. */
+.trash-list { list-style: none; margin: 0 0 10px; padding: 0; display: grid; gap: 6px; font: 12px var(--read); }
+.trash-list li { display: grid; grid-template-columns: 24px auto 1fr; gap: 8px; align-items: baseline; }
+.trash-list .glyph { font-size: 16px; }
+.trash .row { justify-content: space-between; align-items: center; }

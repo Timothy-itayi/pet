@@ -1,5 +1,5 @@
 /**
- * Burrow & Co.'s staff directory, as Sam left it in Active Registry (the office's old on-site directory).
+ * Burrow & Co.'s staff directory, as Sam left it in Active Directory (the office's old on-site directory).
  * One account per person, keyed by login. Sam's account is still switched on: nobody ever turned it off.
  */
 

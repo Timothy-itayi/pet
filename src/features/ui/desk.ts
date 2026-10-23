@@ -1,24 +1,24 @@
-import { CHAT_LATER, MAX_PUSHES, VILLAGERS, WORKAROUND_RETURNS_AFTER } from '../game/data.ts';
+import { MAX_PUSHES, VILLAGERS, WORKAROUND_RETURNS_AFTER } from '../game/data.ts';
 import {
-  askForTicket, canPush, canWorkaround, fix, goNow, goTo, isKnown, issueOf, later, minutesLeft, moodName, next, noteTarget, pushBack,
+  canPush, canWorkaround, fix, isKnown, issueOf, minutesLeft, moodName, next, noteTarget, pushBack,
   relation, reply, scriptFor, ticketById, ticketState, toolFor, workaround, writeNote, type GameState, type Outcome, type Status,
 } from '../game/rules.ts';
 import type { Ticket } from '../game/types.ts';
-import { leaveComputer } from './roomHud.ts';
 import { face } from '../art/sprites.ts';
 import type { App } from './app.ts';
-import { clockText, h, money } from './dom.ts';
-import { panel, SKILL_NAMES } from './panels.ts';
+import { openApp } from './desktop.ts';
+import { clockText, h } from './dom.ts';
+import { SKILL_NAMES } from './panels.ts';
 
 const STATUS: Record<Status, string> = { new: 'New', open: 'Open', pending: 'Pending', resolved: 'Resolved' };
 const PRIORITY = { low: 'Low priority', normal: 'Normal priority', high: 'High priority' } as const;
 
 /** "Reply by 10:50 (8 min)" or "Overdue": the countdown that drives everyone's mood. */
-function dueText(s: GameState, id: string): string {
+export function dueText(s: GameState, id: string): string {
   const left = minutesLeft(s, id);
   return left > 0 ? `Reply by ${clockText(ticketState(s, id).due)} (${left} min)` : 'Overdue';
 }
-const urgent = (s: GameState, id: string) => minutesLeft(s, id) <= 10;
+export const urgent = (s: GameState, id: string) => minutesLeft(s, id) <= 10;
 
 /** Keeps the clock and countdowns moving between full redraws. */
 export function refreshTimes(root: HTMLElement, s: GameState): void {
@@ -41,28 +41,17 @@ function statusBar(app: App): HTMLElement {
       ui.paused ? 'Resume' : 'Pause'),
     h('span', { 'data-testid': 'goal' }, `Tickets resolved ${state.today.resolved}/${scriptFor(state.day).goal}`),
     state.escort && h('span', { class: 'where-you-are' }, `With ${VILLAGERS[ticketById(state.escort).who].name}`),
-    h('span', {}, `Savings ${money(state.savings)}`),
-    h('button', { class: 'btn small', onclick: () => { app.ui.panel = 'runbook'; app.rerender(); } }, 'Runbook'),
-    state.place === 'computer' && h('button', { class: 'btn small', 'data-testid': 'open-directory', onclick: () => { app.ui.panel = 'directory'; app.rerender(); } }, 'Active Registry'),
-    state.place === 'computer' && h('button', { class: 'btn small', onclick: () => app.set(goTo(state, 'desktop')) }, 'Inbox & jobs'),
-    state.place === 'computer' && h('button', { class: 'btn small', 'data-testid': 'back-to-desk', onclick: () => leaveComputer(app) }, 'Back to desk'),
+    state.place === 'computer' && h('button', { class: 'btn small', onclick: () => openApp(app, 'runbook') }, 'Runbook'),
+    state.place === 'computer' && h('button', { class: 'btn small', 'data-testid': 'open-directory', onclick: () => openApp(app, 'directory') }, 'Active Directory'),
   );
 }
 
-/** The left of the screen: your ticket queue, or the chat, where people message you to skip the queue. */
+/** The left of the Service Desk: your ticket queue. People who message you instead are in Burrow Chat. */
 function sidebar(app: App): HTMLElement {
-  const { state, ui } = app;
-  const tab = ui.tab ?? 'tickets';
-  const unread = state.chats.length;
-  const pick = (to: 'tickets' | 'chat') => () => { ui.tab = to; app.rerender(); };
-  return h('nav', { class: 'queue', 'aria-label': tab === 'chat' ? 'Chat' : 'Ticket queue' },
-    h('div', { class: 'tabs', role: 'tablist' },
-      h('button', { class: `tab${tab === 'tickets' ? ' on' : ''}`, role: 'tab', 'aria-selected': tab === 'tickets' ? 'true' : 'false', 'data-testid': 'tab-tickets', onclick: pick('tickets') },
-        `Tickets (${state.queue.length})`),
-      h('button', { class: `tab${tab === 'chat' ? ' on' : ''}`, role: 'tab', 'aria-selected': tab === 'chat' ? 'true' : 'false', 'data-testid': 'tab-chat', onclick: pick('chat') },
-        'Chat', unread > 0 && h('span', { class: 'unread', 'data-testid': 'unread' }, unread))),
-    ...(tab === 'tickets' ? ticketList(app) : chatList(app)),
-  );
+  const { state } = app;
+  return h('nav', { class: 'queue', 'aria-label': 'Ticket queue' },
+    h('h2', { class: 'small-heading queue-title' }, `Tickets (${state.queue.length})`),
+    ...ticketList(app));
 }
 
 function ticketList(app: App): HTMLElement[] {
@@ -83,57 +72,6 @@ function ticketList(app: App): HTMLElement[] {
         h('span', {}, `${v.name}, ${moodName(st.mood).toLowerCase()}. ${STATUS[st.status]}.`),
         h('span', { class: `due${urgent(state, id) ? ' urgent' : ''}`, 'data-due': id }, dueText(state, id))));
   });
-}
-
-function chatList(app: App): HTMLElement[] {
-  const { state, ui } = app;
-  if (!state.chats.length) return [h('p', { class: 'queue-empty' }, 'No messages. Suspiciously quiet.')];
-  return state.chats.map((id) => {
-    const t = ticketById(id);
-    const st = ticketState(state, id);
-    const v = VILLAGERS[t.who];
-    return h('button', {
-      class: `queue-item chat-item${id === ui.chat ? ' selected' : ''}`, 'data-testid': `chat-${id}`,
-      onclick: () => { ui.chat = id; app.rerender(); },
-    },
-      h('img', { class: 'sprite tiny', src: face(v, st.mood), alt: '' }),
-      h('span', { class: 'queue-text' },
-        h('strong', {}, v.name),
-        h('span', { class: 'preview' }, st.messages.at(-1)?.text ?? '')));
-  });
-}
-
-/**
- * A chat with someone who'd rather not log a ticket. Their face, DOOM-style, shows how they're taking it:
- * the longer you leave them, the crosser they look.
- */
-function chatView(app: App, t: Ticket): HTMLElement {
-  const { state } = app;
-  const st = ticketState(state, t.id);
-  const v = VILLAGERS[t.who];
-  return h('article', { class: 'ticket-view chat-view', 'aria-label': `Chat with ${v.name}` },
-    h('div', { class: 'ticket-info' },
-      h('header', { class: 'chat-head' },
-        h('figure', { class: `chat-face mood-${st.mood}` },
-          h('img', { class: 'sprite', src: face(v, st.mood), alt: `${v.name}, looking ${moodName(st.mood).toLowerCase()}`, 'data-testid': 'chat-face' }),
-          h('figcaption', {}, moodName(st.mood))),
-        h('div', {},
-          h('h2', {}, v.name),
-          h('p', { class: 'meta' }, 'Burrow Chat. Not a ticket.'),
-          h('p', { class: `due${urgent(state, t.id) ? ' urgent' : ''}`, 'data-due': t.id }, dueText(state, t.id)))),
-      h('ol', { class: 'conversation', 'data-testid': 'conversation' }, ...st.messages.map((m) =>
-        h('li', { class: `msg ${m.from}` },
-          h('span', { class: 'msg-meta' }, `${m.from === 'you' ? 'You' : v.name}, ${clockText(m.at)}`),
-          h('span', {}, m.text))))),
-    h('section', { class: 'decide', 'aria-label': 'Reply' },
-      h('button', { class: 'btn primary', 'data-testid': 'go-now', 'data-autofocus': true, onclick: () => app.set(goNow(state, t.id)) }, 'On my way'),
-      h('button', { class: 'btn choice', 'data-testid': 'later', disabled: !canPush(state, t.id), onclick: () => app.set(later(state, t.id)) },
-        h('strong', {}, 'Can it wait?'),
-        h('span', {}, canPush(state, t.id) ? `They\u2019ll message again in ${CHAT_LATER} minutes. ${MAX_PUSHES - st.pushes} left` : 'Not again')),
-      h('button', { class: 'btn choice', 'data-testid': 'ask-ticket', onclick: () => app.set(askForTicket(state, t.id)) },
-        h('strong', {}, 'Please log a ticket'),
-        h('span', {}, 'They\u2019ll be annoyed, but then it counts'))),
-  );
 }
 
 function runbookBox(s: GameState, t: Ticket): HTMLElement {
@@ -196,12 +134,12 @@ export function ticketView(app: App, t: Ticket): HTMLElement {
         h('h3', { id: 'fix-heading', class: 'small-heading' }, 'Fix it'),
         tool && h('button', { class: 'btn fix from-tool', 'data-testid': 'fix-tool', onclick: () => app.set(fix(state, t.id, 'tool')) },
           tool.fixLabel, h('span', { class: 'from-note-tag' }, state.runbook[`tool:${tool.id}`] === 'yours' ? tool.name : `${tool.name}: not in the runbook yet`)),
-        // Account tickets are fixed in Active Registry; here you open it on their account, then ask them to try again.
-        issue.console && h('p', { class: 'meta' }, 'Sort out their account in Active Registry, then ask them to try again.'),
+        // Account tickets are fixed in Active Directory; here you open it on their account, then ask them to try again.
+        issue.console && h('p', { class: 'meta' }, 'Sort out their account in Active Directory, then ask them to try again.'),
         issue.console && h('button', {
           class: 'btn fix', 'data-testid': 'open-registry',
-          onclick: () => { Object.assign(app.ui, { panel: 'directory', dirOu: undefined, dirUser: t.who, dirReset: undefined, dirSaid: undefined }); app.rerender(); },
-        }, 'Open Active Registry on their account'),
+          onclick: () => { Object.assign(app.ui, { dirOu: undefined, dirUser: t.who, dirReset: undefined, dirSaid: undefined }); openApp(app, 'directory'); },
+        }, 'Open Active Directory on their account'),
         issue.console && h('button', { class: `btn fix${known ? ' from-note' : ''}`, 'data-testid': 'fix-console', onclick: () => app.set(fix(state, t.id, 'console')) },
           'Ask them to try signing in again', known && h('span', { class: 'from-note-tag' }, 'Your note says how')),
         ...fixes.map((f) => h('button', {
@@ -218,7 +156,7 @@ export function ticketView(app: App, t: Ticket): HTMLElement {
   );
 }
 
-function outcomeCard(app: App, o: Outcome): HTMLElement {
+export function outcomeCard(app: App, o: Outcome): HTMLElement {
   const { state } = app;
   const t = ticketById(o.ticketId);
   const v = VILLAGERS[t.who];
@@ -263,31 +201,27 @@ function outcomeCard(app: App, o: Outcome): HTMLElement {
   );
 }
 
-const pausedCard = (app: App) => h('div', { class: 'overlay' },
+export const pausedCard = (app: App) => h('div', { class: 'overlay' },
   h('section', { class: 'outcome', role: 'dialog', 'aria-label': 'Paused', 'data-testid': 'paused' },
     h('h2', {}, 'Paused'),
     h('p', {}, 'The office clock has stopped. Take your time.'),
     h('button', { class: 'btn primary', 'data-autofocus': true, onclick: () => { app.ui.paused = false; app.rerender(); } }, 'Resume')));
 
-export function deskScreen(app: App): HTMLElement {
+/** The Service Desk app, in its window: your queue on the left, the ticket you've picked on the right. */
+export function serviceDesk(app: App): HTMLElement {
   const { state, ui } = app;
-  if (state.place === 'floor') return onSiteScreen(app);
+  if (state.phase !== 'desk') return h('div', { class: 'desk-closed' }, h('p', {}, 'The service desk is closed. Nobody\u2019s in on a Saturday. Not even Mr. Grisby.'));
   if (!ui.selected || !state.queue.includes(ui.selected)) ui.selected = state.queue[0];
-  if (!ui.chat || !state.chats.includes(ui.chat)) ui.chat = state.chats[0];
-  const onChat = ui.tab === 'chat';
-  const id = onChat ? ui.chat : ui.selected;
-  const outcome = state.outcomes[0];
-  return h('main', { class: 'screen desk', 'data-testid': 'desk' },
-    h('header', { class: 'app-titlebar', 'aria-hidden': 'true' }, h('span', { class: 'app-icon' }), 'Burrow Service Desk \u2014 Incidents'),
+  const id = ui.selected;
+  return h('div', { class: 'desk', 'data-testid': 'desk' },
     statusBar(app),
     h('div', { class: 'desk-body' },
       sidebar(app),
-      id ? (onChat ? chatView(app, ticketById(id)) : ticketView(app, ticketById(id)))
-        : h('section', { class: 'ticket-view empty-view' }, h('p', {}, onChat ? 'No one is messaging you.' : 'Your queue is empty. Check back soon.'))),
-    ui.paused && !outcome && pausedCard(app),
-    outcome && outcomeCard(app, outcome),
-    ui.panel && panel(app, ui.panel));
+      id ? ticketView(app, ticketById(id)) : h('section', { class: 'ticket-view empty-view' }, h('p', {}, 'Your queue is empty. Check back soon.'))));
 }
+
+/** Helping someone in person, away from your computer: the whole screen. */
+export const deskScreen = (app: App) => onSiteScreen(app);
 
 /** Away from your computer, helping someone in person: you followed them to their desk, and here's the problem. */
 function onSiteScreen(app: App): HTMLElement {
@@ -302,6 +236,5 @@ function onSiteScreen(app: App): HTMLElement {
     t && h('div', { class: 'walk-over', 'aria-hidden': 'true' },
       h('p', {}, `You follow ${VILLAGERS[t.who].name} to the ${t.where?.toLowerCase() ?? 'office'}\u2026`)),
     ui.paused && !outcome && pausedCard(app),
-    outcome && outcomeCard(app, outcome),
-    ui.panel && panel(app, ui.panel));
+    outcome && outcomeCard(app, outcome));
 }

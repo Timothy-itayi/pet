@@ -55,7 +55,7 @@ export interface Issue {
   fixes: Fix[];
   correctFix: string;
   /**
-   * Fixed in Active Registry rather than by picking from the list: unlock the account, or reset the password.
+   * Fixed in Active Directory rather than by picking from the list: unlock the account, or reset the password.
    * The ticket checks the account itself when you ask them to try again.
    */
   console?: 'unlock' | 'reset';

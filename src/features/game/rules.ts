@@ -90,7 +90,7 @@ export interface GameState {
   runbook: Record<string, PageStatus>;
   /** Tools on your desk. */
   tools: string[];
-  /** Everyone's account in Active Registry, by login. */
+  /** Everyone's account in Active Directory, by login. */
   accounts: Record<string, Account>;
   /** How many Burrow Intranet posts you've read. */
   newsRead: number;
@@ -190,7 +190,7 @@ function arrive(d: GameState, id: string, at: number): void {
   const window = !onChat ? REPLY_WITHIN[t.priority] : t.via === 'walkup' ? REPLY_WITHIN.walkup : REPLY_WITHIN.chat;
   // On chat they never start with the problem. They start by being friendly.
   const opener = onChat && !before ? [{ from: 'them' as const, text: v.opener, at }] : [];
-  // A lockout is real: their account in Active Registry is locked until you unlock it.
+  // A lockout is real: their account in Active Directory is locked until you unlock it.
   const account = d.accounts[t.who];
   if (!before && account && issueOf(t).console === 'unlock') account.locked = true;
   d.tickets[id] = {
@@ -384,17 +384,17 @@ export function reply(s: GameState, id: string): GameState {
 }
 
 /**
- * What's still wrong with someone's account for an Active Registry ticket, in a sentence; undefined once it's sorted.
+ * What's still wrong with someone's account for an Active Directory ticket, in a sentence; undefined once it's sorted.
  * Asked when you tell them to try signing in again.
  */
 export function accountProblem(s: GameState, t: Ticket): string | undefined {
   const fixBy = issueOf(t).console;
   const a = s.accounts[t.who];
   if (!fixBy || !a) return undefined;
-  if (!a.enabled) return 'Their account is disabled, so nothing will let them in. Enable it again in Active Registry.';
-  if (fixBy === 'unlock') return a.locked ? 'Still locked out. Find their account in Active Registry and unlock it.' : undefined;
+  if (!a.enabled) return 'Their account is disabled, so nothing will let them in. Enable it again in Active Directory.';
+  if (fixBy === 'unlock') return a.locked ? 'Still locked out. Find their account in Active Directory and unlock it.' : undefined;
   const resetSinceTheyAsked = (a.resetAt ?? -1) >= t.day * MINUTES_A_DAY + clockTime(t.at);
-  if (!resetSinceTheyAsked) return 'They still don\u2019t have a password that works. Reset it in Active Registry.';
+  if (!resetSinceTheyAsked) return 'They still don\u2019t have a password that works. Reset it in Active Directory.';
   if (!a.mustChange) return 'You reset it, but didn\u2019t tick \u201CUser must change password at next logon\u201D. Now you know their password and they\u2019ll keep it. Reset it again so they choose their own.';
   if (a.locked) return 'The new password won\u2019t work while the account is locked out.';
   return undefined;
@@ -405,7 +405,7 @@ export function fix(s: GameState, id: string, fixId: string): GameState {
   if (!t || ticketState(s, id).tried.includes(fixId)) return s;
   const issue = issueOf(t);
   const tool = fixId === 'tool' ? toolFor(s, t) : undefined;
-  // An Active Registry ticket has one move here: ask them to try again. The account itself says if it worked.
+  // An Active Directory ticket has one move here: ask them to try again. The account itself says if it worked.
   const problem = issue.console && fixId === 'console' ? accountProblem(s, t) : undefined;
   const chosen = tool ? { id: 'tool', label: tool.fixLabel, fail: undefined }
     : issue.console ? (fixId === 'console' ? { id: 'console', label: 'Asked them to try signing in again', fail: problem } : undefined)
@@ -416,7 +416,7 @@ export function fix(s: GameState, id: string, fixId: string): GameState {
     st.status = 'open';
     st.messages.push({ from: 'you', text: `${chosen.label}.`, at: d.clock });
     if (tool || (issue.console ? !problem : fixId === issue.correctFix)) {
-      // The real work happened in Active Registry; checking it takes a moment.
+      // The real work happened in Active Directory; checking it takes a moment.
       const minutes = tool ? COST.toolFix : issue.console || isKnown(d, t) ? COST.knownFix : COST.fix;
       close(d, t, 'fix', XP.fix);
       const card = d.outcomes.at(-1);
@@ -435,7 +435,7 @@ export function fix(s: GameState, id: string, fixId: string): GameState {
   });
 }
 
-/** Work in Active Registry on someone's account. On the office clock, it takes a few minutes. */
+/** Work in Active Directory on someone's account. On the office clock, it takes a few minutes. */
 function administer(s: GameState, login: string, minutes: number, change: (a: Account, d: GameState) => void): GameState {
   if (!s.accounts[login]) return s;
   return act(s, (d) => {
@@ -625,7 +625,7 @@ export function parseSave(raw: string | null): GameState | undefined {
   if (!raw) return undefined;
   try {
     const s = JSON.parse(raw) as Partial<GameState>;
-    // Saves from before Active Registry and the intranet: same game, with a fresh directory.
+    // Saves from before Active Directory and the intranet: same game, with a fresh directory.
     if ((s.version as number) === 8) Object.assign(s, { version: 9, accounts: newAccounts(), newsRead: 0 });
     const known = new Set(TICKETS.map((t) => t.id));
     const isObject = (x: unknown) => typeof x === 'object' && x !== null;

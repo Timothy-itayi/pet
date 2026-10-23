@@ -244,7 +244,7 @@ export const ISSUES: Issue[] = [
     correctFix: 'console',
     console: 'unlock',
     notes: [
-      { text: 'Locked out after too many tries. Unlocked it in Active Registry; their password was fine.', right: true },
+      { text: 'Locked out after too many tries. Unlocked it in Active Directory; their password was fine.', right: true },
       { text: 'Locked out. Reset the password and read it out.' },
       { text: 'Locked out. Disabled and re-enabled the account.' },
     ],
@@ -259,7 +259,7 @@ export const ISSUES: Issue[] = [
     correctFix: 'console',
     console: 'reset',
     notes: [
-      { text: 'Forgot password: reset in Active Registry with “must change at next logon”, so only they know the new one.', right: true },
+      { text: 'Forgot password: reset in Active Directory with “must change at next logon”, so only they know the new one.', right: true },
       { text: 'Set their password to Welcome1.' },
       { text: 'Unlocked the account.' },
     ],
@@ -525,7 +525,7 @@ export const TICKETS: Ticket[] = [
     message: 'I had a really nice long weekend and now I can’t remember my password. At all. Was it biscuits? It wasn’t biscuits.',
     details: [
       { label: 'Login screen', text: 'The user name or password is incorrect. (3 tries so far)' },
-      { label: 'Active Registry', text: 'Account: biscuit. Not locked out.' },
+      { label: 'Active Directory', text: 'Account: biscuit. Not locked out.' },
     ],
     workaround: 'Let him use the hot-desk PC',
   },
@@ -604,7 +604,7 @@ export const TICKETS: Ticket[] = [
     message: 'Two weeks in the sun and my password has evaporated. I need to send a quote in an hour.',
     details: [
       { label: 'Login screen', text: 'The user name or password is incorrect.' },
-      { label: 'Active Registry', text: 'Account: marlo. Not locked out.' },
+      { label: 'Active Directory', text: 'Account: marlo. Not locked out.' },
     ],
     workaround: 'Let him send the quote from Dot’s computer',
   },

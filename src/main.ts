@@ -32,11 +32,12 @@ function mount(into: HTMLElement, screen: HTMLElement, focus: boolean): void {
 const app: App = {
   state,
   // You start each visit looking at the desk. Mid-day, the computer is locked where you left it.
-  ui: { booted: false, view: 'room', shot: 'overview', power: state.phase === 'boot' ? 'off' : 'locked', paused: false },
+  ui: { booted: false, view: 'room', shot: 'overview', windows: [], toasts: [], power: state.phase === 'boot' ? 'off' : 'locked', paused: false },
   hasSave: saved !== undefined,
   set(next) {
     const { ui } = app;
-    if (next.phase !== app.state.phase) ui.panel = undefined;
+    // A new day starts with a fresh desktop.
+    if (next.phase === 'boot' && app.state.phase !== 'boot') { ui.windows = []; ui.toasts = []; ui.startOpen = false; }
     // A new day starts at your desk with the computer off.
     if (next.phase === 'boot' && app.state.phase !== 'boot') { ui.view = 'room'; ui.shot = 'overview'; ui.power = 'off'; }
     // Walking away leaves it on, counting the time until it locks; walking back means sitting down at it again.
@@ -61,7 +62,7 @@ const app: App = {
     let screen: HTMLElement;
     if (p === 'on' && !fullPage) {
       shown = undefined;
-      screen = phase === 'desktop' ? desktopScreen(app) : phase === 'desk' ? deskScreen(app) : darkScreen();
+      screen = phase === 'desktop' || phase === 'desk' ? desktopScreen(app) : darkScreen();
     } else {
       const key = p === 'on' ? 'locked' : p === 'asleep' ? `asleep:${atComputer}` : p;
       if (shown?.key !== key) shown = { key, el: p === 'off' ? darkScreen() : p === 'asleep' ? asleepScreen(app, atComputer) : computerScreen(app) };
@@ -97,13 +98,13 @@ const bigChange = (a: GameState, b: GameState) =>
   a.phase !== b.phase || a.outcomes.length !== b.outcomes.length || a.queue.join() !== b.queue.join() ||
   a.chats.join() !== b.chats.join() || a.today.missed !== b.today.missed || a.place !== b.place || a.escort !== b.escort;
 
-// The office clock: it only runs at the desk, and stops while paused, reading a window, holding something, or in another tab.
+// The office clock: it runs from when you log in until 5pm, and stops while paused, holding something, or in another tab.
 setInterval(() => {
   const { ui } = app;
   // The computer's own clock runs regardless: left on while you're away, it locks itself and then sleeps, right there on the monitor.
   const power = powerAway(ui.power, ui.leftAt, performance.now());
   if (power !== ui.power) { ui.power = power; app.rerender(); }
-  if (!ui.booted || ui.paused || ui.panel || ui.inspecting || document.hidden) return;
+  if (!ui.booted || ui.paused || ui.inspecting || document.hidden) return;
   const next = tick(app.state, GAME_MINUTES_PER_SECOND);
   if (next === app.state) return;
   if (bigChange(app.state, next)) { announce(app, app.state, next); app.set(next); return; }

@@ -10,7 +10,7 @@ const atDesk = () => goTo(newGame(), 'desk');
 /** Let the office clock run to a given time. */
 const until = (s: GameState, hm: string) => tick(s, clockTime(hm) - s.clock);
 const correct = (id: string) => issueOf(ticketById(id)).correctFix;
-/** For tickets fixed in Active Registry, do the account work first, the right way. */
+/** For tickets fixed in Active Directory, do the account work first, the right way. */
 function admin(s: GameState, id: string): GameState {
   const t = ticketById(id);
   const by = issueOf(t).console;
@@ -282,7 +282,7 @@ describe('money and endings', () => {
   });
 });
 
-describe('Active Registry', () => {
+describe('Active Directory', () => {
   /** Day 3, with Otis's lockout ticket in the queue. */
   const otisLocked = () => {
     let s = newGame();
@@ -325,7 +325,7 @@ describe('saves', () => {
     expect(parseSave('{nope')).toBeUndefined();
     expect(parseSave(JSON.stringify({ ...s, version: 7 }))).toBeUndefined();
     expect(parseSave(JSON.stringify({ ...s, queue: ['not-a-ticket'] }))).toBeUndefined();
-    // A save from before Active Registry still loads, with everyone's accounts as Sam left them.
+    // A save from before Active Directory still loads, with everyone's accounts as Sam left them.
     const older: Omit<Partial<GameState>, 'version'> & { version: number } = { ...s, version: 8 };
     delete older.accounts;
     delete older.newsRead;

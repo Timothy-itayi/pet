@@ -1,6 +1,6 @@
 import type { App } from './app.ts';
 import { h } from './dom.ts';
-import { runbookPages, type RunbookPage } from './panels.ts';
+import { runbookPages, type RunbookPage } from '../game/pages.ts';
 
 /**
  * The paper runbook, opened in your hands: two pages at a time, the old typed pages with your handwritten
