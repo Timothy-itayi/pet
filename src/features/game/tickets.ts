@@ -235,6 +235,36 @@ export const ISSUES: Issue[] = [
     ],
     why: 'Passwords care about capital letters. Check Caps Lock first: it saves a reset, and too many wrong tries can lock the account.',
   },
+  {
+    id: 'locked-out',
+    title: 'Account locked out',
+    skill: 'access',
+    page: { status: 'outdated', text: 'Locked out? Reset their password and tell them the new one.' },
+    fixes: [],
+    correctFix: 'console',
+    console: 'unlock',
+    notes: [
+      { text: 'Locked out after too many tries. Unlocked it in Active Registry; their password was fine.', right: true },
+      { text: 'Locked out. Reset the password and read it out.' },
+      { text: 'Locked out. Disabled and re-enabled the account.' },
+    ],
+    why: 'A lockout means too many wrong tries, not a forgotten password. Unlock the account and they can use the password they already know. A reset was never needed.',
+  },
+  {
+    id: 'forgot-password',
+    title: 'Forgot their password',
+    skill: 'access',
+    page: { status: 'outdated', text: 'Forgotten password: set it to Welcome1 and tell them. Everyone knows Welcome1.' },
+    fixes: [],
+    correctFix: 'console',
+    console: 'reset',
+    notes: [
+      { text: 'Forgot password: reset in Active Registry with “must change at next logon”, so only they know the new one.', right: true },
+      { text: 'Set their password to Welcome1.' },
+      { text: 'Unlocked the account.' },
+    ],
+    why: 'When someone really has forgotten, IT sets a temporary password and ticks “User must change password at next logon”. They choose their own the moment they sign in, so IT never knows it.',
+  },
 ];
 
 export const TICKETS: Ticket[] = [
@@ -457,5 +487,135 @@ export const TICKETS: Ticket[] = [
       { label: 'Wall plate', text: 'Her cable is plugged into the socket marked HDMI 1.' },
     ],
     workaround: '',
+  },
+  // The rest of the week, filling out each day: familiar problems coming back from new people,
+  // and a few new stories. Day 1 stays easy; it gets busier, and the same problems come round more often.
+  {
+    id: 't105', day: 1, at: '13:30', who: 'pip', via: 'tray', priority: 'normal', issue: 'caps-lock', mood: 1,
+    title: 'Locked out of my own laptop',
+    message: 'My password is wrong. It’s never wrong. I am typing it VERY carefully. Ribbit.',
+    details: [
+      { label: 'Pip’s keyboard', text: 'The Caps Lock light is on. There’s a crumb wedged next to the key.' },
+      { label: 'Login screen', text: 'Password incorrect. 2 tries left.' },
+    ],
+    workaround: 'Let him use the hot-desk PC for now',
+  },
+  {
+    id: 't106', day: 1, at: '15:20', who: 'marlo', via: 'walkup', where: 'Open office', priority: 'normal', issue: 'paper-jam', mood: 1,
+    title: 'Printer ate my handout',
+    message: 'The printer stopped halfway through my handouts. I think it needs more ink?',
+    details: [
+      { label: 'Printer screen', text: 'PAPER JAM – TRAY 1. Ink: 88%' },
+    ],
+    workaround: 'Send the rest to the printer upstairs',
+  },
+  {
+    id: 't205', day: 2, at: '11:20', who: 'dot', via: 'tray', priority: 'normal', issue: 'mouse-battery', mood: 1,
+    title: 'Mouse died mid-spreadsheet',
+    message: 'My mouse stopped in the middle of the quarterly numbers. I didn’t save. Please hurry.',
+    details: [
+      { label: 'Mouse', text: 'Wireless. No light underneath. Clicking does nothing.' },
+      { label: 'Supply cupboard', text: 'A box of AA batteries, mostly full.' },
+    ],
+    workaround: 'Lend her the spare wired mouse from the cupboard',
+  },
+  {
+    id: 't206', day: 2, at: '16:00', who: 'biscuit', via: 'tray', priority: 'normal', issue: 'forgot-password', mood: 1,
+    title: 'Forgot my password',
+    message: 'I had a really nice long weekend and now I can’t remember my password. At all. Was it biscuits? It wasn’t biscuits.',
+    details: [
+      { label: 'Login screen', text: 'The user name or password is incorrect. (3 tries so far)' },
+      { label: 'Active Registry', text: 'Account: biscuit. Not locked out.' },
+    ],
+    workaround: 'Let him use the hot-desk PC',
+  },
+  {
+    id: 't305', day: 3, at: '12:40', who: 'grisby', via: 'tray', priority: 'high', issue: 'slow-laptop', mood: 1,
+    title: 'Order me the most expensive computer',
+    message: 'My computer is SLOW. Order me the most expensive one. Budget freeze doesn’t apply to me. Honk.',
+    details: [
+      { label: 'Laptop info', text: 'Last restarted: 63 days ago. 19 updates waiting.' },
+      { label: 'On his desk', text: 'A framed photo of himself next to a bigger framed photo of himself.' },
+    ],
+    workaround: 'Close the 30 videos he has paused in the background',
+  },
+  {
+    id: 't306', day: 3, at: '15:40', who: 'otis', via: 'tray', priority: 'normal', issue: 'locked-out', mood: 1,
+    title: 'Account locked',
+    message: 'I changed my password on Monday. Now it says my account is locked. I know my password perfectly well. Hoo.',
+    details: [
+      { label: 'Login screen', text: 'This account has been locked out. Contact your administrator.' },
+      { label: 'His phone', text: 'The email app has been trying his OLD password every five minutes since Monday.' },
+    ],
+    workaround: 'Let him use the hot-desk PC',
+  },
+  {
+    id: 't405', day: 4, at: '9:50', who: 'pip', via: 'tray', priority: 'normal', issue: 'locked-out', mood: 2,
+    title: 'Now it says LOCKED',
+    message: 'My password was wrong so I kept trying it. Very carefully. Lots of times. Now it says locked. Ribbit.',
+    details: [
+      { label: 'Pip’s keyboard', text: 'The Caps Lock light is on. Again.' },
+      { label: 'Login screen', text: 'This account has been locked out. Contact your administrator.' },
+    ],
+    workaround: 'Let him use the hot-desk PC',
+  },
+  {
+    id: 't406', day: 4, at: '13:20', who: 'biscuit', via: 'tray', priority: 'normal', issue: 'wrong-charger', mood: 1,
+    title: 'Laptop stuck at 4%',
+    message: 'It’s charging but it’s not CHARGING. 4% all morning. Is it hungry?',
+    details: [
+      { label: 'Charger on his desk', text: 'USB-C, 18W. Says “phone” on it.' },
+      { label: 'Laptop sticker', text: 'Use a 65W or higher USB-C charger.' },
+    ],
+    workaround: 'Lend him your own charger for the afternoon',
+  },
+  {
+    id: 't407', day: 4, at: '15:50', who: 'marlo', via: 'tray', priority: 'high', issue: 'cable-unplugged', mood: 1,
+    title: 'Tidied my desk, now no internet',
+    message: 'I tidied my cables. They look beautiful. My computer no longer has the internet.',
+    details: [
+      { label: 'PC screen', text: 'Network cable unplugged.' },
+      { label: 'Under his desk', text: 'Neat coils of cable, all zip-tied. One blue cable plugged into nothing.' },
+    ],
+    workaround: 'Let him work from the hot-desk PC',
+  },
+  {
+    id: 't505', day: 5, at: '11:50', who: 'otis', via: 'walkup', where: 'Meeting room', priority: 'normal', issue: 'default-printer', mood: 1,
+    title: 'My prints go upstairs',
+    message: 'Every time I print, it comes out on the floor above. I have climbed those stairs six times today. Hoo.',
+    details: [
+      { label: 'Print settings', text: 'Default printer: FINANCE-Floor2' },
+    ],
+    workaround: 'Ask Finance to bring his prints down',
+  },
+  {
+    id: 't506', day: 5, at: '14:10', who: 'juniper', via: 'tray', priority: 'normal', issue: 'admin-request', mood: 1,
+    title: 'Need admin to install a font',
+    message: 'I need admin rights to install ONE font for the client deck. It’s a really good font.',
+    details: [
+      { label: 'Company Portal', text: 'Font pack: available. One-click install, no admin needed.' },
+      { label: 'Grisby’s memo', text: 'Nobody gets admin rights. Nobody.' },
+    ],
+    workaround: 'Use one of the fonts already installed for now',
+  },
+  {
+    id: 't507', day: 5, at: '15:00', who: 'marlo', via: 'tray', priority: 'normal', issue: 'forgot-password', mood: 1,
+    title: 'Password gone after holiday',
+    message: 'Two weeks in the sun and my password has evaporated. I need to send a quote in an hour.',
+    details: [
+      { label: 'Login screen', text: 'The user name or password is incorrect.' },
+      { label: 'Active Registry', text: 'Account: marlo. Not locked out.' },
+    ],
+    workaround: 'Let him send the quote from Dot’s computer',
+  },
+  {
+    id: 't508', day: 5, at: '16:10', who: 'pip', via: 'walkup', where: 'Open office', priority: 'high', issue: 'guest-wifi', mood: 1,
+    title: 'Shared drive vanished',
+    message: 'The shared drive is GONE. All the files. Gone. Ribbit ribbit ribbit.',
+    details: [
+      { label: 'Pip’s Wi-Fi', text: 'Connected to: Burrow-Guest' },
+      { label: 'Sticky note on his laptop', text: 'Guest Wi-Fi password: biscuits123' },
+    ],
+    workaround: 'Copy the files he needs onto a USB stick',
   },
 ];

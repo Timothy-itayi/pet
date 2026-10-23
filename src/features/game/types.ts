@@ -54,6 +54,11 @@ export interface Issue {
   page: { status: Exclude<PageStatus, 'yours'>; text: string };
   fixes: Fix[];
   correctFix: string;
+  /**
+   * Fixed in Active Registry rather than by picking from the list: unlock the account, or reset the password.
+   * The ticket checks the account itself when you ask them to try again.
+   */
+  console?: 'unlock' | 'reset';
   /** Internal-note choices after fixing. Exactly one is right. */
   notes: { text: string; right?: true }[];
   why: string;

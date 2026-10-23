@@ -1,9 +1,11 @@
-import { COMPANY, DAYS, TOOLS } from '../game/data.ts';
+import { COMPANY, DAYS, TOOLS, VILLAGERS } from '../game/data.ts';
+import { ticketById, type GameState } from '../game/rules.ts';
 import { ON_THE_WALL, ROOM_ITEMS, SIPS } from '../room3d/items.ts';
 import { closeInspect, goTo, inspectItem, isInspecting, pressMouse, sipMug, spinChair, swayPlant, turnInspected } from '../room3d/view.ts';
 import type { App } from './app.ts';
 import { closeBook, flipBook, openBook } from './book.ts';
 import { clockText, h } from './dom.ts';
+import { chime } from './sound.ts';
 import { powerAway } from './power.ts';
 
 const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -59,6 +61,21 @@ export function leaveComputer(app: App): void {
   ui.panel = undefined;
   ui.leftAt ??= performance.now();
   app.rerender();
+}
+
+/**
+ * Something new has turned up: a ticket in the queue or a message on chat. The computer dings, and if you're
+ * away from it, the room's caption says who it's from, so you know when to head back.
+ */
+export function announce(app: App, before: GameState, after: GameState): void {
+  const seen = new Set([...before.queue, ...before.chats]);
+  const id = [...after.queue, ...after.chats].findLast((x) => !seen.has(x));
+  if (!id) return;
+  chime();
+  if (app.ui.view === 'computer') return;
+  const t = ticketById(id);
+  const who = VILLAGERS[t.who].name;
+  app.ui.note = after.chats.includes(id) ? `Ping. ${who} sent you a message on Burrow Chat.` : `Ding. New ticket from ${who}: \u201C${t.title}\u201D.`;
 }
 
 /** Tap the mouse from where you stand: the left button clicks, and a sleeping computer wakes up. The camera stays put. */

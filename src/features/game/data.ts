@@ -30,7 +30,7 @@ export const GRACE_AFTER_MISS = 30;
 /** Friends give you more time, nemeses less. */
 export const PATIENCE = { friend: 1.5, neutral: 1, nemesis: 0.7 } as const;
 /** Clock minutes each action takes. A fix is faster when your own note tells you what to do. */
-export const COST = { update: 2, fix: 15, knownFix: 5, toolFix: 5, wrongFix: 15, workaround: 10, push: 2, note: 3, goOver: 5, askForTicket: 2 } as const;
+export const COST = { update: 2, fix: 15, knownFix: 5, toolFix: 5, wrongFix: 15, workaround: 10, push: 2, note: 3, goOver: 5, askForTicket: 2, unlock: 1, reset: 3 } as const;
 /** The one morning in week 1 when something turns up on your desk. Loot is rare. */
 export const DROP_DAY = 3;
 export const REPLIES = {
@@ -68,35 +68,35 @@ export type VillagerId = keyof typeof VILLAGERS;
 
 export const DAY_SCRIPTS: DayScript[] = [
   {
-    goal: 1,
-    memo: 'Welcome aboard, intern! Resolve a ticket today and we can TALK about pay. No promises. Some promises. Mostly no.',
+    goal: 2,
+    memo: 'Welcome aboard, intern! Resolve two tickets today and we can TALK about pay. No promises. Some promises. Mostly no.',
     metGoal: 'Not bad. Here, a lunch voucher. Pay? Let’s circle back.',
     missedGoal: 'Hmm. Interns who want to be paid usually close tickets.',
   },
   {
-    goal: 2,
-    memo: 'Day 2. Two tickets, and I need them done with more enthusiasm.',
+    goal: 3,
+    memo: 'Day 2. Three tickets, and I need them done with more enthusiasm.',
     rule: 'Budget freeze: no new hardware. Not even a mouse.',
     metGoal: 'Great hustle. Lunch voucher. Pay is “in the pipeline”.',
     missedGoal: 'Disappointing. The pipeline is clogged now. That’s on you.',
   },
   {
-    goal: 2,
-    memo: 'Goal is 2 today. Also the other intern quit, so it\u2019s busier. I believe in you.',
-    metGoal: 'Two! You’re practically staff. Practically. Voucher.',
-    missedGoal: 'I told the board you’d do 3. Now I look silly. Honk.',
+    goal: 4,
+    memo: 'Goal is 4 today. Also the other intern quit, so it\u2019s busier. I believe in you.',
+    metGoal: 'Four! You’re practically staff. Practically. Voucher.',
+    missedGoal: 'I told the board you’d do 5. Now I look silly. Honk.',
   },
   {
-    goal: 2,
-    memo: 'Day 4. Two tickets, minimum. Finance says pay is “not impossible”. Keep it up.',
+    goal: 5,
+    memo: 'Day 4. Five tickets, minimum. Finance says pay is “not impossible”. Keep it up.',
     rule: 'Nobody gets admin rights. Nobody. Not even me. Especially not me.',
     metGoal: 'Done! Voucher. I’ll mention you in my review. Of myself.',
     missedGoal: 'Not ideal. Finance is now saying “impossible”.',
   },
   {
-    goal: 3,
-    memo: 'Last day of the week! 3 tickets and we’ll have The Conversation about pay.',
-    metGoal: 'Three! Come see me after. About The Conversation.',
+    goal: 6,
+    memo: 'Last day of the week! 6 tickets and we’ll have The Conversation about pay.',
+    metGoal: 'Six! Come see me after. About The Conversation.',
     missedGoal: 'Well. We’ll still have The Conversation. It’s shorter now.',
   },
 ];
@@ -107,14 +107,14 @@ export const JOBS: Job[] = [
     title: 'Junior IT Support (paid!)',
     company: 'Meadow Library',
     blurb: 'Help patrons and staff with laptops, printers and Wi-Fi. Kind team, real salary, a window.',
-    needs: { devices: 14, networks: 8 },
+    needs: { devices: 20, networks: 11 },
   },
   {
     id: 'ocean',
     title: 'IT Support Technician',
     company: 'Big Ocean Corp',
     blurb: 'Fast-paced team supporting 2,000 staff. Accounts, access and networking experience a must.',
-    needs: { devices: 20, networks: 14, access: 12 },
+    needs: { devices: 30, networks: 20, access: 18 },
   },
 ];
 

@@ -680,3 +680,49 @@ body:has(.book) .inspect-canvas { visibility: hidden; }
 @media (prefers-reduced-motion: reduce) {
   .sheet { animation: none; }
 }
+
+/* Active Registry Users and Computers: an old console, folders on the left, accounts on the right. */
+.crt-screen .window-directory { width: min(860px, calc(100% - 32px)); }
+.crt-screen .window-directory .window-body { padding: 0; }
+.ad { display: flex; flex-direction: column; font: 12px var(--read); color: var(--os-text); background: var(--os-face); }
+.ad-menu { display: flex; gap: 14px; padding: 3px 8px; border-bottom: 1px solid var(--os-mid); }
+.ad-toolbar { display: flex; gap: 6px; padding: 5px 6px; border-bottom: 1px solid var(--os-mid); box-shadow: 0 1px #fff; }
+.ad-toolbar .btn { font-size: 12px; padding: 3px 10px; }
+.ad-panes { display: grid; grid-template-columns: 190px 1fr; gap: 4px; padding: 4px; min-height: 300px; }
+.ad-tree, .ad-list { background: #fff; border: 1px solid; border-color: var(--os-mid) #fff #fff var(--os-mid); }
+.ad-tree { padding: 4px; display: flex; flex-direction: column; gap: 1px; }
+.ad-ous { display: flex; flex-direction: column; gap: 1px; padding-left: 16px; border-left: 1px dotted var(--os-mid); margin-left: 8px; }
+.ad-node, .ad-user { font: inherit; text-align: left; background: none; border: 1px solid transparent; padding: 2px 4px; cursor: pointer; color: inherit; white-space: nowrap; }
+.ad-node.on { background: #0a246a; color: #fff; }
+.ad-list { border-collapse: collapse; width: 100%; align-self: start; }
+.ad-list th { text-align: left; font-weight: normal; padding: 2px 6px; background: var(--os-face); border: 1px solid; border-color: #fff var(--os-mid) var(--os-mid) #fff; }
+.ad-list td { padding: 1px 6px; white-space: nowrap; }
+.ad-list tr.on td { background: #0a246a; color: #fff; }
+.ad-list tr.on .ad-user { color: #fff; }
+.ad-list tr.off td { color: var(--os-mid); }
+.ad-list td.warn { color: #a4262c; font-weight: bold; }
+.ad-list tr.on td.warn { color: #ffd5d5; }
+.ad-status { margin: 0; padding: 3px 8px; border-top: 1px solid var(--os-mid); box-shadow: inset 0 1px #fff; }
+.ad-dialog {
+  position: absolute; left: 50%; top: 52%; transform: translate(-50%, -50%); width: 340px; padding: 0 12px 12px; z-index: 3;
+  display: grid; gap: 8px; background: var(--os-face); border: 2px solid; border-color: #dfdfdf var(--os-dark) var(--os-dark) #dfdfdf; box-shadow: 2px 2px 0 #000;
+}
+.ad-dialog-title { margin: 0 -12px 4px; padding: 3px 8px; background: var(--os-title); color: #fff; font: bold 12px var(--read); }
+.ad-dialog label { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.ad-dialog label.tick { justify-content: flex-start; }
+.ad-dialog input[type='password'] { width: 170px; font: 12px var(--read); border: 1px solid; border-color: var(--os-mid) #fff #fff var(--os-mid); padding: 2px 4px; }
+.ad-dialog .row { justify-content: flex-end; }
+.ad-lockout { margin: 0; }
+
+/* The Burrow Intranet: a company homepage from around 2001. */
+.crt-screen .window-intranet { width: min(640px, calc(100% - 32px)); }
+.intranet-head { display: flex; align-items: baseline; gap: 12px; padding: 8px 12px; margin: -16px -16px 12px; background: linear-gradient(#3a6ea5, #0a246a); color: #fff; }
+.intranet-head strong { font: bold 20px Georgia, serif; }
+.news { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.post { padding: 8px 10px; background: #fff; border: 1px solid var(--os-line); }
+.post h3 { margin: 0 0 2px; color: #0a246a; font-size: 15px; }
+.post p { margin: 4px 0 0; }
+
+/* A new intranet post, waiting in the corner until you read it. */
+.crt-screen .news-toast { top: 16px; bottom: auto; flex-direction: column; gap: 2px; align-items: flex-start; cursor: pointer; text-align: left; font: 12px var(--read); color: var(--os-text); }
+.icon .unread { margin-left: 4px; }

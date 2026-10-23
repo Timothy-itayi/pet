@@ -10,7 +10,7 @@ import { deskScreen, refreshTimes } from './features/ui/desk.ts';
 import { powerAway } from './features/ui/power.ts';
 import { desktopScreen } from './features/ui/desktop.ts';
 import { dayEndScreen, endingScreen } from './features/ui/endings.ts';
-import { computerHud, pickInRoom, roomHud, roomKeys } from './features/ui/roomHud.ts';
+import { announce, computerHud, pickInRoom, roomHud, roomKeys } from './features/ui/roomHud.ts';
 
 const page = document.querySelector<HTMLDivElement>('#app');
 if (!page) throw new Error('Missing #app');
@@ -106,7 +106,7 @@ setInterval(() => {
   if (!ui.booted || ui.paused || ui.panel || ui.inspecting || document.hidden) return;
   const next = tick(app.state, GAME_MINUTES_PER_SECOND);
   if (next === app.state) return;
-  if (bigChange(app.state, next)) { app.set(next); return; }
+  if (bigChange(app.state, next)) { announce(app, app.state, next); app.set(next); return; }
   app.state = next;
   saveGame(next);
   app.refreshTimes();
