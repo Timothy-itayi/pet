@@ -213,5 +213,9 @@
   "face-rowan": {
     "image": true,
     "large": true
+  },
+  "news-budget-s-up-phones-for-burrow": {
+    "image": true,
+    "loop": true
   }
 }

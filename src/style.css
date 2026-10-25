@@ -1373,3 +1373,21 @@ button.profile-face:hover, button.profile-face:focus-visible { box-shadow: 0 0 0
 /* The physical home button sits below the glass: 63 points under it, 68 across, in the glass's own scale. */
 .pv-home-button { position: absolute; left: 126px; top: 511px; width: 68px; height: 68px; border-radius: 50%; border: 0; background: transparent; cursor: pointer; }
 .pv-home-button:focus-visible { outline: 3px solid #0a84ff; }
+/* Taking a picture: the glass flashes white. */
+.phone-glass.flash::after { content: ''; position: absolute; inset: 0; width: 320px; height: 480px; background: #fff; animation: pv-flash 0.45s ease-out forwards; pointer-events: none; }
+@keyframes pv-flash { from { opacity: 0.95; } to { opacity: 0; } }
+/* A broken phone: black, cracked across, and nothing on it. */
+.pv-broken { background: #050608; justify-content: center; align-items: center; }
+.pv-crack { position: absolute; inset: 0; width: 100%; height: 100%; background:
+  linear-gradient(118deg, transparent 49.6%, #ffffff55 49.8%, transparent 50.1%),
+  linear-gradient(62deg, transparent 39.7%, #ffffff44 39.9%, transparent 40.2%),
+  linear-gradient(160deg, transparent 69.7%, #ffffff3a 69.9%, transparent 70.2%),
+  radial-gradient(circle at 58% 44%, #ffffff30 0 6px, transparent 7px); }
+.pv-dead { position: relative; color: #ffffff66; font-size: 13px; }
+/* Someone at your desk about a phone. */
+.visitor { position: fixed; left: 16px; bottom: 76px; z-index: 5; display: flex; gap: 12px; align-items: center; max-width: min(420px, calc(100vw - 32px)); padding: 12px 14px; background: #fff8e8; color: #2a1d10; border: 2px solid #2a1d10; border-radius: 10px; box-shadow: 0 6px 20px #0008; animation: visitor-in 0.4s ease-out; }
+.visitor p { margin: 0 0 6px; }
+.visitor .portrait { border-radius: 50%; flex: none; }
+@keyframes visitor-in { from { transform: translateX(-30px); opacity: 0; } }
+.visitor-waiting { position: fixed; left: 50%; bottom: 14px; transform: translateX(-50%); z-index: 5; margin: 0; padding: 6px 12px; background: #fff8e8; color: #2a1d10; border-radius: 8px; box-shadow: 0 4px 12px #0007; }
+.phone-request { margin: 0; padding: 6px 10px; background: #fff8e8; color: #2a1d10; border-radius: 6px; }

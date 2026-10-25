@@ -21,13 +21,18 @@ export interface Phone {
   /** Who it's enrolled to in Oktopus Verify, and when (day * minutes + clock). */
   owner?: string;
   enrolledAt?: number;
+  /** Cracked and won't turn on. */
+  broken?: true;
+  /** A replacement, ordered for this person. */
+  for?: string;
 }
 
 /** The auditors' findings come in on day 16, and so does the budget, and so do the phones. */
 export const PHONES_DAY = 16;
 export const VERIFY = 'verify';
 
-export const newPhones = (): Phone[] => Array.from({ length: 6 }, (_, i) => ({ id: `phone-${i + 1}`, where: 'drawer', setUp: false, passcode: false, apps: [] }));
+/** Six phones in the box. One of them arrived broken: there's always one. */
+export const newPhones = (): Phone[] => Array.from({ length: 6 }, (_, i) => ({ id: `phone-${i + 1}`, where: 'drawer', setUp: false, passcode: false, apps: [], ...(i === 5 && { broken: true as const }) }));
 
 const now = (d: GameState) => d.day * MINUTES_A_DAY + d.clock;
 
@@ -54,7 +59,7 @@ export const putDown = (s: GameState) => {
 
 /** Finish the "Hello" screens, with or without a passcode. */
 export const setUpPhone = (s: GameState, id: string, passcode: boolean) => withPhone(s, id, (p) => {
-  if (p.setUp) return false;
+  if (p.setUp || p.broken) return false;
   Object.assign(p, { setUp: true, passcode });
 });
 
@@ -152,9 +157,100 @@ export function replacedSince(s: GameState, who: string, since: number): boolean
 
 /** A spare phone set up for someone the right way: what the save script and tests use, and what a good answer looks like. */
 export function phoneFor(s: GameState, login: string): GameState {
-  const spare = s.phones.find((p) => p.where === 'drawer' && !p.owner && !p.setUp);
+  const free = s.phones.filter((p) => p.where === 'drawer' && !p.owner && !p.setUp && !p.broken);
+  const spare = free.find((p) => p.for === login) ?? free.find((p) => !p.for);
   if (!spare) return s;
   let d = installApp(setUpPhone(takePhone(s, spare.id), spare.id, true), spare.id, VERIFY);
   d = scan(d, spare.id, login).state;
   return login === SELF ? putDown(d) : handOver(d, spare.id);
+}
+
+// ---- Broken phones and replacements -----------------------------------------------------------------------------
+
+/** A replacement phone has to be approved by whoever holds the budget, which takes a while. */
+export const APPROVER = 'grisby';
+export const APPROVAL_MINUTES = 30;
+
+export interface HardwareRequest {
+  /** The broken phone it replaces, and who the new one is for, if anyone. */
+  phone: string;
+  for?: string;
+  at: number;
+  approvedAt?: number;
+}
+
+/** Ask for a replacement for the broken phone in your hand. It goes to Mr. Grisby to approve. */
+export function requestReplacement(s: GameState, id: string): GameState {
+  const p = s.phones.find((x) => x.id === id);
+  if (!p?.broken || p.where !== 'hand' || s.requests.some((r) => r.phone === id)) return s;
+  const d = structuredClone(s);
+  d.requests.push({ phone: id, ...(p.owner && { for: p.owner }), at: now(d) });
+  return d;
+}
+
+/**
+ * Approvals come through while the day goes on (in place: call with a copy). An approved replacement turns up in the
+ * drawer, and the broken one goes back to the supplier.
+ */
+export function settleRequests(d: GameState): void {
+  for (const r of d.requests) {
+    if (r.approvedAt !== undefined || now(d) < r.at + APPROVAL_MINUTES) continue;
+    r.approvedAt = now(d);
+    d.phones = d.phones.filter((p) => p.id !== r.phone);
+    const id = `phone-${Math.max(0, ...d.phones.map((p) => Number(p.id.slice(6)) || 0), ...d.requests.map((x) => Number(x.phone.slice(6)) || 0)) + 1}`;
+    d.phones.push({ id, where: 'drawer', setUp: false, passcode: false, apps: [], ...(r.for && { for: r.for }) });
+  }
+}
+
+/** On day 19 Dot drops her phone in the car park on the way in. */
+export const BREAK = { day: 19, who: 'dot' };
+
+/** Someone's company phone breaks: theirs (with them), cracked; one is made broken if they never had one. */
+export function breakPhone(d: GameState, login: string): void {
+  const phone = d.phones.find((p) => p.owner === login && p.where === 'given');
+  if (phone) { phone.broken = true; return; }
+  d.phones.push({ id: `phone-${d.phones.length + 1}`, where: 'given', setUp: true, passcode: true, apps: [VERIFY], owner: login, broken: true });
+}
+
+// ---- People coming to your desk -----------------------------------------------------------------------------------
+
+/** How long after you enrol someone's phone they wander over for it (office minutes). */
+export const PICKUP_AFTER = 10;
+
+export interface Visit { login: string; why: 'pickup' | 'dropoff'; phone: string }
+
+/**
+ * Who's at your desk about a phone, if anyone: someone come to collect the phone you set up for them, or to hand in
+ * the one they broke. Only while they're in the office and not in a meeting or at lunch.
+ */
+export function visitor(s: GameState, here: (login: string) => boolean): Visit | undefined {
+  const t = now(s);
+  for (const p of s.phones) {
+    if (!p.owner || p.owner === SELF || !here(p.owner)) continue;
+    if (p.broken && p.where === 'given') return { login: p.owner, why: 'dropoff', phone: p.id };
+    if (!p.broken && p.where !== 'given' && t >= (p.enrolledAt ?? t) + PICKUP_AFTER) return { login: p.owner, why: 'pickup', phone: p.id };
+  }
+  return undefined;
+}
+
+/** Take a broken phone off someone who's brought it back: it's in your hand now. */
+export const takeBroken = (s: GameState, id: string) => withPhone(s, id, (p, d) => {
+  if (!p.broken || p.where !== 'given') return false;
+  for (const other of d.phones) if (other.where === 'hand') other.where = 'drawer';
+  p.where = 'hand';
+});
+
+/** What's still wrong for a broken-phone ticket, in a sentence; undefined once they've a working replacement. */
+export function replaceProblem(s: GameState, who: string, name: string, since: number): string | undefined {
+  const request = s.requests.find((r) => r.for === who && r.at >= since);
+  if (!request) {
+    const broken = s.phones.find((p) => p.owner === who && p.broken);
+    return broken?.where === 'given'
+      ? `${name} still has the broken phone. Take it off them when they come over, then ask for a replacement.`
+      : `${name}’s phone is broken, and a new one has to be approved. Hold the broken phone and request a replacement.`;
+  }
+  if (request.approvedAt === undefined) return `The replacement is waiting for Mr. Grisby to approve it.`;
+  const phone = s.phones.find((p) => p.id === s.okta.verify[who]);
+  if (!phone || phone.for !== who || (phone.enrolledAt ?? -1) < since) return `The replacement’s in your drawer. Set it up and enrol it to ${name}.`;
+  return phone.where === 'given' ? undefined : `${name}’s new phone is ready. Hand it over when they come for it.`;
 }

@@ -60,7 +60,7 @@ const v = {
   phones: [] as string[],
   inspect: undefined as { renderer: WebGLRenderer; scene: Scene; camera: PerspectiveCamera; item: Group; aim: Quaternion; born: number } | undefined,
   /** The phone in your hand, held up to your face. */
-  hold: undefined as { renderer: WebGLRenderer; scene: Scene; camera: PerspectiveCamera; item: Group; born: number; leaving?: number; glass: Box3 } | undefined,
+  hold: undefined as { renderer: WebGLRenderer; scene: Scene; camera: PerspectiveCamera; item: Group; born: number; leaving?: number; glass: Box3; scanning?: number } | undefined,
   /** The phone's screen page, laid over its glass once it's up. The game draws the phone's screens into this. */
   phoneGlass: document.createElement('div'),
   drawerOut: 0,
@@ -159,6 +159,16 @@ function frame(): void {
     const rest = hold.item.userData.rest as Vector3;
     hold.item.position.set(rest.x + 0.15 * (1 - k), rest.y - 1.2 * (1 - k), rest.z);
     hold.item.rotation.set(-0.9 * (1 - k), -0.5 * (1 - k), 0.25 * (1 - k));
+    // Taking a picture of the monitor: out towards the screen and back, turned a little to face it.
+    if (hold.scanning !== undefined) {
+      const t = (now - hold.scanning) / SCAN_MS;
+      const s = t < 1 ? Math.sin(Math.PI * Math.min(1, t * 1.6)) ** 2 * (t < 0.6 ? 1 : 1 - (t - 0.6) / 0.4) : 0;
+      hold.item.position.x -= 0.32 * s;
+      hold.item.position.y += 0.06 * s;
+      hold.item.position.z -= 0.45 * s;
+      hold.item.rotation.y += 0.25 * s;
+      if (t >= 1) hold.scanning = undefined;
+    }
     hold.renderer.render(hold.scene, hold.camera);
     const settled = up === 1 && hold.leaving === undefined;
     if (settled) fitGlass(hold);
@@ -502,6 +512,18 @@ export async function holdPhone(): Promise<void> {
   v.hold = { renderer, scene, camera, item, born: performance.now(), glass: onGlass };
   resize();
   v.renderer?.domElement.classList.add('blurred');
+}
+
+const SCAN_MS = 1500;
+
+/**
+ * Point the phone at the monitor and take a picture: it moves out towards the screen, the glass flashes white with a
+ * shutter sound (done by the caller at `flashAt`), and it comes back. Resolves once it's back in your hand.
+ */
+export function scanMotion(): { flashAt: number; done: Promise<void> } {
+  if (!v.hold || v.reduced) return { flashAt: 0, done: Promise.resolve() };
+  v.hold.scanning = performance.now();
+  return { flashAt: SCAN_MS * 0.45, done: new Promise((ok) => setTimeout(ok, SCAN_MS)) };
 }
 
 /** Lower the phone: it drops back out of view, and the room comes back into focus. */

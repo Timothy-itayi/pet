@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { CLOSE, DAILY_COST, LOCKUP, DAYS, GOAL_VOUCHER, ISSUES, REPLIES, START_SAVINGS, THANKS, TICKETS, TOOLS, VILLAGERS } from './data.ts';
 import { addApp, addGroup, addRule, assignApp, createFromHr, requireMfa, resetMfa, setActive, setSelfEnroll, updateFromHr } from './identity.ts';
-import { PHONES_DAY, phoneFor } from './phones.ts';
+import { APPROVAL_MINUTES, PHONES_DAY, phoneFor, requestReplacement, takeBroken } from './phones.ts';
 import type { Department } from './directory.ts';
 import { goodFlows, withGoodFlows } from './flows.ts';
 import { appsOf, groupsOf, hrOn, needsMfa, newOkta } from './oktopus.ts';
@@ -58,6 +58,12 @@ function admin(s: GameState, id: string): GameState {
     case 'leaver': return setActive(s, t.subject ?? '', false);
     case 'mfa': { const reset = resetMfa(s, t.who); return issueOf(t).id === 'mfa' && t.day >= PHONES_DAY ? phoneFor(reset, t.who) : reset; }
     case 'verify': return phoneFor(s, t.subject ?? t.who);
+    case 'replace': {
+      const who = t.subject ?? t.who;
+      const broken = s.phones.find((p) => p.owner === who && p.broken);
+      const asked = broken ? requestReplacement(takeBroken(s, broken.id), broken.id) : s;
+      return phoneFor(tick(asked, APPROVAL_MINUTES), who);
+    }
     case undefined: return s;
   }
 }
@@ -498,7 +504,10 @@ describe('Oktopus', () => {
     // Week 4's phones: you, Dot and Otis by hand, then self-enrolment; Otis's lost one replaced from the drawer.
     expect(Object.keys(s.okta.verify).sort()).toEqual(['dot', 'intern', 'otis']);
     expect(s.okta.selfEnroll).toBe(true);
-    expect(s.phones.filter((p) => p.where === 'given').map((p) => p.owner ?? 'lost')).toEqual(['dot', 'lost', 'otis']);
+    expect(s.phones.filter((p) => p.where === 'given').map((p) => p.owner ?? 'lost').sort()).toEqual(['dot', 'lost', 'otis']);
+    // Dot broke hers on day 19: Mr. Grisby approved a replacement, which was set up and handed to her.
+    expect(s.requests).toMatchObject([{ for: 'dot', approvedAt: expect.any(Number) }]);
+    expect(s.phones.find((p) => p.id === s.okta.verify.dot)).toMatchObject({ for: 'dot', where: 'given' });
     expect(s.okta.verify.otis).toBe('phone-4');
     expect(s.okta.runs.find((r) => r.flow === 'flow-report')?.steps.at(-1)?.values.Message).toMatch(/Dot \(Accounts Clerk\)/);
     expect(s.accounts.wren?.enabled).toBe(false);

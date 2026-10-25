@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { createFromHr, requireMfa, resetMfa } from './identity.ts';
 import { hrOn } from './oktopus.ts';
 import {
+  APPROVAL_MINUTES, breakPhone, PICKUP_AFTER, replaceProblem, requestReplacement, settleRequests, takeBroken, visitor,
   addPasscode, answerPush, answerRogue, handOver, held, installApp, needsPush, newPhones, phoneFor, PHONES_DAY, putDown, roguePending,
   ROGUE, scan, setUpPhone, takePhone, verifyCode, verifyProblem, VERIFY,
 } from './phones.ts';
@@ -83,5 +84,44 @@ describe('company phones', () => {
     const denied = answerRogue(s, false);
     expect(denied.rogue).toBe('denied');
     expect(roguePending(denied)).toBe(false);
+  });
+
+  it('one phone in the box arrived broken: it can\u2019t be set up, and a replacement needs Mr. Grisby\u2019s approval first', () => {
+    let s = takePhone(day16(), 'phone-6');
+    expect(setUpPhone(s, 'phone-6', true)).toBe(s);
+    s = requestReplacement(s, 'phone-6');
+    expect(s.requests).toHaveLength(1);
+    expect(requestReplacement(s, 'phone-6')).toBe(s); // asked once is enough
+    const later = (minutes: number) => { const d = structuredClone({ ...s, clock: s.clock + minutes }); settleRequests(d); return d; };
+    expect(later(APPROVAL_MINUTES - 1).phones.map((p) => p.id)).toContain('phone-6');
+    const approved = later(APPROVAL_MINUTES);
+    expect(approved.phones.map((p) => p.id)).toEqual(['phone-1', 'phone-2', 'phone-3', 'phone-4', 'phone-5', 'phone-7']);
+    expect(approved.phones.at(-1)).toMatchObject({ where: 'drawer', setUp: false });
+  });
+
+  it('people come to your desk for the phone you set up for them, a few minutes later, if they\u2019re in', () => {
+    const s = scan(ready(day16()), 'phone-1', 'dot').state;
+    const everyone = () => true;
+    expect(visitor(s, everyone)).toBeUndefined();
+    const soon = { ...s, clock: s.clock + PICKUP_AFTER };
+    expect(visitor(soon, everyone)).toEqual({ login: 'dot', why: 'pickup', phone: 'phone-1' });
+    expect(visitor(soon, () => false)).toBeUndefined(); // at lunch
+    expect(visitor(handOver(soon, 'phone-1'), everyone)).toBeUndefined();
+  });
+
+  it('a broken phone: they bring it back, you ask for a replacement, and only the approved one, set up and handed over, will do', () => {
+    let s = handOver(scan(ready(day16()), 'phone-1', 'dot').state, 'phone-1');
+    s = structuredClone(s);
+    breakPhone(s, 'dot');
+    expect(visitor(s, () => true)).toEqual({ login: 'dot', why: 'dropoff', phone: 'phone-1' });
+    expect(replaceProblem(s, 'dot', 'Dot', 0)).toMatch(/still has the broken phone/);
+    s = requestReplacement(takeBroken(s, 'phone-1'), 'phone-1');
+    expect(replaceProblem(s, 'dot', 'Dot', 0)).toMatch(/waiting for Mr\. Grisby/);
+    s = structuredClone({ ...s, clock: s.clock + APPROVAL_MINUTES });
+    settleRequests(s);
+    expect(replaceProblem(s, 'dot', 'Dot', 0)).toMatch(/in your drawer\. Set it up and enrol it to Dot/);
+    s = phoneFor(s, 'dot');
+    expect(s.phones.find((p) => p.id === s.okta.verify.dot)).toMatchObject({ for: 'dot', where: 'given' });
+    expect(replaceProblem(s, 'dot', 'Dot', 0)).toBeUndefined();
   });
 });

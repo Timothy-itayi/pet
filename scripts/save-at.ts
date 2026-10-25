@@ -11,7 +11,7 @@ import { DAYS } from '../src/features/game/data.ts';
 import type { Department } from '../src/features/game/directory.ts';
 import { withGoodFlows } from '../src/features/game/flows.ts';
 import { addApp, addGroup, addRule, assignApp, createFromHr, requireMfa, resetMfa, setActive, setSelfEnroll, updateFromHr } from '../src/features/game/identity.ts';
-import { PHONES_DAY, phoneFor } from '../src/features/game/phones.ts';
+import { APPROVAL_MINUTES, PHONES_DAY, phoneFor, requestReplacement, takeBroken } from '../src/features/game/phones.ts';
 import { CATALOG, hrOn } from '../src/features/game/oktopus.ts';
 import {
   askForTicket, clockOut, fixFor, goHome, goTo, issueOf, newGame, next, resetPassword, resolve, setEnabled, suggest, tick, ticketById, unlockAccount, type GameState,
@@ -49,6 +49,12 @@ function admin(s: GameState, id: string): GameState {
     case 'leaver': return setActive(s, t.subject ?? '', false);
     case 'mfa': { const reset = resetMfa(s, t.who); return issueOf(t).id === 'mfa' && t.day >= PHONES_DAY ? phoneFor(reset, t.who) : reset; }
     case 'verify': return phoneFor(s, t.subject ?? t.who);
+    case 'replace': {
+      const who = t.subject ?? t.who;
+      const broken = s.phones.find((p) => p.owner === who && p.broken);
+      const asked = broken ? requestReplacement(takeBroken(s, broken.id), broken.id) : s;
+      return phoneFor(tick(asked, APPROVAL_MINUTES), who);
+    }
     case undefined: return s;
   }
 }

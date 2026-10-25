@@ -5,7 +5,7 @@ import {
 } from './data.ts';
 import { MINUTES_A_DAY, newAccounts, type Account } from './directory.ts';
 import { flowProblem, runToday, TASKS, TRIGGERS, upgradeFlow } from './flows.ts';
-import { newPhones, PHONES_DAY, replacedSince, verifyProblem, type Phone } from './phones.ts';
+import { BREAK, breakPhone, newPhones, PHONES_DAY, replacedSince, replaceProblem, settleRequests, verifyProblem, type HardwareRequest, type Phone } from './phones.ts';
 import { awayLine, backAt, dayMood } from './people.ts';
 import { appsOf, CATALOG, hrOn, needsMfa, newOkta, type Okta } from './oktopus.ts';
 import { MOODS, type ConsoleFix, type Fix, type Issue, type Note, type Job, type Mood, type PageStatus, type Relation, type Skill, type Ticket, type Tool } from './types.ts';
@@ -108,6 +108,8 @@ export interface GameState {
   okta: Okta;
   /** Company phones, from week 4: in your desk drawer, in your hand, or given to someone. */
   phones: Phone[];
+  /** Replacement phones asked for, and whether Mr. Grisby has approved them yet. */
+  requests: HardwareRequest[];
   /** The day you last approved Oktopus Verify's push to sign in to Oktopus Admin yourself. */
   pushOk?: number;
   /** What you did with the sign-in push you didn't start, on day 18. */
@@ -292,6 +294,7 @@ function slip(d: GameState, t: Ticket): void {
 /** Run the office clock forward: people's tickets and messages arrive on time. */
 function advance(d: GameState, minutes: number): void {
   d.clock = Math.min(d.clock + minutes, LOCKUP);
+  settleRequests(d);
   for (const id of [...d.queue]) {
     const c = d.tickets[id]?.caller;
     if (c && c.doing !== 'confirmed' && c.until <= d.clock) hear(d, ticketById(id), c);
@@ -316,6 +319,7 @@ function startDay(d: GameState): void {
   if (d.day === DROP_DAY) dropLoot(d);
   // The budget's up: a box of company phones turns up in your desk drawer.
   if (d.day >= PHONES_DAY && !d.phones.length) d.phones = newPhones();
+  if (d.day === BREAK.day) breakPhone(d, BREAK.who);
   const back = d.returning.filter((r) => r.day === d.day).map((r) => r.id);
   d.returning = d.returning.filter((r) => r.day !== d.day);
   d.arriving = [
@@ -358,6 +362,7 @@ export function newGame(seed = Math.floor(Math.random() * 2 ** 31)): GameState {
     newsRead: 0,
     okta: newOkta(),
     phones: [],
+    requests: [],
     version: 11,
     day: 1,
     phase: 'boot',
@@ -420,6 +425,7 @@ export function accountProblem(s: GameState, t: Ticket): string | undefined {
     return on.length ? `${named(s, on)}${on.length > 1 ? '\u2019s accounts are' : '\u2019s account is'} still enabled in Active Directory. Anyone with the old password can still get in.` : undefined;
   }
   if (fixBy === 'flow') return t.flow && flowProblem(s, t.flow, t.everywhere);
+  if (fixBy === 'replace') { const who = t.subject ?? t.who; return replaceProblem(s, who, named(s, [who]), t.day * MINUTES_A_DAY + clockTime(t.at)); }
   if (fixBy === 'verify') { const who = t.subject ?? t.who; return verifyProblem(s, who, named(s, [who])); }
   if (fixBy !== 'unlock' && fixBy !== 'reset') {
     const person = oktaProblem(s, t, fixBy);
@@ -564,6 +570,7 @@ const CONSOLE_CHECK: Record<ConsoleFix, string> = {
   'mfa-policy': 'Ask them to check everyone is asked for their phone',
   flow: 'Ask them to check the flow does the job',
   verify: 'Ask them to sign in with the phone',
+  replace: 'Ask them to sign in with the new phone',
   'okta-setup': 'Ask them to check {team} are all set up',
   'okta-app': 'Ask them to check {app} is on the right dashboards',
   joiner: 'Ask them to check {who} can sign in',
@@ -910,6 +917,7 @@ export function parseSave(raw: string | null): GameState | undefined {
     if (s.okta) { s.okta.flows ??= []; s.okta.runs ??= []; }
     // Saves from before company phones: none yet (they turn up at the start of day 16), nobody on Oktopus Verify.
     s.phones ??= [];
+    s.requests ??= [];
     if (s.okta) { s.okta.verify ??= {}; s.okta.selfEnroll ??= false; }
     if ((s.day ?? 0) > PHONES_DAY && !s.phones.length) s.phones = newPhones();
     // Saves from before fields had types: the event's fields move inside its Person.

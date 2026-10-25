@@ -9,7 +9,9 @@ import {
 } from '../game/phones.ts';
 import { SELF } from '../game/rules.ts';
 import type { App, PhoneScreen } from './app.ts';
+import { phoneGlassElement, scanMotion } from '../room3d/view.ts';
 import { clockText, h } from './dom.ts';
+import { shutter } from './sound.ts';
 import { qr } from './oktopus.ts';
 
 /** The tick in a navy circle: Oktopus Verify's icon, drawn rather than painted. */
@@ -111,9 +113,22 @@ function verify(app: App, phone: Phone): HTMLElement {
       h('button', {
         class: 'pv-get wide', 'data-testid': 'phone-scan',
         onclick: () => {
-          const { state: next, said } = scan(app.state, phone.id, showing);
-          ui.phoneSaid = said;
-          if (next !== app.state) { ui.phoneScreen = 'verify'; app.set(next); } else app.rerender();
+          const read = () => {
+            const { state: next, said } = scan(app.state, phone.id, showing);
+            ui.phoneSaid = said;
+            if (next !== app.state) { ui.phoneScreen = 'verify'; app.set(next); } else app.rerender();
+          };
+          if (!showing) { read(); return; }
+          // Up to the monitor, snap, and back: a flash on the glass and the shutter sound when the picture's taken.
+          const { flashAt, done } = scanMotion();
+          setTimeout(() => {
+            shutter();
+            const glass = phoneGlassElement();
+            glass.classList.remove('flash');
+            void glass.offsetWidth;
+            glass.classList.add('flash');
+          }, flashAt);
+          void done.then(read);
         },
       }, 'Scan'),
       ui.phoneSaid && h('p', { class: 'pv-said', role: 'status', 'data-testid': 'phone-said' }, ui.phoneSaid));
@@ -159,6 +174,12 @@ function pushSheet(app: App, phone: Phone): HTMLElement | undefined {
 export function phoneScreen(app: App): HTMLElement {
   const phone = held(app.state);
   if (!phone) return h('div', { class: 'pv' });
+  if (phone.broken) {
+    // Cracked right across, and dead: nothing on it works.
+    return h('div', { class: 'pv-wrap' }, h('div', { class: 'pv pv-broken', 'data-testid': 'phone-broken' },
+      h('svg', { class: 'pv-crack', viewBox: '0 0 320 480', 'aria-hidden': 'true' }),
+      h('p', { class: 'pv-dead' }, 'Won\u2019t turn on.')));
+  }
   const screen = !phone.setUp || app.ui.phoneScreen === 'passcode' ? setup(app, phone)
     : app.ui.phoneScreen === 'store' ? store(app, phone)
     : app.ui.phoneScreen === 'settings' ? settings(app, phone)

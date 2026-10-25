@@ -124,8 +124,8 @@ export const NEWS: NewsPost[] = [
   },
   {
     day: 17, title: 'Sign in with your phone', from: 'Mr. Grisby', scene: '\u{1F4F1}\u{1F510}', tone: '#1e3a8a',
-    shows: 'An old desk phone and a small modern mobile phone side by side on a desk, a padlock between them, lit by a monitor',
-    moves: 'Static camera. The mobile phone\u2019s screen lights up softly, then dims.',
+    shows: 'A close-up of a hand holding a black smartphone; on its screen a sign-in request with a big navy circle and a white tick, and two buttons, Yes and No. No computer in the picture',
+    moves: 'Static camera. The phone buzzes slightly and the tick on its screen pulses once.',
     body: 'From today Oktopus will ask for your phone as well as your password. This is called MFA, apparently. IT is setting up company phones for Finance. Everyone else: Oktopus will walk you through it.',
   },
   {

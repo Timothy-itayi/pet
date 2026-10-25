@@ -872,6 +872,26 @@ export const ISSUES: Issue[] = [
     why: 'Oktopus Verify turns a phone into the second thing you need to sign in: your password, and a tap on a phone only you hold. The QR code ties that phone to one person\u2019s account. The passcode matters too: a phone anyone can pick up and open proves nothing about who\u2019s holding it.',
   },
   {
+    id: 'phone-broken',
+    rule: 4,
+    title: 'Broken company phone',
+    skill: 'devices',
+    page: { status: 'missing', text: '(New phones. No page yet.)' },
+    asks: [
+      { id: 'what', text: 'What happened to it?', none: 'It slid off the car roof. Then a van happened. It\u2019s mostly glass now.' },
+      { id: 'on', text: 'Does it turn on at all?', none: 'No. It doesn\u2019t even buzz. It used to buzz.' },
+      { id: 'spare', text: 'Can I just give you a spare?', none: 'Mr. Grisby says the spares are for new starters. Breakages need his say-so. He was very firm. He bought them.' },
+    ],
+    fixes: [],
+    correctFix: 'console',
+    console: 'replace',
+    note: {
+      example: 'Broken company phone: take the broken one back, request a replacement (needs the budget holder\u2019s approval), then set the new one up, enrol it to them and hand it over.',
+      keys: ['replace', 'approv', 'broken', 'grisby', 'request', 'enrol', 'hand'],
+    },
+    why: 'Company hardware belongs to the company: a broken phone comes back to IT, and a new one is a cost someone has to approve. The order matters too. Their Oktopus Verify lived on the broken phone, so until the replacement is enrolled to them, they can\u2019t sign in.',
+  },
+  {
     id: 'mfa-fatigue',
     rule: 3,
     title: 'Pushes I didn\u2019t ask for',
@@ -2563,6 +2583,17 @@ export const TICKETS: Ticket[] = [
       { label: 'When', text: 'Before the policy. He doesn\u2019t want to be locked out of his own minutes.', ask: 'when' },
     ],
     workaround: 'Lend him yours',
+  },
+  {
+    id: 't1908', day: 19, at: '11:00', who: 'dot', via: 'tray', priority: 'high', issue: 'phone-broken', mood: 2, subject: 'dot',
+    title: 'My new phone is in pieces',
+    message: 'I put my phone on the car roof to find my keys and then I drove off. It\u2019s in quite a lot of pieces. Oktopus wants it and I can\u2019t sign in. I\u2019m so sorry. I\u2019ll bring you the pieces.',
+    details: [
+      { label: 'Phone', text: 'Cracked right across. Won\u2019t turn on.', ask: 'on' },
+      { label: 'What', text: 'Fell off the car roof. A van was involved.', ask: 'what' },
+      { label: 'Spares', text: 'Mr. Grisby approves replacements himself.', ask: 'spare' },
+    ],
+    workaround: 'Lend her your phone for the morning',
   },
   {
     id: 't1807', day: 18, at: '14:20', who: 'juniper', via: 'tray', priority: 'high', issue: 'mfa-fatigue', mood: 2,

@@ -12,7 +12,7 @@ import { refreshTimes } from './features/ui/desk.ts';
 import { powerAway } from './features/ui/power.ts';
 import { desktopScreen, notify } from './features/ui/desktop.ts';
 import { dayEndScreen, endingScreen } from './features/ui/endings.ts';
-import { announce, computerHud, pickInRoom, roomHud, roomKeys } from './features/ui/roomHud.ts';
+import { announce, computerHud, deskVisitor, pickInRoom, roomHud, roomKeys } from './features/ui/roomHud.ts';
 import { ambience, chime, click, keystroke, wake } from './features/ui/sound.ts';
 
 const page = document.querySelector<HTMLDivElement>('#app');
@@ -101,7 +101,8 @@ const app: App = {
     // The top drawer, open while you're looking into it, with whatever phones are still in it.
     openDrawer(ui.view === 'room' && ui.shot === 'drawer' && !fullPage);
     const buzzing = roguePending(app.state) || (needsPush(app.state) && ui.windows.some((w) => w.id === 'okta'));
-    void setPhones(app.state.phones.filter((x) => x.where === 'drawer').map((x) => ({ id: x.id, glow: x.owner === SELF && buzzing ? 2 : x.setUp ? 1 : 0 })));
+    const wanted = deskVisitor(app.state)?.phone;
+    void setPhones(app.state.phones.filter((x) => x.where === 'drawer').map((x) => ({ id: x.id, glow: (x.owner === SELF && buzzing) || x.id === wanted ? 2 : x.setUp ? 1 : 0 })));
     // The phone in your hand, held up to your face, its screen drawn on its glass.
     const phoneUp = Boolean(ui.phoneUp && held(app.state)) && !fullPage;
     if (phoneUp) void holdPhone(); else lowerPhone();
@@ -140,8 +141,10 @@ function closingTime(before: GameState, after: GameState): void {
 }
 
 /** Did this tick change more than the clock? Then redraw; otherwise just move the times on. */
+const visitKey = (s: GameState) => { const v = deskVisitor(s); return v ? `${v.login}:${v.why}` : ''; };
+const approvals = (s: GameState) => s.requests.filter((r) => r.approvedAt !== undefined).length;
 const bigChange = (a: GameState, b: GameState) =>
-  a.phase !== b.phase || a.outcomes.length !== b.outcomes.length || a.queue.join() !== b.queue.join() ||
+  visitKey(a) !== visitKey(b) || approvals(a) !== approvals(b) || a.phase !== b.phase || a.outcomes.length !== b.outcomes.length || a.queue.join() !== b.queue.join() ||
   a.chats.join() !== b.chats.join() || a.notice !== b.notice ||
   b.queue.some((id) => a.tickets[id]?.messages.length !== b.tickets[id]?.messages.length);
 
@@ -158,7 +161,25 @@ setInterval(() => {
   if (bigChange(before, next)) { announce(app, before, next); app.set(next); }
   else { app.state = next; saveGame(next); app.refreshTimes(); }
   closingTime(before, next);
+  phoneNews(before, next);
 }, 1000);
+
+/** Someone turning up at your desk about a phone, or Mr. Grisby approving a replacement: said wherever you are. */
+function phoneNews(before: GameState, after: GameState): void {
+  const visit = deskVisitor(after);
+  const lines: [string, string][] = [];
+  if (visit && visitKey(before) !== visitKey(after)) {
+    const name = after.okta.users[visit.login]?.name ?? visit.login;
+    lines.push([name, visit.why === 'pickup' ? `${name} is at your desk to pick up the phone you set up.` : `${name} is at your desk with the broken phone.`]);
+  }
+  if (approvals(after) > approvals(before)) lines.push(['Mr. Grisby', 'Approved. The replacement phone is in your top drawer. Try not to let anyone put it on a car roof.']);
+  for (const [from, text] of lines) {
+    chime();
+    notify(app, { app: 'chat', from, text });
+    if (app.ui.view !== 'computer') app.ui.note = text;
+  }
+  if (lines.length) app.rerender();
+}
 
 addEventListener('keydown', (e) => roomKeys(app, e));
 addEventListener('keydown', wake);
@@ -200,6 +221,7 @@ document.documentElement.style.setProperty('--static', `url(${staticTile()})`);
 /** What a phone in the drawer is, when you point at it. */
 function phoneLabel(id: string): string {
   const phone = app.state.phones.find((p) => p.id === id);
+  if (phone?.broken) return 'A broken phone';
   if (phone?.owner === SELF) return 'Your phone';
   if (phone?.owner) return `${app.state.okta.users[phone.owner]?.name ?? phone.owner}\u2019s phone`;
   return phone?.setUp ? 'A company phone (set up)' : 'A new company phone';
