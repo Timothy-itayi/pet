@@ -3,14 +3,8 @@ import type { VillagerId } from './data.ts';
 export type Skill = 'devices' | 'networks' | 'access';
 export const SKILLS: readonly Skill[] = ['devices', 'networks', 'access'];
 
-export type Ears = 'pointy' | 'round' | 'long' | 'floppy' | 'none';
-
 export interface Villager {
   name: string;
-  species: string;
-  ears: Ears;
-  fur: string;
-  beak?: string;
   /** How they start a chat when they want something fixed but don't want to log a ticket. */
   opener: string;
   /** What they say when they arrive as your friend, or as your nemesis. */

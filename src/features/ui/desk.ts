@@ -6,7 +6,7 @@ import {
   scriptFor, suggest, suggestions, ticketById, ticketState, workaround, writeNote, type GameState, type Outcome, type Status, type TicketState,
 } from '../game/rules.ts';
 import type { ConsoleFix, Ticket } from '../game/types.ts';
-import { face } from '../art/sprites.ts';
+import { portrait } from './portrait.ts';
 import type { App } from './app.ts';
 import { openApp } from './desktop.ts';
 import { clockText, h } from './dom.ts';
@@ -230,7 +230,7 @@ export function ticketView(app: App, t: Ticket): HTMLElement {
   const bond = relation(state, t.who);
   const tab = ui.snTab ?? 'notes';
   const caller = h('span', { class: 'sn-caller' },
-    h('img', { class: 'sprite tiny', src: face(v, st.mood), alt: '' }),
+    portrait(v.name, 40),
     `${v.name} `,
     h('span', { class: `mood mood-${st.mood}`, 'data-testid': 'mood' }, moodName(st.mood)),
     bond !== 'neutral' && h('span', { class: `bond ${bond}`, 'data-testid': 'bond' }, bond === 'friend' ? '\u2665 Friend' : 'Nemesis'));

@@ -967,7 +967,7 @@ export const TICKETS: Ticket[] = [
   {
     id: 't802', day: 8, at: '10:40', who: 'pip', via: 'tray', priority: 'low', issue: 'slow-laptop', mood: 0,
     title: 'Laptop slower than me',
-    message: 'My laptop is slower than me. I am a frog. Ribbit.',
+    message: 'My laptop is slower than me, and I’m not fast. Ribbit.',
     details: [{ label: 'Laptop info', text: 'Last restarted: 33 days ago. 14 updates waiting.', ask: 'uptime' }],
     workaround: 'Close everything he isn’t using',
   },

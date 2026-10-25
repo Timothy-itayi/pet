@@ -99,7 +99,7 @@ async function atlas(key: string, body: Record<string, unknown>, file: string, s
 async function image(art: Art, key: string): Promise<void> {
   charge(art.id, 'image', IMAGE_USD);
   const square = art.face || art.icon;
-  const style = art.face ? FACE_STYLE : art.icon ? ICON_STYLE : STYLE;
+  const style = art.style ?? (art.face ? FACE_STYLE : art.icon ? ICON_STYLE : STYLE);
   await atlas(key, { model: IMAGE_MODEL, ...IMAGE_SIZE, prompt: `${style}. ${art.shows}`, ...(square && { size: '2048*2048' }) },
     art.id, art.face ? 'scale=256:256' : art.icon ? 'scale=160:160' : 'scale=1280:-2');
   record(art.id, 'image');

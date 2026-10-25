@@ -1,6 +1,6 @@
 import { DAILY_COST, GOAL_VOUCHER, JOBS, MANAGER, VILLAGERS } from '../game/data.ts';
 import { goHome, newGame, peopleWho, scriptFor } from '../game/rules.ts';
-import { face } from '../art/sprites.ts';
+import { portrait } from './portrait.ts';
 import type { App } from './app.ts';
 import { h, money } from './dom.ts';
 
@@ -30,7 +30,7 @@ export function dayEndScreen(app: App): HTMLElement {
         neutral: 'has moved on. You\u2019re back to neutral.',
       }[now]}`))),
     h('div', { class: 'toast inline' },
-      h('img', { class: 'sprite small', src: face(VILLAGERS.grisby), alt: '' }),
+      portrait(MANAGER, 48),
       h('p', {}, `${MANAGER}: ${today.voucher ? script.metGoal : script.missedGoal}`)),
     state.savings <= 0 && h('p', { class: 'notice' }, 'Your savings are gone.'),
     h('button', { class: 'btn primary', 'data-testid': 'go-home', 'data-autofocus': true, onclick: () => app.set(goHome(state)) }, 'Go home'),
