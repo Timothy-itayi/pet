@@ -73,9 +73,14 @@ export interface Okta {
   apps: Record<string, string[]>;
   /** The System Log: what was done, newest last. */
   log: { at: number; event: string; target: string }[];
+  /** Groups whose members must sign in with their phone as well as their password (MFA). */
+  mfa: string[];
 }
 
-export const newOkta = (): Okta => ({ users: {}, groups: ['Everyone'], rules: [], apps: {}, log: [] });
+export const newOkta = (): Okta => ({ users: {}, groups: ['Everyone'], rules: [], apps: {}, log: [], mfa: [] });
+
+/** Whether someone has to use their phone to sign in: they're in a group the sign-on policy covers. */
+export const needsMfa = (okta: Okta, login: string) => groupsOf(okta, login).some((g) => okta.mfa.includes(g));
 
 /** Apps in the Oktopus catalog. Hootsweet is Marketing's social media scheduler. */
 export const CATALOG = [

@@ -157,5 +157,31 @@
   "face-hazel": {
     "image": true,
     "large": true
+  },
+  "news-the-auditors-findings": {
+    "image": true,
+    "loop": true
+  },
+  "news-sign-in-with-your-phone": {
+    "image": true,
+    "loop": true
+  },
+  "news-please-stop-plugging-things-in": {
+    "image": true,
+    "loop": true
+  },
+  "news-i-would-never-ask-quietly": {
+    "image": true,
+    "loop": true
+  },
+  "news-goodbye-auditors": {
+    "image": true,
+    "loop": true
+  },
+  "feed-18-pip": {
+    "image": true
+  },
+  "feed-20-fern": {
+    "image": true
   }
 }

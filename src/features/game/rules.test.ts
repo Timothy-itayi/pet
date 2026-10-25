@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { CLOSE, DAILY_COST, LOCKUP, DAYS, GOAL_VOUCHER, ISSUES, REPLIES, START_SAVINGS, THANKS, TICKETS, TOOLS, VILLAGERS } from './data.ts';
-import { addApp, addGroup, addRule, assignApp, createFromHr, resetMfa, setActive, updateFromHr } from './identity.ts';
+import { addApp, addGroup, addRule, assignApp, createFromHr, requireMfa, resetMfa, setActive, updateFromHr } from './identity.ts';
 import type { Department } from './directory.ts';
 import { appsOf, groupsOf, hrOn, newOkta } from './oktopus.ts';
 import {
@@ -46,7 +46,8 @@ function admin(s: GameState, id: string): GameState {
   switch (issueOf(t).console) {
     case 'unlock': return unlockAccount(s, t.who);
     case 'reset': return resetPassword(s, t.who, { mustChange: true, unlock: true });
-    case 'disable': return setEnabled(s, 'sam', false);
+    case 'disable': return (t.subjects ?? ['sam']).reduce((x, l) => setEnabled(x, l, false), s);
+    case 'mfa-policy': return requireMfa(s, 'Everyone', true);
     case 'okta-setup': return setUpTeams(s, t.team);
     case 'okta-app': return giveApp(s, t.app, t.team);
     case 'joiner': return createFromHr(s, t.subject ?? '');
@@ -412,6 +413,8 @@ describe('money and endings', () => {
     expect(acceptOffer(fixesOnly).ending).toBe('stay');
     const withNotes = play((x, id) => handle(x, id, (y, i) => writeNote(fix(admin(y, i), i, correct(i)), noteTarget(y, { ticketId: i, kind: 'fix', xp: 0 })?.note.example ?? '')));
     expect(apply(withNotes, 'ocean').ending).toBe('hired');
+    expect(apply(fixesOnly, 'lighthouse')).toBe(fixesOnly); // a security job needs access written up, not just done
+    expect(apply(withNotes, 'lighthouse')).toMatchObject({ ending: 'hired', jobId: 'lighthouse' });
   });
 });
 

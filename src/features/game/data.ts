@@ -2,8 +2,8 @@ import type { DayScript, Job, Villager } from './types.ts';
 
 export const COMPANY = 'Burrow & Co.';
 export const MANAGER = 'Mr. Grisby';
-/** Working weeks so far: Sam's old system, Oktopus for Marketing, then Oktopus for everyone. */
-export const DAYS = 15;
+/** Working weeks so far: Sam's old system, Oktopus for Marketing, Oktopus for everyone, then security week. */
+export const DAYS = 20;
 /** Enough for a few weeks of bus fare and food, if most days go well: meeting the goal pays for the day. */
 export const START_SAVINGS = 80;
 export const DAILY_COST = 12;
@@ -184,8 +184,41 @@ export const DAY_SCRIPTS: DayScript[] = [
   {
     goal: 6,
     memo: 'Friday. Hazel has left us already. Six tickets, and then: The Conversation. In my office. I have biscuits.',
-    metGoal: 'Six! Come in. Sit down. Let’s have The Conversation.',
-    missedGoal: 'We can still have The Conversation. It will be brief. Like Hazel.',
+    metGoal: 'Six! Ah. The auditors arrive Monday. The Conversation will have to wait one more week. I ate the biscuits. Voucher.',
+    missedGoal: 'The auditors arrive Monday, so The Conversation waits a week. Which, frankly, is lucky for you.',
+  },
+  {
+    goal: 5,
+    memo: 'The auditors’ report is in. It has findings. Plural. Five tickets, and make the findings go away.',
+    rule: 'Leavers are switched off everywhere on their last day. Every system. Every time.',
+    metGoal: 'Finding 1: closed. The auditors nodded. Voucher.',
+    missedGoal: 'The auditors asked who Sam is and why Sam signed in on Saturday. I said “IT”.',
+  },
+  {
+    goal: 5,
+    memo: 'The auditors want everyone signing in with their phones. Including me. I have a phone. Somewhere. Five tickets.',
+    rule: 'Policies go on groups, not people. Just like apps.',
+    metGoal: 'Everyone has a phone sign-in! Mine works! I signed in four times to check. Voucher.',
+    missedGoal: 'The auditors tried my password. It worked. They wrote that down.',
+  },
+  {
+    goal: 6,
+    memo: 'People keep finding things in the car park and clicking things in emails. Six tickets. Stop them.',
+    metGoal: 'Nobody plugged anything in that they found on the floor. Low bar. Cleared. Voucher.',
+    missedGoal: 'I have had a very long talk about USB sticks. Mostly with myself.',
+  },
+  {
+    goal: 6,
+    memo: 'Someone pretending to be me tried to get money out of Finance. I would never ask quietly. Six tickets.',
+    rule: 'Urgent and secret is how a scam sounds. Check in person.',
+    metGoal: 'Dot didn’t pay the fake me. The real me is very grateful. Voucher.',
+    missedGoal: 'Finance are now suspicious of every email I send. That’s new. I don’t hate it.',
+  },
+  {
+    goal: 6,
+    memo: 'The auditors leave today. Six tickets, and then The Conversation. Truly. I’ve cleared my diary. It was already clear.',
+    metGoal: 'Six! The auditors left smiling. Now: The Conversation. Sit down.',
+    missedGoal: 'The auditors left. The Conversation is still happening. Brace yourself.',
   },
 ];
 
@@ -202,7 +235,14 @@ export const JOBS: Job[] = [
     title: 'IT Support Technician',
     company: 'Big Ocean Corp',
     blurb: 'Fast-paced team supporting 2,000 staff. Accounts, access and networking experience a must.',
-    needs: { devices: 84, networks: 36, access: 90 },
+    needs: { devices: 110, networks: 44, access: 115 },
+  },
+  {
+    id: 'lighthouse',
+    title: 'Junior Security Analyst',
+    company: 'Lighthouse Security',
+    blurb: 'Help small companies spot phishing, lock down sign-ins and clean up after leavers. You\u2019ll need to know access inside out.',
+    needs: { access: 120 },
   },
 ];
 

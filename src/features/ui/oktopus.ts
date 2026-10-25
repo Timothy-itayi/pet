@@ -1,7 +1,7 @@
 import { artFor, iconId } from '../game/art.ts';
 import { DEPARTMENTS, MINUTES_A_DAY, type Department } from '../game/directory.ts';
-import { addApp, addGroup, addRule, assignApp, createFromHr, removeRule, resetMfa, setActive, unassignApp, updateFromHr } from '../game/identity.ts';
-import { appsOf, CATALOG, differences, groupsOf, hrOn, type HrRow, type Okta } from '../game/oktopus.ts';
+import { addApp, addGroup, addRule, assignApp, createFromHr, removeRule, requireMfa, resetMfa, setActive, unassignApp, updateFromHr } from '../game/identity.ts';
+import { appsOf, CATALOG, differences, groupsOf, hrOn, needsMfa, type HrRow, type Okta } from '../game/oktopus.ts';
 import type { GameState } from '../game/rules.ts';
 import type { App } from './app.ts';
 import { clockText, h } from './dom.ts';
@@ -11,7 +11,7 @@ import { clockText, h } from './dom.ts';
  * Applications and the System Log down the side, the page on the right.
  */
 
-export type OktaPage = 'dashboard' | 'people' | 'groups' | 'import' | 'apps' | 'log';
+export type OktaPage = 'dashboard' | 'people' | 'groups' | 'import' | 'apps' | 'security' | 'log';
 
 /**
  * The Oktopus wordmark: lowercase and clean like the real sign-on brand it nods to, with the "o" drawn as a thick ring
@@ -265,16 +265,41 @@ function logPage(app: App): HTMLElement {
   );
 }
 
+/**
+ * Security: the sign-on policy. Turn on phone sign-in (MFA) for a group, and everyone in it must use their phone as
+ * well as their password. It shows who can still get in with a password alone.
+ */
+function securityPage(app: App): HTMLElement {
+  const { state } = app;
+  const { okta } = state;
+  const active = Object.keys(okta.users).filter((l) => okta.users[l]?.status === 'active');
+  const loose = active.filter((l) => !needsMfa(okta, l));
+  return h('div', { class: 'okta-page' },
+    h('h1', {}, 'Security: sign-on policy'),
+    h('p', { class: 'meta' }, 'Require phone sign-in for a group, and everyone in it must use their phone as well as their password. Policies go on groups, like apps.'),
+    h('section', { class: 'okta-card' },
+      h('h2', {}, 'Require phone sign-in'),
+      h('ul', { class: 'okta-rules' }, ...okta.groups.map((g) => {
+        const on = okta.mfa.includes(g);
+        return h('li', {}, h('label', { class: 'okta-switch' },
+          h('input', { type: 'checkbox', checked: on, 'data-testid': `okta-mfa-${g}`, onchange: () => app.set(requireMfa(state, g, !on)) }),
+          h('strong', {}, g), h('span', { class: 'meta' }, ` ${Object.keys(okta.users).filter((l) => groupsOf(okta, l).includes(g)).length} people`)));
+      }))),
+    h('section', { class: 'okta-card' },
+      h('h2', {}, `Password only (${loose.length} of ${active.length})`),
+      h('p', {}, loose.length ? loose.map((l) => okta.users[l]?.name ?? l).join(', ') : 'Nobody. Everyone has to use their phone to sign in.')));
+}
+
 const PAGES: [OktaPage, string, string][] = [
   ['dashboard', 'Dashboard', '\u{1F3E0}'], ['people', 'People', '\u{1F464}'], ['groups', 'Groups', '\u{1F465}'],
-  ['import', 'Import from HR', '\u{1F4E5}'], ['apps', 'Applications', '\u{1F9E9}'], ['log', 'System Log', '\u{1F4DC}'],
+  ['import', 'Import from HR', '\u{1F4E5}'], ['apps', 'Applications', '\u{1F9E9}'], ['security', 'Security', '\u{1F512}'], ['log', 'System Log', '\u{1F4DC}'],
 ];
 
 export function oktopus(app: App): HTMLElement {
   const { ui } = app;
   const page = ui.oktaPage ?? 'dashboard';
   const go = (to: OktaPage) => () => { ui.oktaPage = to; ui.oktaUser = undefined; ui.oktaApp = undefined; ui.oktaVerify = undefined; app.rerender(); };
-  const body = { dashboard, people, groups: groupsPage, import: importPage, apps: appsPage, log: logPage }[page](app);
+  const body = { dashboard, people, groups: groupsPage, import: importPage, apps: appsPage, security: securityPage, log: logPage }[page](app);
   return h('div', { class: 'okta', 'data-testid': 'oktopus' },
     h('div', { class: 'ridge-bar' },
       h('span', { class: 'ridge-nav', 'aria-hidden': 'true' }, '← → ↻'),

@@ -71,6 +71,13 @@ export const addApp = (s: GameState, app: string) => oktaWork(s, 'application.li
   okta.apps[app] = [];
 });
 
+/** Require phone sign-in (MFA) for a group, or stop requiring it. A policy on a group covers everyone in it. */
+export const requireMfa = (s: GameState, group: string, on: boolean) =>
+  oktaWork(s, on ? 'policy.rule.add_mfa' : 'policy.rule.remove_mfa', group, (okta) => {
+    if (!okta.groups.includes(group) || okta.mfa.includes(group) === on) return false;
+    okta.mfa = on ? [...okta.mfa, group] : okta.mfa.filter((g) => g !== group);
+  });
+
 /** Assign an app to a group. Apps go to groups, never to people one at a time. */
 export const assignApp = (s: GameState, app: string, group: string) => oktaWork(s, 'application.user_membership.add', `${app} → ${group}`, (okta) => {
   const assigned = okta.apps[app];

@@ -9,7 +9,7 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { DAYS } from '../src/features/game/data.ts';
 import type { Department } from '../src/features/game/directory.ts';
-import { addApp, addGroup, addRule, assignApp, createFromHr, resetMfa, setActive, updateFromHr } from '../src/features/game/identity.ts';
+import { addApp, addGroup, addRule, assignApp, createFromHr, requireMfa, resetMfa, setActive, updateFromHr } from '../src/features/game/identity.ts';
 import { CATALOG, hrOn } from '../src/features/game/oktopus.ts';
 import {
   askForTicket, clockOut, fixFor, goHome, goTo, issueOf, newGame, next, resetPassword, resolve, setEnabled, suggest, tick, ticketById, unlockAccount, type GameState,
@@ -37,7 +37,8 @@ function admin(s: GameState, id: string): GameState {
   switch (issueOf(t).console) {
     case 'unlock': return unlockAccount(s, t.who);
     case 'reset': return resetPassword(s, t.who, { mustChange: true, unlock: true });
-    case 'disable': return setEnabled(s, 'sam', false);
+    case 'disable': return (t.subjects ?? ['sam']).reduce((x, l) => setEnabled(x, l, false), s);
+    case 'mfa-policy': return requireMfa(s, 'Everyone', true);
     case 'okta-setup': return teams(s, t.team);
     case 'okta-app': return app(s, t.app, t.team);
     case 'joiner': return createFromHr(s, t.subject ?? '');

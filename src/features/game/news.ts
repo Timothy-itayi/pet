@@ -110,6 +110,36 @@ export const NEWS: NewsPost[] = [
     moves: 'Static camera. The card tips over very slowly and lies flat.',
     body: 'Hazel has decided Finance isn\u2019t for her. She was with us three days, and she was lovely. If you have seen a calculator, please return it to Finance.',
   },
+  {
+    day: 16, title: 'The auditors\u2019 findings', from: 'Otis', scene: '\u{1F50E}\u{1F4CB}', tone: '#334155',
+    shows: 'A thick report on a meeting room table with coloured flags sticking out of it, a red pen beside it, blinds half drawn',
+    moves: 'Static camera. The report\u2019s flags flutter slightly in the air-conditioning and the light through the blinds shifts.',
+    body: 'The auditors\u2019 report is in. Three findings: leavers who can still sign in, passwords on their own, and a shared login at reception. IT is on it. IT is one intern. Hoo.',
+  },
+  {
+    day: 17, title: 'Sign in with your phone', from: 'Mr. Grisby', scene: '\u{1F4F1}\u{1F510}', tone: '#1e3a8a',
+    shows: 'An old desk phone and a small modern mobile phone side by side on a desk, a padlock between them, lit by a monitor',
+    moves: 'Static camera. The mobile phone\u2019s screen lights up softly, then dims.',
+    body: 'From today Oktopus will ask for your phone as well as your password. This is called MFA, apparently. If you don\u2019t have a phone, Biscuit has a drawer of them.',
+  },
+  {
+    day: 18, title: 'Please stop plugging things in', from: 'IT', scene: '\u{1F50C}\u{1F6AB}', tone: '#7f1d1d',
+    shows: 'A single USB stick lying on wet tarmac in an empty car park at night under a street lamp, with a handwritten label',
+    moves: 'Static camera. Rain falls lightly through the lamp light and the puddles ripple.',
+    body: 'If you find a USB stick, do not plug it in to see whose it is. Bring it to IT. If you find one labelled \u201CSalaries\u201D, especially do not plug it in. Thank you, Pip.',
+  },
+  {
+    day: 19, title: 'I would never ask quietly', from: 'Mr. Grisby', scene: '\u{1F4B7}\u{1F92B}', tone: '#78350f',
+    shows: 'A finance desk with a payment form left unsigned, a pen set down beside it, and an old telephone off its hook as if someone is calling to check',
+    moves: 'Static camera. The pen rolls a little and stops against the form.',
+    body: 'Someone pretending to be me asked Finance to pay a stranger, quietly. I have never done anything quietly in my life. If I ask for money, I will ask loudly, in person, and probably twice.',
+  },
+  {
+    day: 20, title: 'Goodbye, auditors', from: 'Otis', scene: '\u{1F44B}\u{1F4CB}', tone: '#3f6212',
+    shows: 'An empty meeting room after a long stay, a neat stack of returned folders, a single half-eaten biscuit on a plate',
+    moves: 'Static camera. The door slowly swings shut on its own.',
+    body: 'The auditors leave us today. Two of three findings are closed, and the third is a shared login that Biscuit misses. They said we had \u201Cimproved markedly\u201D. I have framed it. Hoo.',
+  },
 ];
 
 /** Every post up to today, newest first. */

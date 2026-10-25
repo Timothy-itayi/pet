@@ -68,7 +68,7 @@ export type PageStatus = 'ok' | 'outdated' | 'missing' | 'yours';
  * Problems fixed in an admin console rather than by picking from a list. Active Directory: unlock, reset, disable.
  * Oktopus: setting Marketing up, giving them their app, and a joiner, mover, leaver and lost phone.
  */
-export type ConsoleFix = 'unlock' | 'reset' | 'disable' | 'okta-setup' | 'okta-app' | 'joiner' | 'mover' | 'leaver' | 'mfa';
+export type ConsoleFix = 'unlock' | 'reset' | 'disable' | 'okta-setup' | 'okta-app' | 'joiner' | 'mover' | 'leaver' | 'mfa' | 'mfa-policy';
 
 /** A kind of problem. Several tickets can be the same issue, which is what makes your notes useful. */
 export interface Issue {
@@ -115,6 +115,8 @@ export interface Ticket {
   fixedBy?: string;
   /** Oktopus tickets: who's joining, moving or leaving (by login). */
   subject?: string;
+  /** Accounts that should be switched off in Active Directory (by login). Sam's, unless it says otherwise. */
+  subjects?: string[];
   /** Oktopus tickets: the departments to set up, or that should have the app. */
   team?: Department[];
   /** Oktopus tickets: the app from the catalog. */

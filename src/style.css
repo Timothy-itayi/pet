@@ -1199,3 +1199,5 @@ button.profile-face:hover, button.profile-face:focus-visible { box-shadow: 0 0 0
 .okta-catalog-name { display: inline-flex; align-items: center; gap: 8px; }
 .okta-app-title { display: flex; align-items: center; gap: 10px; }
 .painted-glyph { width: 1.6em; height: 1.6em; border-radius: 22%; vertical-align: middle; }
+
+.okta-switch { display: flex; align-items: center; gap: 8px; cursor: pointer; }

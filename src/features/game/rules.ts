@@ -5,7 +5,7 @@ import {
 } from './data.ts';
 import { MINUTES_A_DAY, newAccounts, type Account } from './directory.ts';
 import { awayLine, backAt, dayMood } from './people.ts';
-import { appsOf, CATALOG, hrOn, newOkta, type Okta } from './oktopus.ts';
+import { appsOf, CATALOG, hrOn, needsMfa, newOkta, type Okta } from './oktopus.ts';
 import { MOODS, type ConsoleFix, type Fix, type Issue, type Note, type Job, type Mood, type PageStatus, type Relation, type Skill, type Ticket, type Tool } from './types.ts';
 
 export type Phase = 'boot' | 'desktop' | 'desk' | 'dayEnd' | 'ending';
@@ -402,7 +402,10 @@ export function reply(s: GameState, id: string): GameState {
 export function accountProblem(s: GameState, t: Ticket): string | undefined {
   const fixBy = issueOf(t).console;
   if (!fixBy) return undefined;
-  if (fixBy === 'disable') return s.accounts.sam?.enabled ? 'Sam\u2019s account is still enabled in Active Directory. Anyone with his old password can still get in.' : undefined;
+  if (fixBy === 'disable') {
+    const on = (t.subjects ?? ['sam']).filter((l) => s.accounts[l]?.enabled);
+    return on.length ? `${named(s, on)}${on.length > 1 ? '\u2019s accounts are' : '\u2019s account is'} still enabled in Active Directory. Anyone with the old password can still get in.` : undefined;
+  }
   if (fixBy !== 'unlock' && fixBy !== 'reset') return oktaProblem(s, t, fixBy);
   const a = s.accounts[t.who];
   if (!a) return undefined;
@@ -418,6 +421,8 @@ export function accountProblem(s: GameState, t: Ticket): string | undefined {
 /** Everyone in some departments, as HR has them today. */
 const staffIn = (s: GameState, team: readonly string[]) => hrOn(s.day).filter((r) => team.includes(r.dept) && r.status === 'active');
 const named = (s: GameState, logins: string[]) => logins.map((l) => hrOn(s.day).find((r) => r.login === l)?.name ?? l).join(', ');
+/** People's names from their logins, as a list: "Wren and Sam". Anyone who's ever been on the HR file. */
+const nameList = (logins: string[]) => teamWords(logins.map((l) => hrOn(DAYS).find((r) => r.login === l)?.name ?? l));
 const isAre = (n: number) => (n > 1 ? 'aren\u2019t' : 'isn\u2019t');
 const teamWords = (team: readonly string[]) => new Intl.ListFormat('en', { type: 'conjunction' }).format(team);
 
@@ -466,6 +471,12 @@ function oktaProblem(s: GameState, t: Ticket, fixBy: Exclude<NonNullable<Issue['
     }
     case 'leaver':
       return user?.status === 'active' ? `${name} can still sign in to Oktopus and everything in it. Deactivate them.` : undefined;
+    case 'mfa-policy': {
+      const loose = Object.keys(okta.users).filter((l) => okta.users[l]?.status === 'active' && !needsMfa(okta, l));
+      if (!loose.length) return undefined;
+      return loose.length > 3 ? `${loose.length} people can still sign in with just a password. A sign-on policy on a group covers everyone in it: which group has everyone?`
+        : `${named(s, loose)} can still sign in with just a password.`;
+    }
     case 'mfa': {
       const reset = okta.users[t.who]?.mfaResetAt ?? -1;
       return reset >= t.day * MINUTES_A_DAY + clockTime(t.at) ? undefined : 'Their old phone is still the only way in. Reset their sign-in methods in Oktopus, once you\u2019ve checked it\u2019s really them.';
@@ -479,9 +490,8 @@ function oktaProblem(s: GameState, t: Ticket, fixBy: Exclude<NonNullable<Issue['
  */
 export function liveFact(s: GameState, t: Ticket, label: string): string | undefined {
   if (label === 'Active Directory') {
-    const login = issueOf(t).console === 'disable' ? 'sam' : t.who;
-    const a = s.accounts[login];
-    return a && `Account: ${login}. ${a.enabled ? '' : 'Disabled. '}${a.locked ? 'Locked out.' : 'Not locked out.'}`;
+    const logins = issueOf(t).console === 'disable' ? t.subjects ?? ['sam'] : [t.who];
+    return logins.map((l) => { const a = s.accounts[l]; return a ? `${l}: ${a.enabled ? 'enabled' : 'disabled'}${a.locked ? ', locked out' : ''}.` : ''; }).join(' ') || undefined;
   }
   if (label !== 'Oktopus') return undefined;
   const { okta } = s;
@@ -504,7 +514,7 @@ export function liveFact(s: GameState, t: Ticket, label: string): string | undef
 export function fill(t: Ticket, text: string): string {
   const team = t.team ?? ['Marketing'];
   return text
-    .replaceAll('{who}', t.subject ? hrOn(DAYS).find((r) => r.login === t.subject)?.name ?? t.subject : 'them')
+    .replaceAll('{who}', nameList(t.subjects ?? (t.subject ? [t.subject] : issueOf(t).console === 'disable' ? ['sam'] : [])) || 'them')
     .replaceAll('{app}', CATALOG.find((c) => c.id === (t.app ?? 'hootsweet'))?.name ?? t.app ?? '')
     .replaceAll('{team}', team.length >= 5 ? 'everyone' : teamWords(team));
 }
@@ -517,7 +527,8 @@ const CONSOLE_CHECK: Record<ConsoleFix, string> = {
   unlock: 'Ask them to try signing in again',
   reset: 'Ask them to sign in with the temporary password and choose their own',
   mfa: 'Ask them to sign in and set up their new phone',
-  disable: 'Ask them to check nobody can sign in as Sam now',
+  disable: 'Ask them to check nobody can sign in as {who} now',
+  'mfa-policy': 'Ask them to check everyone is asked for their phone',
   'okta-setup': 'Ask them to check {team} are all set up',
   'okta-app': 'Ask them to check {app} is on the right dashboards',
   joiner: 'Ask them to check {who} can sign in',
@@ -839,6 +850,8 @@ export function parseSave(raw: string | null): GameState | undefined {
     for (const st of Object.values(s.tickets ?? {})) st.heard ??= [];
     // Saves from before you typed your notes: the pages you wrote show the example text.
     s.written ??= {};
+    // Saves from before Oktopus had sign-on policies: none set yet.
+    if (s.okta) s.okta.mfa ??= [];
     // Saves from before you could stay late: no overtime yet.
     if (s.today) s.today.overtime ??= 0;
     const known = new Set(TICKETS.map((t) => t.id));
