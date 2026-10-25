@@ -4,7 +4,7 @@ import {
   WORKAROUND_RETURNS_AFTER, XP, type VillagerId,
 } from './data.ts';
 import { MINUTES_A_DAY, newAccounts, type Account } from './directory.ts';
-import { runToday } from './flows.ts';
+import { flowProblem, runToday, TRIGGERS } from './flows.ts';
 import { awayLine, backAt, dayMood } from './people.ts';
 import { appsOf, CATALOG, hrOn, needsMfa, newOkta, type Okta } from './oktopus.ts';
 import { MOODS, type ConsoleFix, type Fix, type Issue, type Note, type Job, type Mood, type PageStatus, type Relation, type Skill, type Ticket, type Tool } from './types.ts';
@@ -409,7 +409,15 @@ export function accountProblem(s: GameState, t: Ticket): string | undefined {
     const on = (t.subjects ?? ['sam']).filter((l) => s.accounts[l]?.enabled);
     return on.length ? `${named(s, on)}${on.length > 1 ? '\u2019s accounts are' : '\u2019s account is'} still enabled in Active Directory. Anyone with the old password can still get in.` : undefined;
   }
-  if (fixBy !== 'unlock' && fixBy !== 'reset') return oktaProblem(s, t, fixBy);
+  if (fixBy === 'flow') return t.flow && flowProblem(s, t.flow, t.everywhere);
+  if (fixBy !== 'unlock' && fixBy !== 'reset') {
+    const person = oktaProblem(s, t, fixBy);
+    if (person || !t.automate) return person;
+    // Fixed, but by hand: from week 3 HR changes come too often for that. Is the flow on for next time?
+    const trigger = ({ joiner: 'hr.joined', mover: 'hr.moved', leaver: 'hr.left' } as const)[fixBy as 'joiner' | 'mover' | 'leaver'];
+    return trigger && !s.okta.flows.some((f) => f.on && f.trigger === trigger)
+      ? `${nameList([t.subject ?? t.who])} is sorted now, by hand. HR won\u2019t wait next time: switch on a flow for \u201C${TRIGGERS[trigger]}\u201D in Oktopus Workflows.` : undefined;
+  }
   const a = s.accounts[t.who];
   if (!a) return undefined;
   if (!a.enabled) return 'Their account is disabled, so nothing will let them in. Enable it again in Active Directory.';
@@ -532,6 +540,7 @@ const CONSOLE_CHECK: Record<ConsoleFix, string> = {
   mfa: 'Ask them to sign in and set up their new phone',
   disable: 'Ask them to check nobody can sign in as {who} now',
   'mfa-policy': 'Ask them to check everyone is asked for their phone',
+  flow: 'Ask them to check the flow does the job',
   'okta-setup': 'Ask them to check {team} are all set up',
   'okta-app': 'Ask them to check {app} is on the right dashboards',
   joiner: 'Ask them to check {who} can sign in',

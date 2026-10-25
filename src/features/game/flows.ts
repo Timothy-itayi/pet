@@ -145,10 +145,16 @@ export function testFlow(s: GameState, flow: Flow): { run: FlowRun; after: GameS
   return { run, after: d };
 }
 
-/** What a flow for a trigger should leave Sam Sample as, in a sentence when it doesn't; undefined when it's right. */
-export function flowProblem(s: GameState, trigger: Trigger): string | undefined {
+/**
+ * What a flow for a trigger should leave Sam Sample as, in a sentence when it doesn't; undefined when it's right.
+ * `everywhere`: a leaver flow must also switch them off in Active Directory.
+ */
+export function flowProblem(s: GameState, trigger: Trigger, everywhere = false): string | undefined {
   const flow = s.okta.flows.find((f) => f.on && f.trigger === trigger);
-  if (!flow) return `There’s no ${TRIGGERS[trigger].replace('HR: ', '').replace('someone ', '')} flow switched on in Oktopus Workflows.`;
+  if (!flow) return `There’s no flow for \u201C${TRIGGERS[trigger]}\u201D switched on in Oktopus Workflows.`;
+  if (everywhere && !flow.cards.some((c) => c.kind === 'ad-disable' && c.inputs.Login)) {
+    return 'Your leaver flow switches them off in Oktopus, but not in Active Directory. Add an Active Directory: Disable account card, with their Login wired in.';
+  }
   const { run, after } = testFlow(s, flow);
   const failed = run.steps.find((x) => x.error);
   if (failed) return `Your flow stops at a card: ${failed.error}`;
@@ -229,3 +235,19 @@ export const setInput = (s: GameState, id: string, cardId: string, name: string,
   }
   card.inputs = Object.fromEntries([...Object.entries(card.inputs).filter(([k]) => k !== name), ...(input ? [[name, input] as const] : [])]);
 });
+
+/** A flow that does the job, built the right way: what the save script and tests use, and what a good answer looks like. */
+export function goodFlow(trigger: Trigger, everywhere = false): Flow {
+  const login = { wire: { card: 'c1', field: 'Login' } };
+  const field = (f: string) => ({ wire: { card: 'c1', field: f } });
+  const cards: Card[] = [{ id: 'c1', kind: 'event', inputs: {} }];
+  if (trigger === 'hr.joined') {
+    cards.push({ id: 'c2', kind: 'okta-create', inputs: { Login: login, Name: field('Name'), Department: field('Department'), Title: field('Title'), Manager: field('Manager'), 'Employee ID': field('Employee ID') } });
+  } else if (trigger === 'hr.moved') {
+    cards.push({ id: 'c2', kind: 'okta-update', inputs: { Login: login } });
+  } else {
+    cards.push({ id: 'c2', kind: 'okta-deactivate', inputs: { Login: login } });
+    if (everywhere) cards.push({ id: 'c3', kind: 'ad-disable', inputs: { Login: login } });
+  }
+  return { id: `flow-${trigger}`, name: TRIGGERS[trigger], trigger, on: true, cards };
+}

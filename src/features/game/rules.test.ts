@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { CLOSE, DAILY_COST, LOCKUP, DAYS, GOAL_VOUCHER, ISSUES, REPLIES, START_SAVINGS, THANKS, TICKETS, TOOLS, VILLAGERS } from './data.ts';
 import { addApp, addGroup, addRule, assignApp, createFromHr, requireMfa, resetMfa, setActive, updateFromHr } from './identity.ts';
 import type { Department } from './directory.ts';
+import { goodFlow } from './flows.ts';
 import { appsOf, groupsOf, hrOn, needsMfa, newOkta } from './oktopus.ts';
 import {
   accountProblem, acceptOffer, apply, ask, liveFact, askForTicket, clockOut, clockTime, fixFor, goHome, goTo, issueOf, newGame, next, noteProblem, noteTarget, parseSave,
@@ -48,6 +49,7 @@ function admin(s: GameState, id: string): GameState {
     case 'reset': return resetPassword(s, t.who, { mustChange: true, unlock: true });
     case 'disable': return (t.subjects ?? ['sam']).reduce((x, l) => setEnabled(x, l, false), s);
     case 'mfa-policy': return requireMfa(s, 'Everyone', true);
+    case 'flow': return t.flow ? { ...s, okta: { ...s.okta, flows: [...s.okta.flows.filter((f) => f.trigger !== t.flow), goodFlow(t.flow, t.everywhere)] } } : s;
     case 'okta-setup': return setUpTeams(s, t.team);
     case 'okta-app': return giveApp(s, t.app, t.team);
     case 'joiner': return createFromHr(s, t.subject ?? '');
@@ -486,6 +488,12 @@ describe('Oktopus', () => {
     expect(appsOf(s.okta, 'rowan')).toEqual(['canvass']); // week 5's joiner: Sales' app, from the rules
     expect(needsMfa(s.okta, 'rowan')).toBe(true); // and phone sign-in, because the policy is on Everyone
     expect(Object.keys(s.okta.users)).toHaveLength(13); // everyone who's been on the HR file since Oktopus arrived
+    // From week 3 the flows did the joiners, movers and leavers, first thing in the morning, not you.
+    expect(s.okta.runs.filter((r) => !r.test).map((r) => r.subject)).toEqual(['hazel', 'pip', 'hazel', 'rowan']);
+    expect(s.okta.runs.every((r) => r.steps.every((x) => !x.error))).toBe(true);
+    expect(s.okta.log.filter((e) => e.by?.startsWith('flow:')).map((e) => `${e.event} ${e.target}`)).toEqual([
+      'user.lifecycle.create hazel', 'user.account.update_profile pip', 'user.lifecycle.deactivate hazel', 'user.lifecycle.create rowan',
+    ]);
   });
 
   it('gives an app to everyone a rule puts in its group, and to nobody else', () => {
@@ -517,6 +525,15 @@ describe('Oktopus', () => {
     s = setActive(s, 'fern', false);
     expect(appsOf(s.okta, 'fern')).toEqual([]);
     expect(s.okta.log.at(-1)).toMatchObject({ event: 'user.lifecycle.deactivate', target: 'fern' });
+  });
+
+  it('from week 3, a joiner done by hand isn\u2019t enough: the ticket wants the flow switched on for next time', () => {
+    const m = serveUntil(morningOf(13), '9:11', 't1301');
+    const users = Object.fromEntries(Object.entries(m.okta.users).filter(([login]) => login !== 'hazel'));
+    const s = createFromHr({ ...m, okta: { ...m.okta, flows: [], users } }, 'hazel'); // no flow ever built; Hazel done by hand
+    expect(accountProblem(s, ticketById('t1301'))).toMatch(/Hazel is sorted now, by hand\. HR won\u2019t wait next time/);
+    const withFlow = { ...s, okta: { ...s.okta, flows: [goodFlow('hr.joined')] } };
+    expect(accountProblem(withFlow, ticketById('t1301'))).toBeUndefined();
   });
 
   it('undoing the console work after they say it works reopens the ticket instead of resolving it', () => {

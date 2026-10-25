@@ -41,7 +41,7 @@ describe('flows', () => {
     expect(appsOf(d.okta, 'hazel')).toEqual(['voyago']);
     expect(d.okta.runs.at(-1)).toMatchObject({ flow: 'hr.joined', subject: 'hazel' });
     expect(d.okta.log.at(-1)).toMatchObject({ event: 'user.lifecycle.create', target: 'hazel', by: 'flow: hr.joined' });
-    expect(flowProblem(financeOn(13), 'hr.joined')).toMatch(/no joins flow/);
+    expect(flowProblem(financeOn(13), 'hr.joined')).toMatch(/no flow for “HR: someone joins” switched on/);
     expect(flowProblem({ ...financeOn(13), okta: { ...financeOn(13).okta, flows: [joiner()] } }, 'hr.joined')).toBeUndefined();
   });
 
