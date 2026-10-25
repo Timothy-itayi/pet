@@ -4,6 +4,7 @@ import {
   WORKAROUND_RETURNS_AFTER, XP, type VillagerId,
 } from './data.ts';
 import { MINUTES_A_DAY, newAccounts, type Account } from './directory.ts';
+import { runToday } from './flows.ts';
 import { awayLine, backAt, dayMood } from './people.ts';
 import { appsOf, CATALOG, hrOn, needsMfa, newOkta, type Okta } from './oktopus.ts';
 import { MOODS, type ConsoleFix, type Fix, type Issue, type Note, type Job, type Mood, type PageStatus, type Relation, type Skill, type Ticket, type Tool } from './types.ts';
@@ -312,6 +313,8 @@ function startDay(d: GameState): void {
     ...[...carried, ...back].map((id) => ({ id, at: OPEN })),
     ...TICKETS.filter((t) => t.day === d.day).map((t) => ({ id: t.id, at: clockTime(t.at) })),
   ];
+  // First thing, before anyone's in: your flows handle today's joiners, movers and leavers.
+  runToday(d);
   advance(d, 0);
 }
 
@@ -871,6 +874,8 @@ export function parseSave(raw: string | null): GameState | undefined {
     if (you) you.status = 'active';
     // Saves from before Oktopus had sign-on policies: none set yet.
     if (s.okta) s.okta.mfa ??= [];
+    // Saves from before Workflows: no flows built yet.
+    if (s.okta) { s.okta.flows ??= []; s.okta.runs ??= []; }
     // Saves from before you could stay late: no overtime yet.
     if (s.today) s.today.overtime ??= 0;
     const known = new Set(TICKETS.map((t) => t.id));

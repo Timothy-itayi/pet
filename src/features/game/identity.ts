@@ -1,6 +1,6 @@
 import { COST } from './data.ts';
 import { MINUTES_A_DAY } from './directory.ts';
-import { CATALOG, hrOn, type GroupRule, type Okta } from './oktopus.ts';
+import { CATALOG, hrOn, type GroupRule, type HrRow, type Okta, type OktaUser } from './oktopus.ts';
 import { officeWork, SELF, type GameState } from './rules.ts';
 
 /**
@@ -19,29 +19,48 @@ function oktaWork(s: GameState, event: string, target: string, change: (okta: Ok
 
 const hrRow = (s: GameState, login: string) => hrOn(s.day).find((r) => r.login === login);
 
-/** Create someone in Oktopus from their HR row: a joiner, or the first import. */
-export const createFromHr = (s: GameState, login: string) => oktaWork(s, 'user.lifecycle.create', login, (okta, d) => {
-  const row = hrRow(d, login);
-  if (!row || okta.users[login]) return false;
-  const { employeeId, name, dept, title, manager } = row;
-  okta.users[login] = { employeeId, name, dept, title, manager, status: 'active' };
-});
+/*
+ * What each change does to Oktopus, on its own, so the console (which takes your time) and a flow (which runs by
+ * itself) make exactly the same change. Each returns false when there's nothing it can do.
+ */
 
-/** Copy someone's department, title and manager from HR: what a mover needs. */
-export const updateFromHr = (s: GameState, login: string) => oktaWork(s, 'user.account.update_profile', login, (okta, d) => {
-  const row = hrRow(d, login);
+/** Add someone, with whatever details they're given: from HR by hand, or wired up by a flow, rightly or wrongly. */
+export function addUser(okta: Okta, login: string, details: Omit<OktaUser, 'status'>): boolean {
+  if (!login || okta.users[login]) return false;
+  okta.users[login] = { ...details, status: 'active' };
+  return true;
+}
+
+/** Copy someone's department, title and manager from their HR row. */
+export function copyFromHr(okta: Okta, login: string, row: HrRow | undefined): boolean {
   const user = okta.users[login];
   if (!row || !user) return false;
   Object.assign(user, { dept: row.dept, title: row.title, manager: row.manager });
+  return true;
+}
+
+export function switchUser(okta: Okta, login: string, active: boolean): boolean {
+  const user = okta.users[login];
+  // The only IT admin can't lock themselves out.
+  if (!user || (user.status === 'active') === active || (login === SELF && !active)) return false;
+  user.status = active ? 'active' : 'deactivated';
+  return true;
+}
+
+/** Create someone in Oktopus from their HR row: a joiner, or the first import. */
+export const createFromHr = (s: GameState, login: string) => oktaWork(s, 'user.lifecycle.create', login, (okta, d) => {
+  const row = hrRow(d, login);
+  if (!row) return false;
+  const { employeeId, name, dept, title, manager } = row;
+  return addUser(okta, login, { employeeId, name, dept, title, manager }) ? undefined : false;
 });
 
+/** Copy someone's department, title and manager from HR: what a mover needs. */
+export const updateFromHr = (s: GameState, login: string) => oktaWork(s, 'user.account.update_profile', login, (okta, d) =>
+  (copyFromHr(okta, login, hrRow(d, login)) ? undefined : false));
+
 export const setActive = (s: GameState, login: string, active: boolean) =>
-  oktaWork(s, active ? 'user.lifecycle.activate' : 'user.lifecycle.deactivate', login, (okta) => {
-    const user = okta.users[login];
-    // The only IT admin can't lock themselves out.
-    if (!user || (user.status === 'active') === active || (login === SELF && !active)) return false;
-    user.status = active ? 'active' : 'deactivated';
-  });
+  oktaWork(s, active ? 'user.lifecycle.activate' : 'user.lifecycle.deactivate', login, (okta) => (switchUser(okta, login, active) ? undefined : false));
 
 /** Remove someone's sign-in methods after a lost phone. They set them up again on their next sign-in. */
 export const resetMfa = (s: GameState, login: string) => oktaWork(s, 'user.mfa.factor.deactivate', login, (okta, d) => {

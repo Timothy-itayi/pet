@@ -268,7 +268,7 @@ function logPage(app: App): HTMLElement {
     log.length === 0 ? h('p', { class: 'okta-empty' }, 'Nothing has happened yet.')
       : h('table', { class: 'okta-table' },
         h('thead', {}, h('tr', {}, ...['When', 'Event', 'Target', 'Actor'].map((c) => h('th', {}, c)))),
-        h('tbody', {}, ...[...log].reverse().map((e) => h('tr', {}, h('td', {}, stamp(e.at)), h('td', {}, h('code', {}, e.event)), h('td', {}, e.target), h('td', {}, 'intern'))))),
+        h('tbody', {}, ...[...log].reverse().map((e) => h('tr', {}, h('td', {}, stamp(e.at)), h('td', {}, h('code', {}, e.event)), h('td', {}, e.target), h('td', {}, e.by ?? 'intern'))))),
   );
 }
 
