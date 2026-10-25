@@ -186,7 +186,10 @@ export function runIn(d: GameState, flow: Flow, person: Person | undefined, hr: 
       }
       case 'okta-members': {
         const group = text('Group');
-        if (!d.okta.groups.includes(group)) step.error = `There’s no group called “${group}” in Oktopus. Group names have to match exactly.`;
+        if (!d.okta.groups.includes(group)) {
+          const near = d.okta.groups.find((g) => g.toLowerCase().replace(/s$/, '') === group.trim().toLowerCase().replace(/s$/, ''));
+          step.error = `There’s no group called “${group}” in Oktopus. Group names have to match exactly${near ? `: did you mean “${near}”?` : '.'}`;
+        }
         else give({ Users: Object.keys(d.okta.users).filter((l) => d.okta.users[l]?.status === 'active' && groupsOf(d.okta, l).includes(group)).flatMap((l) => personInOkta(d, l) ?? []) });
         break;
       }

@@ -174,4 +174,10 @@ describe('flows', () => {
     expect(up.cards[1]?.inputs).toEqual({ First: p('Login'), Second: { text: '@' }, Third: { text: 'burrow.co' } });
     expect(goodFlows('hr.joined')[0]?.cards[1]?.inputs.Login).toEqual(wire('c1', 'Person.Login'));
   });
+
+  it('a group name that\u2019s nearly right is refused, with the name it probably meant', () => {
+    const s = withGoodFlows(financeOn(23), 'report');
+    const typo = { ...s, okta: { ...s.okta, flows: s.okta.flows.map((f) => ({ ...f, cards: f.cards.map((c) => (c.kind === 'assign' ? { ...c, inputs: { Value: { text: 'app-voyago-user' } } } : c)) })) } };
+    expect(runNow(typo, 'flow-report').okta.runs.at(-1)?.steps.at(-1)?.error).toMatch(/did you mean \u201CAPP-Voyago-Users\u201D/);
+  });
 });

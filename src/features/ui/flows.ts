@@ -77,7 +77,7 @@ function palette(app: App, flow: Flow, at: number): HTMLElement {
     ...groups.map((g, gi) => h('div', {}, h('p', { class: `flow-palette-group ${groupClass(g)}` }, g),
       ...kinds(g).map(([kind, c], i) => h('button', {
         class: 'flow-palette-item', 'data-testid': `flow-add-${kind}`, 'data-autofocus': gi === 0 && i === 0,
-        onclick: () => { app.ui.flowAdd = undefined; app.set(addCard(app.state, flow.id, at, kind)); },
+        onclick: () => { app.ui.flowAdd = undefined; app.ui.flowTest = undefined; app.ui.flowScrollTo = at; app.set(addCard(app.state, flow.id, at, kind)); },
       }, c.title)))));
 }
 
@@ -180,6 +180,7 @@ function cardView(app: App, flow: Flow, card: Card, index: number, step: Step | 
       onchange: (e) => {
         const v = (e.target as HTMLSelectElement).value;
         if (v === '+new') { const next = newFlow(state, 'helper', 'New_helper'); ui.flowOpen = next.okta.flows.at(-1)?.id; app.set(next); return; }
+        ui.flowTest = undefined;
         app.set(setHelper(state, flow.id, card.id, v));
       },
     }, h('option', { value: '', selected: !card.helper }, 'Pick a helper flow…'),
@@ -195,7 +196,7 @@ function cardView(app: App, flow: Flow, card: Card, index: number, step: Step | 
     h('header', { class: 'flow-card-head' },
       h('span', { class: 'flow-card-group' }, spec.group),
       h('strong', {}, titleOf(flow, card)),
-      index > 0 && h('button', { class: 'flow-x', 'aria-label': `Remove ${spec.title}`, 'data-testid': `remove-${card.id}`, onclick: () => app.set(removeCard(state, flow.id, card.id)) }, '×')),
+      index > 0 && h('button', { class: 'flow-x', 'aria-label': `Remove ${spec.title}`, 'data-testid': `remove-${card.id}`, onclick: () => { ui.flowTest = undefined; app.set(removeCard(state, flow.id, card.id)); } }, '×')),
     (spec.inputs.length > 0 || helperBox || assignName) && h('div', { class: 'flow-inputs' }, assignName, spec.helper && card.kind !== 'call' && h('p', { class: 'flow-section' }, 'For each item in this list'), ...spec.inputs.map(slot), helperBox),
     outputs.length > 0 && h('div', { class: 'flow-outputs' }, ...outputs),
     step && h('div', { class: 'flow-step' }, ...stepsView(app.state.okta.flows, flow, [step], true)));
@@ -246,8 +247,15 @@ function editor(app: App, flow: Flow): HTMLElement {
     class: 'flow-canvas', 'data-testid': 'flow-canvas',
     onkeydown: (e) => { if ((e as KeyboardEvent).key === 'Escape' && ui.flowPick) { e.stopPropagation(); ui.flowPick = undefined; app.rerender(); } },
   }, svg, row);
-  // Measure once the cards are on the page, and again if a card changes size.
-  if (show) requestAnimationFrame(() => drawWires(canvas, svg, flow));
+  canvas.addEventListener('scroll', () => { ui.flowScrollX = canvas.scrollLeft; });
+  requestAnimationFrame(() => {
+    // Keep where you'd scrolled to; after adding a card, bring it (and the + after it) into view.
+    const added = ui.flowScrollTo !== undefined ? row.children[ui.flowScrollTo * 2] as HTMLElement | undefined : undefined;
+    canvas.scrollLeft = added ? added.offsetLeft + added.offsetWidth + 60 - canvas.clientWidth : ui.flowScrollX ?? 0;
+    ui.flowScrollTo = undefined;
+    // Measure once the cards are on the page.
+    if (show) drawWires(canvas, svg, flow);
+  });
   const runs = state.okta.runs.filter((r) => r.flow === flow.id && !r.test).slice(-5).reverse();
   const nameBox = h('input', {
     class: 'flow-title', value: flow.name, 'aria-label': 'Flow name', autocomplete: 'off',
@@ -258,7 +266,7 @@ function editor(app: App, flow: Flow): HTMLElement {
   const helper = flow.trigger === 'helper';
   return h('div', { class: 'okta-page flow-editor', 'data-testid': 'flow-editor' },
     h('div', { class: 'flow-bar' },
-      h('button', { class: 'okta-back', onclick: () => { ui.flowOpen = undefined; ui.flowPick = undefined; ui.flowTest = undefined; ui.flowSaid = undefined; app.rerender(); } }, '← Flows'),
+      h('button', { class: 'okta-back', onclick: () => { ui.flowOpen = undefined; ui.flowPick = undefined; ui.flowTest = undefined; ui.flowSaid = undefined; ui.flowScrollX = 0; app.rerender(); } }, '← Flows'),
       nameBox,
       h('button', { class: 'okta-btn', 'data-testid': 'flow-test', onclick: () => { ui.flowTest = testFlow(state, flow).run; app.rerender(); } }, '▶ Test'),
       flow.trigger === 'schedule' && h('button', { class: 'okta-btn', 'data-testid': 'flow-run-now', onclick: () => { ui.flowTest = undefined; app.set(runNow(state, flow.id)); } }, 'Run now'),
@@ -270,7 +278,7 @@ function editor(app: App, flow: Flow): HTMLElement {
         h('input', { type: 'checkbox', checked: show, onchange: () => { ui.flowMappings = !show; app.rerender(); } }), 'Show mappings')),
     h('p', { class: `flow-hint${ui.flowSaid ? ' warn' : ''}`, role: 'status', 'data-testid': 'flow-hint' },
       ui.flowSaid ?? (ui.flowPick ? `Now click an input to wire ${ui.flowPick.field.split('.').at(-1) ?? ''} (${TYPE_WORDS[pickType(flow, ui.flowPick) ?? 'text']}) into it. Esc to cancel.`
-        : test ? (firstError(test.steps) ? `Test on ${who}: it stopped at a card. Its error is in red.` : `Test on ${who}: every card ran. Check the values under each one.`)
+        : test ? (firstError(test.steps) ? `Test on ${who}: it stopped at a card. Its error is in red.` : `Test on ${who}: every card ran. Check the values under each one. It\u2019s a rehearsal: nothing real was changed or posted.`)
           : 'Drag an output onto an input, or click one then the other. The icons say what each field holds: text, one person, or a list. Open a person (▸) for their fields.')),
     // Above the canvas, not in it: the canvas scrolls sideways and would cut the palette off.
     ui.flowAdd !== undefined && palette(app, flow, ui.flowAdd),

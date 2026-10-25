@@ -92,6 +92,9 @@ export interface Ui {
   flowTyping?: string;
   /** People opened (▸) into their fields, as card:output. */
   flowOpened?: string[];
+  /** How far the flow canvas is scrolled sideways, and a card just added to scroll to. */
+  flowScrollX?: number;
+  flowScrollTo?: number;
   oktaApp?: string;
   oktaVerify?: string;
   /** Burrow Chat: a channel you're reading, or a direct message (ui.chat) when unset. */

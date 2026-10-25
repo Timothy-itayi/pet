@@ -854,7 +854,7 @@ export const ISSUES: Issue[] = [
   {
     id: 'flow-build',
     rule: 6,
-    title: 'Automate a joiner, mover or leaver',
+    title: 'Automate it in Oktopus Workflows',
     skill: 'access',
     page: { status: 'missing', text: '(New system. No page yet.)' },
     asks: [
@@ -2481,7 +2481,7 @@ export const TICKETS: Ticket[] = [
     title: 'Leavers, automatically',
     message: 'Hoo. Hazel leaves us tomorrow, after two days. When HR marks someone as gone, they should lose their sign-in that same morning. And put the leaver steps in a helper flow of their own, please. The auditors will want to use them for more than one thing. Mark my words.',
     details: [
-      { label: 'What', text: 'A helper flow (“Called by another flow”) that deactivates the User it’s given. Then a leaver flow that calls it, handing it the person who left.', ask: 'what' },
+      { label: 'What', text: 'Whoever leaves can’t sign in from that morning. And the steps for switching someone off should live in a flow of their own, so other flows can reuse them.', ask: 'what' },
       { label: 'When', text: 'Hazel, tomorrow morning.', ask: 'when' },
       { label: 'Check', text: 'Test the leaver flow on Sam Sample. The helper’s steps show up under the card that called it. Hoo.', ask: 'check' },
     ],
@@ -2501,9 +2501,9 @@ export const TICKETS: Ticket[] = [
   {
     id: 't2307', day: 23, at: '15:20', who: 'otis', via: 'tray', priority: 'normal', issue: 'flow-build', mood: 1, flow: 'report',
     title: 'Auditors: who can use Voyago?',
-    message: 'Hoo. Last thing the auditors want: everyone who can book travel on Voyago, as Name (Title), posted in #general by Oktopus itself. Not typed by you. They want to see a machine did it.',
+    message: 'Hoo. Last thing the auditors want: everyone in APP-Voyago-Users (they can book travel), as Name (Title), posted in #general by Oktopus itself. Not typed by you. They want to see a machine did it.',
     details: [
-      { label: 'What', text: 'A flow that lists everyone in APP-Voyago-Users, turns each one into “Name (Title)” with a helper, joins them up and posts them in #general.', ask: 'what' },
+      { label: 'What', text: 'One message in #general naming everyone in APP-Voyago-Users, each as Name (Title). Posted by Oktopus, not by you.', ask: 'what' },
       { label: 'When', text: 'Today. Run it now, don’t wait for the morning.', ask: 'when' },
       { label: 'Check', text: 'Test it first. If the list comes out empty, check the group name letter by letter.', ask: 'check' },
     ],

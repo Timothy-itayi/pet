@@ -1208,7 +1208,7 @@ button.profile-face:hover, button.profile-face:focus-visible { box-shadow: 0 0 0
 .flow-title { flex: 1; min-width: 0; font: 600 16px 'Segoe UI', sans-serif; border: 1px solid transparent; border-radius: 4px; padding: 4px 6px; background: none; }
 .flow-title:hover, .flow-title:focus { border-color: #c9c9d2; background: #fff; }
 .flow-toggle { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; color: #1662dd; cursor: pointer; }
-.flow-hint { margin: 0 0 8px; font-size: 12px; color: #5d5d6b; }
+.flow-hint { margin: 0 0 8px; min-height: 3em; font-size: 12px; color: #5d5d6b; }
 .flow-hint.warn { color: #b3261e; font-weight: 600; }
 .flow-canvas { position: relative; overflow-x: auto; padding: 10px 4px 16px; background: #f4f5f8; border: 1px solid #e1e1e6; border-radius: 6px; margin-bottom: 12px; }
 .flow-wires { position: absolute; left: 0; top: 0; pointer-events: none; overflow: visible; }
