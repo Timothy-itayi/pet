@@ -8,7 +8,7 @@ import type { App } from './features/ui/app.ts';
 import { asleepScreen, computerScreen, darkScreen } from './features/ui/boot.ts';
 import { refreshTimes } from './features/ui/desk.ts';
 import { powerAway } from './features/ui/power.ts';
-import { desktopScreen, notify, tickRealClock } from './features/ui/desktop.ts';
+import { desktopScreen, notify } from './features/ui/desktop.ts';
 import { dayEndScreen, endingScreen } from './features/ui/endings.ts';
 import { announce, computerHud, pickInRoom, roomHud, roomKeys } from './features/ui/roomHud.ts';
 import { ambience, chime, click, keystroke, wake } from './features/ui/sound.ts';
@@ -152,14 +152,18 @@ setInterval(() => {
 
 addEventListener('keydown', (e) => roomKeys(app, e));
 addEventListener('keydown', wake);
+// On the lock screen, Enter logs in wherever focus has wandered (it can land on the page after the camera moves).
+addEventListener('keydown', (e) => {
+  if (e.key !== 'Enter' || app.ui.view !== 'computer' || e.target instanceof HTMLButtonElement || e.target instanceof HTMLInputElement) return;
+  const login = screenElement().querySelector<HTMLFormElement>('form.login');
+  if (login) { e.preventDefault(); login.requestSubmit(); }
+});
 addEventListener('pointerdown', () => { wake(); if (app.ui.view === 'computer') click(); });
 // Typing at the computer: every key you press in a text box, notes included, clacks on the old keyboard.
 addEventListener('keydown', (e) => {
   const typing = e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLInputElement;
   if (app.ui.view === 'computer' && typing && !e.repeat && (e.key.length === 1 || ['Backspace', 'Enter', 'Delete'].includes(e.key))) keystroke(e.key === ' ' || e.key === 'Enter');
 });
-// The taskbar clock is your real one: keep it ticking.
-setInterval(tickRealClock, 5000);
 
 /** A small tile of static for the CRT look, made once. */
 function staticTile(): string {

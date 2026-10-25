@@ -642,6 +642,16 @@ export function resolve(s: GameState, id: string): GameState {
   const t = workable(s, id);
   const c = t && ticketState(s, id).caller;
   if (!t || c?.doing !== 'confirmed') return s;
+  // Console work can be undone after they've said it works: check it's still right before closing.
+  const undone = issueOf(t).console ? accountProblem(s, t) : undefined;
+  if (undone) {
+    return act(s, (d) => {
+      const st = ticketState(d, id);
+      st.caller = undefined;
+      st.messages.push({ from: 'them', text: 'Wait. It\u2019s stopped working again.', at: d.clock });
+      d.notice = { ticketId: id, text: `Not fixed any more: ${undone}` };
+    });
+  }
   return act(s, (d) => {
     close(d, t, 'fix', XP.fix);
     const card = d.outcomes.at(-1);

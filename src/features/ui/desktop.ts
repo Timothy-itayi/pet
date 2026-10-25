@@ -2,12 +2,12 @@ import { artFor, iconId } from '../game/art.ts';
 import { CLOSE, MANAGER, VILLAGERS } from '../game/data.ts';
 import { newsFor } from '../game/news.ts';
 import { OKTOPUS_DAY } from '../game/oktopus.ts';
-import { canClockOut, clockOut, isWeekOver, readNews, scriptFor, ticketById, type GameState } from '../game/rules.ts';
+import { canClockOut, clockOut, isWeekOver, readNews, scriptFor, ticketById, weekday, weekOf, type GameState } from '../game/rules.ts';
 import type { App, AppId, Toast, Win } from './app.ts';
 import { browserTitle } from './browser.ts';
 import { chatApp } from './chat.ts';
 import { openIncident, outcomeCard, serviceDesk } from './desk.ts';
-import { h } from './dom.ts';
+import { clockText, h } from './dom.ts';
 import { BODIES } from './panels.ts';
 import { leaveComputer } from './roomHud.ts';
 import { chime } from './sound.ts';
@@ -262,13 +262,6 @@ function startMenu(app: App): HTMLElement {
 
 // ---- The desktop ---------------------------------------------------------------------------------------------
 
-/** Your own computer's time and date, in your time zone, the way a taskbar clock shows them. */
-const realTime = () => new Date().toLocaleString([], { hour: 'numeric', minute: '2-digit', weekday: 'short', day: 'numeric', month: 'short' });
-
-/** Keep every taskbar clock showing the real time. */
-export function tickRealClock(): void {
-  document.querySelectorAll<HTMLElement>('[data-real-clock]').forEach((el) => { el.textContent = realTime(); });
-}
 
 /** How many things are waiting in an app, for the little red count on its icon. */
 function waiting(app: App, id: AppId): number {
@@ -299,7 +292,8 @@ function taskbar(app: App): HTMLElement {
         class: 'tray-chat', 'aria-label': `Burrow Chat${state.chats.length ? `, ${state.chats.length} unread` : ''}`, 'data-testid': 'tray-chat',
         onclick: () => openApp(app, 'chat'),
       }, '\u{1F4AC}', state.chats.length > 0 && h('span', { class: 'unread' }, String(state.chats.length))),
-      h('span', { class: 'tray-clock', 'data-real-clock': true, 'data-testid': 'tray-clock', title: Intl.DateTimeFormat().resolvedOptions().timeZone }, realTime())));
+      // The game's own day and time; the time part moves on with the office clock.
+      h('span', { class: 'tray-clock', 'data-testid': 'tray-clock' }, `${weekday(app.state.day).slice(0, 3)}, week ${weekOf(app.state.day)} \u00b7 `, h('span', { 'data-clock': true }, clockText(app.state.clock)))));
 }
 
 /** After 5pm: nothing new comes in. Finish what you're on, then go home, or security locks up at 6. */
