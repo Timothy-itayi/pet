@@ -212,20 +212,26 @@ export function wake(): void {
   }
 }
 
-/** A mouse button's click: a very short, bright tick. */
-export function click(): void {
+/** A short tick of filtered noise: higher is a mouse button, lower is a key going down. */
+function tick(hz: number, length: number, loud: number): void {
   if (!audio) return;
   const { a, to } = out();
   const at = a.currentTime;
-  const tick = a.createBufferSource();
-  tick.buffer = noise(a, 0.03);
-  const bright = a.createBiquadFilter();
-  bright.type = 'bandpass';
-  bright.frequency.value = 3200;
-  bright.Q.value = 1.5;
+  const src = a.createBufferSource();
+  src.buffer = noise(a, length + 0.01);
+  const shape = a.createBiquadFilter();
+  shape.type = 'bandpass';
+  shape.frequency.value = hz;
+  shape.Q.value = 1.5;
   const volume = a.createGain();
-  volume.gain.setValueAtTime(0.9, at);
-  volume.gain.exponentialRampToValueAtTime(0.0001, at + 0.025);
-  tick.connect(bright).connect(volume).connect(to);
-  tick.start(at);
+  volume.gain.setValueAtTime(loud, at);
+  volume.gain.exponentialRampToValueAtTime(0.0001, at + length);
+  src.connect(shape).connect(volume).connect(to);
+  src.start(at);
 }
+
+/** A mouse button's click: a very short, bright tick. */
+export const click = () => tick(3200, 0.025, 0.9);
+
+/** A key on the old keyboard: each one a little different, and the space bar and Enter deeper. */
+export const keystroke = (big: boolean) => tick(big ? 900 : 1500 + Math.random() * 700, big ? 0.06 : 0.04, big ? 0.8 : 0.7);

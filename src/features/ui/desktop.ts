@@ -1,3 +1,4 @@
+import { artFor, iconId } from '../game/art.ts';
 import { CLOSE, MANAGER, VILLAGERS } from '../game/data.ts';
 import { newsFor } from '../game/news.ts';
 import { OKTOPUS_DAY } from '../game/oktopus.ts';
@@ -31,6 +32,12 @@ const APPS: Record<AppId, { title: string; label: string; glyph: string; w: numb
 };
 /** Oktopus arrives in week 2, once Burrow has the money for it. */
 const hasOktopus = (s: GameState) => s.day >= OKTOPUS_DAY;
+/** A program's icon: Oktopus has a painted one once it's made; the rest are the system's own. */
+function glyph(id: AppId): Node | string {
+  const painted = id === 'okta' ? artFor(iconId('oktopus')) : undefined;
+  return painted ? h('img', { class: 'painted-glyph', src: import.meta.env.BASE_URL + painted.image, alt: '' }) : APPS[id].glyph;
+}
+
 const onDesktop = (s: GameState): AppId[] => ['desk', 'chat', 'directory', ...(hasOktopus(s) ? ['okta' as const] : []), 'browser', 'trash'];
 const programs = (s: GameState): AppId[] => ['desk', 'chat', 'directory', ...(hasOktopus(s) ? ['okta' as const] : []), 'browser', 'mail'];
 const DOCUMENTS: AppId[] = ['policy', 'runbook', 'resume', 'jobs'];
@@ -240,7 +247,7 @@ function powerDown(app: App, to: 'off' | 'asleep' | 'locked'): void {
 
 function startMenu(app: App): HTMLElement {
   const item = (id: AppId) => h('button', { class: 'start-item', 'data-testid': `start-${id}`, onclick: () => openApp(app, id) },
-    h('span', { class: 'glyph', 'aria-hidden': 'true' }, APPS[id].glyph), APPS[id].label);
+    h('span', { class: 'glyph', 'aria-hidden': 'true' }, glyph(id)), APPS[id].label);
   return h('nav', { class: 'start-menu', 'aria-label': 'Start menu', 'data-testid': 'start-menu' },
     h('div', { class: 'start-banner', 'aria-hidden': 'true' }, h('span', {}, 'BurrowOS 2000')),
     h('div', { class: 'start-items' },
@@ -311,7 +318,7 @@ export function desktopScreen(app: App): HTMLElement {
     h('nav', { class: 'icons', 'aria-label': 'Desktop' }, ...onDesktop(state).map((id) => {
       const count = waiting(app, id);
       return h('button', { class: 'icon', 'data-testid': `icon-${id}`, onclick: () => openApp(app, id) },
-        h('span', { class: 'glyph', 'aria-hidden': 'true' }, id === 'trash' && ui.trashEmptied ? '\u{1F5D1}' : APPS[id].glyph), APPS[id].label,
+        h('span', { class: 'glyph', 'aria-hidden': 'true' }, id === 'trash' && ui.trashEmptied ? '\u{1F5D1}' : glyph(id)), APPS[id].label,
         count > 0 && h('span', { class: 'unread', 'aria-label': `${count} waiting` }, String(count)));
     })),
     ...ui.windows.map((w, i) => windowEl(app, w, i + 2)),

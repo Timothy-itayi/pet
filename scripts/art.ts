@@ -11,7 +11,7 @@
  */
 import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { ALL_ART, FACE_STYLE, STYLE, type Art } from '../src/features/game/art.ts';
+import { ALL_ART, FACE_STYLE, ICON_STYLE, STYLE, type Art } from '../src/features/game/art.ts';
 
 const BUDGET_USD = 15;
 const IMAGE_MODEL = 'bytedance/seedream-v5.0-pro/text-to-image';
@@ -95,11 +95,13 @@ async function atlas(key: string, body: Record<string, unknown>, file: string, s
   throw new Error(`${file} took too long`);
 }
 
-/** A still, saved as public/art/<id>.jpg. Faces show small, in a circle, so they're kept small. */
+/** A still, saved as public/art/<id>.jpg. Faces and icons only ever show small, so they're kept small. */
 async function image(art: Art, key: string): Promise<void> {
   charge(art.id, 'image', IMAGE_USD);
-  await atlas(key, { model: IMAGE_MODEL, ...IMAGE_SIZE, prompt: `${art.face ? FACE_STYLE : STYLE}. ${art.shows}`, ...(art.face && { size: '2048*2048' }) },
-    art.id, art.face ? 'scale=256:256' : 'scale=1280:-2');
+  const square = art.face || art.icon;
+  const style = art.face ? FACE_STYLE : art.icon ? ICON_STYLE : STYLE;
+  await atlas(key, { model: IMAGE_MODEL, ...IMAGE_SIZE, prompt: `${style}. ${art.shows}`, ...(square && { size: '2048*2048' }) },
+    art.id, art.face ? 'scale=256:256' : art.icon ? 'scale=160:160' : 'scale=1280:-2');
   record(art.id, 'image');
 }
 

@@ -1,3 +1,4 @@
+import { artFor, iconId } from '../game/art.ts';
 import { DEPARTMENTS, MINUTES_A_DAY, type Department } from '../game/directory.ts';
 import { addApp, addGroup, addRule, assignApp, createFromHr, removeRule, resetMfa, setActive, unassignApp, updateFromHr } from '../game/identity.ts';
 import { appsOf, CATALOG, differences, groupsOf, hrOn, type HrRow, type Okta } from '../game/oktopus.ts';
@@ -36,7 +37,12 @@ export function oktopusLogo(height = 26): SVGSVGElement {
 }
 
 const appName = (id: string) => CATALOG.find((c) => c.id === id)?.name ?? id;
-const appGlyph = (id: string) => CATALOG.find((c) => c.id === id)?.glyph ?? '□';
+/** An app's painted icon, or its emoji until one's been made. */
+function appIcon(id: string, size = 20): HTMLElement {
+  const painted = artFor(iconId(id));
+  if (!painted) return h('span', { class: 'okta-app-icon', 'aria-hidden': 'true' }, CATALOG.find((c) => c.id === id)?.glyph ?? '□');
+  return h('img', { class: 'okta-app-icon', src: import.meta.env.BASE_URL + painted.image, alt: '', width: size, height: size });
+}
 const stamp = (at: number) => `Day ${Math.floor(at / MINUTES_A_DAY)}, ${clockText(at % MINUTES_A_DAY)}`;
 const field = (form: HTMLFormElement, name: string) => String(new FormData(form).get(name) ?? '');
 
@@ -105,7 +111,7 @@ function person(app: App, login: string): HTMLElement {
       h('p', {}, groupsOf(state.okta, login).join(', ')),
       h('h2', {}, 'Their dashboard'),
       h('div', { class: 'okta-tiles' }, ...(appsOf(state.okta, login).length
-        ? appsOf(state.okta, login).map((a) => h('span', { class: 'okta-tile' }, appGlyph(a), appName(a)))
+        ? appsOf(state.okta, login).map((a) => h('span', { class: 'okta-tile' }, appIcon(a, 36), appName(a)))
         : [h('p', { class: 'meta' }, user.status === 'active' ? 'No apps yet.' : 'Deactivated: they can’t sign in.')]))),
   );
 }
@@ -219,7 +225,7 @@ function appsPage(app: App): HTMLElement {
     const using = Object.keys(okta.users).filter((l) => appsOf(okta, l).includes(open));
     return h('div', { class: 'okta-page' },
       h('button', { class: 'okta-back', onclick: () => { ui.oktaApp = undefined; app.rerender(); } }, '← Applications'),
-      h('h1', {}, `${appGlyph(open)} ${appName(open)}`),
+      h('h1', { class: 'okta-app-title' }, appIcon(open, 32), appName(open)),
       h('section', { class: 'okta-card' },
         h('h2', {}, 'Assignments'),
         h('p', { class: 'meta' }, 'Apps are assigned to groups. People get them through their groups.'),
@@ -239,10 +245,10 @@ function appsPage(app: App): HTMLElement {
     Object.keys(okta.apps).length === 0 ? h('p', { class: 'okta-empty' }, 'No applications yet.')
       : h('div', { class: 'okta-tiles' }, ...Object.keys(okta.apps).map((a) => h('button', {
         class: 'okta-tile', 'data-testid': `okta-app-${a}`, onclick: () => { ui.oktaApp = a; app.rerender(); },
-      }, appGlyph(a), appName(a)))),
+      }, appIcon(a, 36), appName(a)))),
     h('h2', {}, 'Browse App Catalog'),
     h('ul', { class: 'okta-catalog' }, ...CATALOG.map((c) => h('li', {},
-      h('span', { class: 'okta-catalog-name' }, `${c.glyph} `, h('strong', {}, c.name), h('span', { class: 'meta' }, ` ${c.about}`)),
+      h('span', { class: 'okta-catalog-name' }, appIcon(c.id, 24), h('strong', {}, c.name), h('span', { class: 'meta' }, ` ${c.about}`)),
       okta.apps[c.id] ? h('span', { class: 'meta' }, 'Added') : h('button', { class: 'okta-btn small', 'data-testid': `okta-add-app-${c.id}`, onclick: () => app.set(addApp(state, c.id)) }, 'Add')))),
   );
 }

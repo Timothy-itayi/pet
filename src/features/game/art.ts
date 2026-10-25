@@ -14,6 +14,8 @@ export interface Art {
   id: string;
   /** A square head-and-shoulders portrait, in place of the scene style. */
   face?: true;
+  /** A square app icon, in place of the scene style. */
+  icon?: true;
   /** What the picture shows. */
   shows: string;
   /** How it moves, for a looping clip. Without it, it's a still. */
@@ -55,6 +57,19 @@ const FACES: Record<string, string> = {
   IT: 'Young IT intern, light skin, short dark brown hair, blue shirt with a staff lanyard, a hopeful nervous smile',
 };
 
+/** The look for app icons: one simple object on a rounded square, like a 1990s software box, painted. */
+export const ICON_STYLE = 'App icon, a single simple bold object centred on a rounded square tile with a soft gradient, cozy painted gouache texture, chunky 1990s software feel, strong silhouette readable when tiny, no text, no letters, no logos';
+
+/** The apps in Oktopus, and Oktopus itself: what each icon shows. */
+const ICONS: Record<string, string> = {
+  hootsweet: 'A friendly round owl with big eyes holding a tiny paper speech bubble, on a teal tile',
+  voyago: 'A small paper aeroplane over a suitcase with a luggage tag, on a sky-blue tile',
+  canvass: 'A paint palette with a fat brush and three bright blobs of paint, on a warm coral tile',
+  oktopus: 'A cheerful purple octopus holding a small brass key in one tentacle, on a deep indigo tile',
+};
+
+export const iconId = (app: string) => `icon-${app}`;
+
 /** Whose painted face to show for a name. Anyone not on the list (like "Intern (you)") is the intern. */
 export const faceId = (name: string) => `face-${slug(name in FACES ? name : 'IT')}`;
 
@@ -65,4 +80,5 @@ export const feedArt = (p: SocialPost): Art | undefined => (p.shows ? { id: `fee
 export const ALL_ART: Art[] = [
   BANNER, ...NEWS.map(newsArt), ...SOCIAL.flatMap((p) => feedArt(p) ?? []),
   ...Object.entries(FACES).map(([name, shows]): Art => ({ id: faceId(name), shows, face: true })),
+  ...Object.entries(ICONS).map(([app, shows]): Art => ({ id: iconId(app), shows, icon: true })),
 ];
