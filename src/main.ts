@@ -2,7 +2,9 @@ import './style.css';
 import { CLOSE, CLOSING_SOON, COMPANY, GAME_MINUTES_PER_SECOND, LOCKUP } from './features/game/data.ts';
 import { newGame, tick, type GameState } from './features/game/rules.ts';
 import { ROOM_ITEMS, SIPS } from './features/room3d/items.ts';
-import { goTo, mountRoom, screenElement, setAtComputer, setLamp, setMug, setScreen, setTools, showRoom, snapTo } from './features/room3d/view.ts';
+import { goTo, holdPhone, lowerPhone, mountRoom, openDrawer, phoneGlassElement, screenElement, setAtComputer, setLamp, setMug, setPhones, setScreen, setTools, showRoom, snapTo } from './features/room3d/view.ts';
+import { held } from './features/game/phones.ts';
+import { phoneScreen } from './features/ui/phone.ts';
 import { loadGame, saveGame } from './features/save/save.ts';
 import type { App } from './features/ui/app.ts';
 import { asleepScreen, computerScreen, darkScreen } from './features/ui/boot.ts';
@@ -96,6 +98,13 @@ const app: App = {
     void goTo(atComputer ? 'computer' : ui.shot);
     setScreen(p === 'off' ? 'off' : p === 'asleep' ? 'asleep' : 'on');
     setTools(app.state.tools);
+    // The top drawer, open while you're looking into it, with whatever phones are still in it.
+    openDrawer(ui.view === 'room' && ui.shot === 'drawer' && !fullPage);
+    void setPhones(app.state.phones.filter((x) => x.where === 'drawer').map((x) => x.id));
+    // The phone in your hand, held up to your face, its screen drawn on its glass.
+    const phoneUp = Boolean(ui.phoneUp && held(app.state)) && !fullPage;
+    if (phoneUp) void holdPhone(); else lowerPhone();
+    mount(phoneGlassElement(), phoneScreen(app), false);
     setLamp(!ui.lampOff);
     setMug(1 - (ui.sips ?? 0) / SIPS.length);
   },
@@ -192,7 +201,7 @@ void mountRoom({
   pick: (id) => pickInRoom(app, id),
   hover: (id) => {
     const label = page.querySelector<HTMLElement>('[data-hover]');
-    if (label) label.textContent = id === 'tool' ? 'Something in the tray' : ROOM_ITEMS.find((i) => i.id === id)?.label ?? '';
+    if (label) label.textContent = id === 'tool' ? 'Something in the tray' : id?.startsWith('phone-') ? 'A company phone' : ROOM_ITEMS.find((i) => i.id === id)?.label ?? '';
   },
 }).then(() => app.rerender());
 app.rerender();

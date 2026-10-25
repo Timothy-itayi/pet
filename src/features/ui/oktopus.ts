@@ -1,12 +1,13 @@
 import { artFor, iconId } from '../game/art.ts';
 import { DEPARTMENTS, MINUTES_A_DAY, type Department } from '../game/directory.ts';
-import { addApp, addGroup, addRule, assignApp, createFromHr, removeRule, requireMfa, resetMfa, setActive, unassignApp, updateFromHr } from '../game/identity.ts';
+import { addApp, addGroup, addRule, assignApp, createFromHr, removeRule, requireMfa, resetMfa, setActive, setSelfEnroll, unassignApp, updateFromHr } from '../game/identity.ts';
 import { appsOf, CATALOG, differences, groupsOf, hrOn, needsMfa, type HrRow, type Okta } from '../game/oktopus.ts';
 import { OWN_ACCOUNT, SELF, type GameState } from '../game/rules.ts';
 import type { App } from './app.ts';
 import { clockText, h } from './dom.ts';
 import { workflowsPage } from './flows.ts';
 import { FLOWS_DAY } from '../game/flows.ts';
+import { needsPush, PHONES_DAY, verifyCode } from '../game/phones.ts';
 
 /**
  * The Oktopus Admin Console, laid out like the real thing: Dashboard, Directory (People, Groups, Import from HR),
@@ -89,7 +90,7 @@ function person(app: App, login: string): HTMLElement {
   const diffs = row ? differences(user, row) : [];
   const verifying = ui.oktaVerify === login;
   return h('div', { class: 'okta-page' },
-    h('button', { class: 'okta-back', onclick: () => { ui.oktaUser = undefined; app.rerender(); } }, '← People'),
+    h('button', { class: 'okta-back', onclick: () => { ui.oktaUser = undefined; ui.oktaEnrol = undefined; app.rerender(); } }, '← People'),
     h('h1', {}, user.name, h('span', { class: `okta-pill ${user.status}` }, user.status === 'active' ? 'Active' : 'Deactivated')),
     h('div', { class: 'okta-actions' },
       diffs.length > 0 && h('button', { class: 'okta-btn primary', 'data-testid': 'okta-update', onclick: () => app.set(updateFromHr(state, login)) }, 'Update profile from HR'),
@@ -112,6 +113,7 @@ function person(app: App, login: string): HTMLElement {
       h('h2', {}, 'Profile'),
       h('dl', { class: 'okta-dl' }, ...[['Login', `${login}@burrow.co`], ['Employee ID', user.employeeId], ['Department', user.dept], ['Title', user.title], ['Manager', user.manager]]
         .flatMap(([k, v]) => [h('dt', {}, k ?? ''), h('dd', {}, v ?? '')]))),
+    state.day >= PHONES_DAY && user.status === 'active' && verifyCard(app, login),
     h('section', { class: 'okta-card' },
       h('h2', {}, 'Groups'),
       h('p', {}, groupsOf(state.okta, login).join(', ')),
@@ -120,6 +122,41 @@ function person(app: App, login: string): HTMLElement {
         ? appsOf(state.okta, login).map((a) => h('span', { class: 'okta-tile' }, appIcon(a, 36), appName(a)))
         : [h('p', { class: 'meta' }, user.status === 'active' ? 'No apps yet.' : 'Deactivated: they can’t sign in.')]))),
   );
+}
+
+/** A QR code for someone's enrolment: a made-up pattern, the same every time for the same person. */
+export function qr(seed: string): HTMLElement {
+  let x = [...seed].reduce((a, c) => Math.imul(a ^ c.charCodeAt(0), 16777619) >>> 0, 2166136261);
+  const cells: HTMLElement[] = [];
+  for (let i = 0; i < 21 * 21; i++) {
+    const r = Math.floor(i / 21);
+    const c = i % 21;
+    // The three big corner squares every QR code has, then noise.
+    const corner = (r < 7 && c < 7) || (r < 7 && c > 13) || (r > 13 && c < 7);
+    const ring = corner && (Math.max(Math.abs((r % 14) - 3), Math.abs((c % 14) - 3)) !== 2);
+    x = Math.imul(x ^ (x >>> 15), 2246822519) >>> 0;
+    cells.push(h('span', { class: (corner ? ring : x % 2 === 0) ? 'on' : '' }));
+  }
+  return h('div', { class: 'okta-qr', role: 'img', 'aria-label': 'Enrolment QR code' }, ...cells);
+}
+
+/** Oktopus Verify on someone's page: which phone signs them in, and a QR code to enrol one. */
+function verifyCard(app: App, login: string): HTMLElement {
+  const { state, ui } = app;
+  const phone = state.okta.verify[login];
+  const showing = ui.oktaEnrol === login && !phone;
+  const name = state.okta.users[login]?.name ?? login;
+  return h('section', { class: 'okta-card', 'data-testid': 'okta-verify-card' },
+    h('h2', {}, 'Oktopus Verify'),
+    h('p', {}, phone ? `Signs in with ${phone.replace('phone-', 'Burrow phone ')}.` : login === SELF ? 'You aren’t on Oktopus Verify yet.' : `${name} isn’t on Oktopus Verify yet.`),
+    !phone && !showing && h('button', { class: 'okta-btn primary', 'data-testid': 'okta-enrol', onclick: () => { ui.oktaEnrol = login; app.rerender(); } }, 'Set up Oktopus Verify'),
+    showing && h('div', { class: 'okta-enrol', 'data-testid': 'okta-enrol-qr' },
+      qr(login),
+      h('div', {},
+        h('p', {}, h('strong', {}, `Enrol a phone for ${name}`)),
+        h('ol', {}, h('li', {}, 'On the phone, open Oktopus Verify.'), h('li', {}, 'Tap +, then Organisation.'), h('li', {}, 'Scan this code with the phone.')),
+        h('p', { class: 'meta' }, `Can’t scan? Activation code: ${verifyCode('enrol', login, 0)}`),
+        h('button', { class: 'okta-btn', onclick: () => { ui.oktaEnrol = undefined; app.rerender(); } }, 'Done'))));
 }
 
 function people(app: App): HTMLElement {
@@ -285,7 +322,16 @@ function securityPage(app: App): HTMLElement {
   const loose = active.filter((l) => !needsMfa(okta, l));
   return h('div', { class: 'okta-page' },
     h('h1', {}, 'Security: sign-on policy'),
-    h('p', { class: 'meta' }, 'Require phone sign-in for a group, and everyone in it must use their phone as well as their password. Policies go on groups, like apps.'),
+    h('p', { class: 'meta' }, state.day >= PHONES_DAY
+      ? 'Require Oktopus Verify for a group, and everyone in it must approve a push on their phone as well as typing their password. Policies go on groups, like apps.'
+      : 'Require phone sign-in for a group, and everyone in it must use their phone as well as their password. Policies go on groups, like apps.'),
+    state.day >= PHONES_DAY && h('section', { class: 'okta-card' },
+      h('h2', {}, 'Oktopus Verify enrolment'),
+      h('label', { class: 'okta-switch' },
+        h('input', { type: 'checkbox', checked: okta.selfEnroll, 'data-testid': 'okta-self-enrol', onchange: () => app.set(setSelfEnroll(state, !okta.selfEnroll)) }),
+        h('strong', {}, 'Allow self-enrolment'),
+        h('span', { class: 'meta' }, ' People set up Oktopus Verify on their own phone the first time they\u2019re asked. Otherwise IT does each one.')),
+      h('p', { class: 'meta' }, `On Oktopus Verify: ${Object.keys(okta.verify).map((l) => okta.users[l]?.name ?? l).join(', ') || 'nobody yet'}.`)),
     h('section', { class: 'okta-card' },
       h('h2', {}, 'Require phone sign-in'),
       h('ul', { class: 'okta-rules' }, ...okta.groups.map((g) => {
@@ -304,11 +350,21 @@ const PAGES: [OktaPage, string, string][] = [
   ['import', 'Import from HR', '\u{1F4E5}'], ['apps', 'Applications', '\u{1F9E9}'], ['security', 'Security', '\u{1F512}'], ['flows', 'Workflows', '\u2699'], ['log', 'System Log', '\u{1F4DC}'],
 ];
 
+function pushWait(): HTMLElement {
+  return h('div', { class: 'okta-page okta-push-wait', 'data-testid': 'okta-push-wait' },
+    h('span', { class: 'pv-icon', style: '--s:56px', 'aria-hidden': 'true' }, '\u2713'),
+    h('h1', {}, 'Push sent to your phone'),
+    h('p', {}, 'Oktopus Verify has sent a sign-in request to your company phone. Pick it up and tap \u201CYes, it\u2019s me\u201D.'),
+    h('p', { class: 'meta' }, 'Your phone\u2019s in your hand, or in the top drawer of your desk. Stand up to get it.'));
+}
+
 export function oktopus(app: App): HTMLElement {
   const { ui } = app;
   const page = ui.oktaPage ?? 'dashboard';
-  const go = (to: OktaPage) => () => { ui.oktaPage = to; ui.oktaUser = undefined; ui.oktaApp = undefined; ui.oktaVerify = undefined; ui.oktaSaid = undefined; ui.flowOpen = undefined; ui.flowPick = undefined; app.rerender(); };
-  const body = { dashboard, people, groups: groupsPage, import: importPage, apps: appsPage, security: securityPage, flows: workflowsPage, log: logPage }[page](app);
+  const go = (to: OktaPage) => () => { ui.oktaPage = to; ui.oktaUser = undefined; ui.oktaApp = undefined; ui.oktaVerify = undefined; ui.oktaEnrol = undefined; ui.oktaSaid = undefined; ui.flowOpen = undefined; ui.flowPick = undefined; app.rerender(); };
+  // Signed in with Oktopus Verify: the console waits for you to approve the push on your phone, once a day.
+  const body = needsPush(app.state) ? pushWait()
+    : { dashboard, people, groups: groupsPage, import: importPage, apps: appsPage, security: securityPage, flows: workflowsPage, log: logPage }[page](app);
   return h('div', { class: 'okta', 'data-testid': 'oktopus' },
     h('div', { class: 'ridge-bar' },
       h('span', { class: 'ridge-nav', 'aria-hidden': 'true' }, '← → ↻'),

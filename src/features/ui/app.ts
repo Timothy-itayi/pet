@@ -8,6 +8,8 @@ import type { Power } from './power.ts';
 export type AppId = 'desk' | 'chat' | 'directory' | 'okta' | 'browser' | 'mail' | 'runbook' | 'policy' | 'resume' | 'jobs' | 'trash';
 
 /** An open window: where it is, and whether it's minimised to the taskbar or maximised. */
+export type PhoneScreen = 'home' | 'passcode' | 'store' | 'settings' | 'verify' | 'verify-add' | 'scan';
+
 export interface Win {
   id: AppId;
   x: number;
@@ -40,7 +42,7 @@ export interface Ui {
   /** The camera is gliding into the computer screen. */
   flying?: boolean;
   /** Which part of the room you're looking at. */
-  shot: 'overview' | 'wall';
+  shot: 'overview' | 'wall' | 'drawer';
   /** A one-off message in the room's caption, e.g. after clicking the dark screen. */
   note?: string;
   /** An item you've picked up to look at. */
@@ -92,6 +94,13 @@ export interface Ui {
   flowTyping?: string;
   /** People opened (▸) into their fields, as card:output. */
   flowOpened?: string[];
+  /** The phone in your hand is held up to your face; which of its screens is open; what it said last; a passcode being typed. */
+  phoneUp?: boolean;
+  phoneScreen?: PhoneScreen;
+  phoneSaid?: string;
+  phoneCode?: string;
+  /** Oktopus Admin: whose Oktopus Verify enrolment QR code is on the screen. */
+  oktaEnrol?: string;
   /** How far the flow canvas is scrolled sideways, and a card just added to scroll to. */
   flowScrollX?: number;
   flowScrollTo?: number;

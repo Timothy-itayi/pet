@@ -1,5 +1,6 @@
 import { CLOSE, COMPANY, DAYS, TOOLS } from '../game/data.ts';
-import { canClockOut, clockOut, weekday, weekOf, type GameState } from '../game/rules.ts';
+import { handOver, held, putDown, takePhone } from '../game/phones.ts';
+import { canClockOut, clockOut, SELF, weekday, weekOf, type GameState } from '../game/rules.ts';
 import { ON_THE_WALL, ROOM_ITEMS, SIPS } from '../room3d/items.ts';
 import { closeInspect, goTo, inspectItem, isInspecting, pressMouse, sipMug, spinChair, swayPlant, turnInspected } from '../room3d/view.ts';
 import type { App } from './app.ts';
@@ -102,6 +103,14 @@ export function pickInRoom(app: App, id: string): void {
   // The day is over: nothing to do at the desk until tomorrow.
   if (app.state.phase === 'dayEnd') return;
   ui.note = undefined;
+  // A company phone in the drawer: pick it up, and it comes up to your face.
+  if (id.startsWith('phone-')) {
+    ui.phoneUp = true;
+    ui.phoneScreen = undefined;
+    ui.phoneSaid = undefined;
+    app.set(takePhone(app.state, id));
+    return;
+  }
   const item = ROOM_ITEMS.find((i) => i.id === id);
   const says = item?.says(app.state.day);
   switch (item?.kind) {
@@ -109,6 +118,7 @@ export function pickInRoom(app: App, id: string): void {
     case 'power': return pressPower(app);
     case 'mouse': return tapMouse(app);
     case 'wall': ui.shot = 'wall'; break;
+    case 'drawer': ui.shot = 'drawer'; ui.note = says; break;
     case 'look': ui.note = says; break;
     case 'spin': spinChair(); ui.note = says; break;
     case 'sway': swayPlant(); ui.note = says; break;
@@ -142,11 +152,31 @@ function soundChip(app: App): HTMLElement {
   }, off ? '\u{1F507}' : '\u{1F50A}');
 }
 
+/**
+ * The phone in your hand: a button to bring it up, and once it's up, ways to lower it, put it back in the drawer, or
+ * give it to whoever it's set up for.
+ */
+function phoneChips(app: App): HTMLElement | false {
+  const { state, ui } = app;
+  const phone = held(state);
+  if (!phone) return false;
+  const lower = () => { ui.phoneUp = false; app.rerender(); };
+  if (!ui.phoneUp) {
+    return h('button', { class: 'back-chip phone-chip', 'data-testid': 'phone-raise', 'aria-label': 'Raise your phone', title: 'Your phone', onclick: () => { ui.phoneUp = true; app.rerender(); } }, '\u{1F4F1}');
+  }
+  const owner = phone.owner && phone.owner !== SELF ? state.okta.users[phone.owner]?.name ?? phone.owner : undefined;
+  return h('div', { class: 'phone-actions', role: 'group', 'aria-label': 'Your phone' },
+    h('button', { class: 'btn', 'data-testid': 'phone-lower', onclick: lower }, 'Lower it'),
+    ui.view === 'room' && h('button', { class: 'btn', 'data-testid': 'phone-put-back', onclick: () => { ui.phoneUp = false; app.set(putDown(state)); } }, 'Put it back in the drawer'),
+    owner && h('button', { class: 'btn primary', 'data-testid': 'phone-give', onclick: () => { ui.phoneUp = false; ui.note = `You walk ${owner}\u2019s phone over. It\u2019s theirs now.`; app.set(handOver(state, phone.id)); } }, `Give it to ${owner}`));
+}
+
 /** While you're at the computer: a way to stand up again, and the sound switch. Everything else is on the screen itself. */
 export function computerHud(app: App): HTMLElement {
   return h('main', { class: 'room-hud computer-hud' },
     h('button', { class: 'back-chip', 'data-testid': 'stand-up', 'aria-label': 'Stand up', title: 'Stand up', onclick: () => leaveComputer(app) }, '\u2190'),
-    soundChip(app));
+    soundChip(app),
+    phoneChips(app));
 }
 
 /** Keys in the room: Esc puts things back or steps back; arrows turn what you're holding. */
@@ -160,7 +190,7 @@ export function roomKeys(app: App, e: KeyboardEvent): void {
     return;
   }
   if (e.key === 'Escape') {
-    if (isInspecting()) putBack(app);
+    if (ui.phoneUp) { ui.phoneUp = false; app.rerender(); } else if (isInspecting()) putBack(app);
     else if (ui.shot !== 'overview') { ui.shot = 'overview'; app.rerender(); }
     return;
   }
@@ -182,10 +212,13 @@ export function roomHud(app: App): HTMLElement {
   const intro = ui.note ?? (dropped ? `Something new in your ticket tray. ${dropped.gift}`
     : state.day === 1 && state.phase === 'boot' ? 'Your first day. This was Sam\u2019s desk. Sam left notes.'
     : 'Sam\u2019s desk. Well, yours now.');
-  const here = ROOM_ITEMS.filter((i) => ON_THE_WALL.includes(i.id) === (ui.shot === 'wall'));
+  const here = ui.shot === 'drawer'
+    ? state.phones.filter((p) => p.where === 'drawer').map((p, i) => ({ id: p.id, label: `Company phone ${i + 1}${p.setUp ? ' (set up)' : ''}` }))
+    : ROOM_ITEMS.filter((i) => ON_THE_WALL.includes(i.id) === (ui.shot === 'wall'));
   const things = [...here, ...(state.tools.length && ui.shot === 'overview' ? [{ id: 'tool', label: describe(app, 'tool')?.label ?? 'Tool' }] : [])];
   return h('main', { class: 'room-hud', 'data-testid': 'room' },
     soundChip(app),
+    phoneChips(app),
     h('header', { class: 'room-top' },
       h('p', {}, `${COMPANY} IT Help Desk`),
       h('p', {}, state.phase === 'desk' ? `${day}, ${clockText(state.clock)}` : day)),
