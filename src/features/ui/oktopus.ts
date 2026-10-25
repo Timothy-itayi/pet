@@ -176,10 +176,14 @@ function groupsPage(app: App): HTMLElement {
   const options = (values: readonly string[]) => values.map((v) => h('option', { value: v }, v));
   const newGroup = h('form', { class: 'okta-form', onsubmit: (e) => {
     e.preventDefault();
-    app.set(addGroup(state, field(e.target as HTMLFormElement, 'name')));
+    const name = field(e.target as HTMLFormElement, 'name').trim();
+    // Say why a group wasn't added, rather than doing nothing.
+    app.ui.oktaSaid = !name ? 'A group needs a name.' : okta.groups.includes(name) ? `There\u2019s already a group called ${name}.` : undefined;
+    app.set(addGroup(state, name));
   } },
     h('label', {}, 'Group name ', h('input', { name: 'name', placeholder: 'DEPT-Marketing', required: true, autocomplete: 'off', 'data-testid': 'okta-group-name' })),
-    h('button', { class: 'okta-btn primary', type: 'submit', 'data-testid': 'okta-add-group' }, 'Add group'));
+    h('button', { class: 'okta-btn primary', type: 'submit', 'data-testid': 'okta-add-group' }, 'Add group'),
+    app.ui.oktaSaid && h('p', { class: 'okta-warning', role: 'status', 'data-testid': 'okta-said' }, app.ui.oktaSaid));
   const targets = okta.groups.filter((g) => g !== 'Everyone');
   const deptRule = h('form', { class: 'okta-form', onsubmit: (e) => {
     e.preventDefault();
@@ -299,7 +303,7 @@ const PAGES: [OktaPage, string, string][] = [
 export function oktopus(app: App): HTMLElement {
   const { ui } = app;
   const page = ui.oktaPage ?? 'dashboard';
-  const go = (to: OktaPage) => () => { ui.oktaPage = to; ui.oktaUser = undefined; ui.oktaApp = undefined; ui.oktaVerify = undefined; app.rerender(); };
+  const go = (to: OktaPage) => () => { ui.oktaPage = to; ui.oktaUser = undefined; ui.oktaApp = undefined; ui.oktaVerify = undefined; ui.oktaSaid = undefined; app.rerender(); };
   const body = { dashboard, people, groups: groupsPage, import: importPage, apps: appsPage, security: securityPage, log: logPage }[page](app);
   return h('div', { class: 'okta', 'data-testid': 'oktopus' },
     h('div', { class: 'ridge-bar' },

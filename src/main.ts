@@ -152,6 +152,12 @@ setInterval(() => {
 
 addEventListener('keydown', (e) => roomKeys(app, e));
 addEventListener('keydown', wake);
+// At the computer, the first Tab goes into the screen, not to the "stand up" arrow beside it.
+addEventListener('keydown', (e) => {
+  if (e.key !== 'Tab' || e.shiftKey || app.ui.view !== 'computer' || app.ui.flying || document.activeElement !== document.body) return;
+  const first = screenElement().querySelector<HTMLElement>('[data-autofocus], input, button, [href], [tabindex]:not([tabindex="-1"])');
+  if (first) { e.preventDefault(); first.focus(); }
+});
 // On the lock screen, Enter logs in wherever focus has wandered (it can land on the page after the camera moves).
 addEventListener('keydown', (e) => {
   if (e.key !== 'Enter' || app.ui.view !== 'computer' || e.target instanceof HTMLButtonElement || e.target instanceof HTMLInputElement) return;

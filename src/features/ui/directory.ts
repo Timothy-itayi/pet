@@ -10,6 +10,9 @@ import { h } from './dom.ts';
  * Folders on the left, accounts on the right, and the jobs IT does every day on the toolbar.
  */
 
+/** "Dot's", or "Your" when it's your own account. */
+const whose = (login: string, a: Account) => (login === 'intern' ? 'Your' : `${a.name}\u2019s`);
+
 const standing = (a: Account) => (!a.enabled ? 'Disabled' : a.locked ? 'Locked out' : 'Active');
 
 function resetBox(app: App, login: string, a: Account, opts: { mustChange: boolean; unlock: boolean }): HTMLElement {
@@ -62,11 +65,11 @@ export function directoryConsole(app: App): HTMLElement {
       }, 'Reset Password…'),
       h('button', {
         class: 'btn', 'data-testid': 'ad-unlock', disabled: !picked?.locked,
-        onclick: () => { if (login && picked) doing(`${picked.name}’s account has been unlocked.`, unlockAccount(state, login)); },
+        onclick: () => { if (login && picked) doing(`${whose(login, picked)} account has been unlocked.`, unlockAccount(state, login)); },
       }, 'Unlock Account'),
       h('button', {
         class: 'btn', 'data-testid': 'ad-enable', disabled: !picked,
-        onclick: () => { if (login && picked) doing(`${picked.name}’s account has been ${picked.enabled ? 'disabled' : 'enabled'}.`, setEnabled(state, login, !picked.enabled)); },
+        onclick: () => { if (login && picked) doing(`${whose(login, picked)} account has been ${picked.enabled ? 'disabled' : 'enabled'}.`, setEnabled(state, login, !picked.enabled)); },
       }, picked && !picked.enabled ? 'Enable Account' : 'Disable Account')),
     h('div', { class: 'ad-panes' },
       h('nav', { class: 'ad-tree', 'aria-label': 'Folders' },

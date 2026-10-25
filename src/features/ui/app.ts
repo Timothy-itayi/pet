@@ -77,6 +77,8 @@ export interface Ui {
   toasts: Toast[];
   /** Oktopus: the page you're on, and the person, app or identity check you've opened there. */
   oktaPage?: OktaPage;
+  /** Oktopus: why the last thing you tried wasn't done, if it wasn't. */
+  oktaSaid?: string;
   oktaUser?: string;
   oktaApp?: string;
   oktaVerify?: string;
