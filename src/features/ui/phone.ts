@@ -18,7 +18,7 @@ const verifyIcon = (size: number) => h('span', { class: 'pv-icon', style: `--s:$
 /** Whatever Oktopus is showing an enrolment QR code for on the monitor right now, if its window is up. */
 const qrOnMonitor = (app: App) => {
   const okta = app.ui.windows.find((w) => w.id === 'okta');
-  return okta && !okta.min && app.ui.oktaPage === 'people' ? app.ui.oktaEnrol : undefined;
+  return app.ui.view === 'computer' && okta && !okta.min && app.ui.oktaPage === 'people' ? app.ui.oktaEnrol : undefined;
 };
 
 function bar(app: App): HTMLElement {
@@ -43,8 +43,8 @@ function setup(app: App, phone: Phone): HTMLElement {
     const next = typed + digit;
     if (next.length < 4) { ui.phoneCode = next; app.rerender(); return; }
     ui.phoneCode = undefined;
-    ui.phoneScreen = 'home';
-    app.set(setUpPhone(app.state, phone.id, true));
+    ui.phoneScreen = phone.setUp ? 'settings' : 'home';
+    app.set(phone.setUp ? addPasscode(app.state, phone.id) : setUpPhone(app.state, phone.id, true));
   };
   return h('div', { class: 'pv-page pv-passcode' },
     h('p', { class: 'pv-title' }, 'Create a passcode'),
@@ -52,7 +52,8 @@ function setup(app: App, phone: Phone): HTMLElement {
     h('div', { class: 'pv-keys' }, ...['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0'].map((k) => (k
       ? h('button', { class: 'pv-key', 'data-testid': `phone-key-${k}`, onclick: () => press(k) }, k)
       : h('span', {})))),
-    h('button', { class: 'pv-link', 'data-testid': 'phone-skip-passcode', onclick: () => { ui.phoneScreen = 'home'; app.set(setUpPhone(app.state, phone.id, false)); } }, 'Don’t use a passcode'));
+    phone.setUp ? h('button', { class: 'pv-link', onclick: () => go(app, 'settings') }, 'Cancel')
+      : h('button', { class: 'pv-link', 'data-testid': 'phone-skip-passcode', onclick: () => { ui.phoneScreen = 'home'; app.set(setUpPhone(app.state, phone.id, false)); } }, 'Don’t use a passcode'));
 }
 
 function home(app: App, phone: Phone): HTMLElement {
@@ -86,7 +87,7 @@ function settings(app: App, phone: Phone): HTMLElement {
     h('header', { class: 'pv-head' }, h('button', { class: 'pv-back', onclick: () => go(app, 'home') }, '‹'), h('span', {}, 'Settings')),
     h('ul', { class: 'pv-rows' },
       h('li', {}, h('span', {}, 'Passcode'), phone.passcode ? h('span', { class: 'pv-sub' }, 'On')
-        : h('button', { class: 'pv-link', 'data-testid': 'phone-passcode-on', onclick: () => app.set(addPasscode(app.state, phone.id)) }, 'Turn Passcode On')),
+        : h('button', { class: 'pv-link', 'data-testid': 'phone-passcode-on', onclick: () => { app.ui.phoneCode = ''; go(app, 'passcode'); } }, 'Turn Passcode On')),
       h('li', {}, h('span', {}, 'Name'), h('span', { class: 'pv-sub' }, phone.id.replace('phone-', 'Burrow phone '))),
       h('li', {}, h('span', {}, 'Managed by'), h('span', { class: 'pv-sub' }, 'Burrow & Co. IT'))));
 }
@@ -135,13 +136,18 @@ function pushSheet(app: App, phone: Phone): HTMLElement | undefined {
   const { state } = app;
   if (phone.owner !== SELF) return undefined;
   const rogue = roguePending(state);
-  const yours = needsPush(state) && app.ui.windows.some((w) => w.id === 'okta');
+  const yours = needsPush(state) && app.ui.windows.some((w) => w.id === 'okta') && !app.ui.pushDenied;
   if (!rogue && !yours) return undefined;
-  const answer = (yes: boolean) => app.set(rogue ? answerRogue(state, yes) : answerPush(state, yes));
+  const answer = (yes: boolean) => {
+    // Saying no to your own sign-in stops it: Oktopus waits until you ask it to send another.
+    if (!rogue && !yes) app.ui.pushDenied = true;
+    app.set(rogue ? answerRogue(state, yes) : answerPush(state, yes));
+  };
   return h('div', { class: 'pv-push', role: 'alertdialog', 'aria-label': 'Sign-in request', 'data-testid': 'phone-push' },
     h('div', { class: 'pv-push-head' }, verifyIcon(22), h('strong', {}, 'Oktopus Verify')),
     h('p', { class: 'pv-push-title' }, 'Are you trying to sign in?'),
     h('dl', {},
+      h('dt', {}, 'Account'), h('dd', {}, 'intern@burrow.co (you)'),
       h('dt', {}, 'App'), h('dd', {}, 'Oktopus Admin'),
       h('dt', {}, 'From'), h('dd', {}, rogue ? ROGUE.where : 'Burrow office, Sam’s old PC'),
       h('dt', {}, 'Time'), h('dd', {}, clockText(state.clock))),
@@ -153,10 +159,12 @@ function pushSheet(app: App, phone: Phone): HTMLElement | undefined {
 export function phoneScreen(app: App): HTMLElement {
   const phone = held(app.state);
   if (!phone) return h('div', { class: 'pv' });
-  const screen = !phone.setUp ? setup(app, phone)
+  const screen = !phone.setUp || app.ui.phoneScreen === 'passcode' ? setup(app, phone)
     : app.ui.phoneScreen === 'store' ? store(app, phone)
     : app.ui.phoneScreen === 'settings' ? settings(app, phone)
     : app.ui.phoneScreen && ['verify', 'verify-add', 'scan'].includes(app.ui.phoneScreen) ? verify(app, phone)
     : home(app, phone);
-  return h('div', { class: 'pv', 'data-testid': 'phone' }, bar(app), screen, pushSheet(app, phone));
+  // The phone's own home button, under the glass: back to the home screen from anywhere.
+  const homeButton = h('button', { class: 'pv-home-button', 'aria-label': 'Home button', 'data-testid': 'phone-home', onclick: () => phone.setUp && go(app, 'home') });
+  return h('div', { class: 'pv-wrap' }, h('div', { class: 'pv', 'data-testid': 'phone' }, bar(app), screen, pushSheet(app, phone)), homeButton);
 }

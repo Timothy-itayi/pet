@@ -523,6 +523,10 @@ export function liveFact(s: GameState, t: Ticket, label: string): string | undef
   }
   if (label !== 'Oktopus') return undefined;
   const { okta } = s;
+  if (issueOf(t).console === 'verify') {
+    const who = t.subject ?? t.who;
+    return `${named(s, [who])}: ${okta.verify[who] ? `on Oktopus Verify, ${okta.verify[who].replace('phone-', 'Burrow phone ')}` : 'not on Oktopus Verify yet'}.`;
+  }
   const who = t.subject;
   if (who) {
     const user = okta.users[who];

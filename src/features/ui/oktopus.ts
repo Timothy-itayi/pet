@@ -148,7 +148,10 @@ function verifyCard(app: App, login: string): HTMLElement {
   const name = state.okta.users[login]?.name ?? login;
   return h('section', { class: 'okta-card', 'data-testid': 'okta-verify-card' },
     h('h2', {}, 'Oktopus Verify'),
-    h('p', {}, phone ? `Signs in with ${phone.replace('phone-', 'Burrow phone ')}.` : login === SELF ? 'You aren’t on Oktopus Verify yet.' : `${name} isn’t on Oktopus Verify yet.`),
+    h('p', {}, phone ? `Signs in with ${phone.replace('phone-', 'Burrow phone ')}.`
+      : login === SELF ? 'You aren’t on Oktopus Verify yet.'
+      : state.okta.selfEnroll && needsMfa(state.okta, login) ? `${name} set up Oktopus Verify on their own phone (self-enrolment).`
+      : `${name} isn’t on Oktopus Verify yet.`),
     !phone && !showing && h('button', { class: 'okta-btn primary', 'data-testid': 'okta-enrol', onclick: () => { ui.oktaEnrol = login; app.rerender(); } }, 'Set up Oktopus Verify'),
     showing && h('div', { class: 'okta-enrol', 'data-testid': 'okta-enrol-qr' },
       qr(login),
@@ -350,7 +353,13 @@ const PAGES: [OktaPage, string, string][] = [
   ['import', 'Import from HR', '\u{1F4E5}'], ['apps', 'Applications', '\u{1F9E9}'], ['security', 'Security', '\u{1F512}'], ['flows', 'Workflows', '\u2699'], ['log', 'System Log', '\u{1F4DC}'],
 ];
 
-function pushWait(): HTMLElement {
+function pushWait(app: App): HTMLElement {
+  if (app.ui.pushDenied) {
+    return h('div', { class: 'okta-page okta-push-wait', 'data-testid': 'okta-push-wait' },
+      h('h1', {}, 'Sign-in denied'),
+      h('p', {}, 'You said no on your phone, so nobody’s signed in. If it was you after all, send another push.'),
+      h('button', { class: 'okta-btn primary', 'data-testid': 'okta-push-again', onclick: () => { app.ui.pushDenied = undefined; app.rerender(); } }, 'Send push again'));
+  }
   return h('div', { class: 'okta-page okta-push-wait', 'data-testid': 'okta-push-wait' },
     h('span', { class: 'pv-icon', style: '--s:56px', 'aria-hidden': 'true' }, '\u2713'),
     h('h1', {}, 'Push sent to your phone'),
@@ -363,7 +372,7 @@ export function oktopus(app: App): HTMLElement {
   const page = ui.oktaPage ?? 'dashboard';
   const go = (to: OktaPage) => () => { ui.oktaPage = to; ui.oktaUser = undefined; ui.oktaApp = undefined; ui.oktaVerify = undefined; ui.oktaEnrol = undefined; ui.oktaSaid = undefined; ui.flowOpen = undefined; ui.flowPick = undefined; app.rerender(); };
   // Signed in with Oktopus Verify: the console waits for you to approve the push on your phone, once a day.
-  const body = needsPush(app.state) ? pushWait()
+  const body = needsPush(app.state) ? pushWait(app)
     : { dashboard, people, groups: groupsPage, import: importPage, apps: appsPage, security: securityPage, flows: workflowsPage, log: logPage }[page](app);
   return h('div', { class: 'okta', 'data-testid': 'oktopus' },
     h('div', { class: 'ridge-bar' },

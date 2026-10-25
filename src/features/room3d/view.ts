@@ -7,7 +7,7 @@ import { COMPUTER_Z, DESK_TOP, GLASS, buildRoom, toolObject, type Room } from '.
 import { cameraAt, easeInOut, type Pose } from './camera.ts';
 import { setLampOn } from './lamp.ts';
 import { setCoffee } from './mug.ts';
-import { fillDrawer, glassBox, phoneModel } from './phone.ts';
+import { fillDrawer, glassBox, phoneModel, switchGlass } from './phone.ts';
 
 export type Shot = 'overview' | 'wall' | 'computer' | 'drawer';
 /** What the CRT shows. */
@@ -199,7 +199,7 @@ export async function mountRoom(handlers: Handlers): Promise<void> {
   onGlass.scale.setScalar(GLASS.w / SCREEN_PX.w);
   v.cssScene.add(onGlass);
   setTools(v.tools);
-  void setPhones(v.phones);
+  void setPhones([]);
   v.phoneGlass.className = 'phone-glass';
   v.phoneGlass.hidden = true;
   document.body.append(v.phoneGlass);
@@ -427,8 +427,9 @@ export function openDrawer(open: boolean): void {
   play(600, (k) => { drawer.position.z = rest + from + (to - from) * easeInOut(k); });
 }
 
-/** Put the phones that are in the drawer into it: ids of the phones there now (none before they arrive). */
-export async function setPhones(ids: string[]): Promise<void> {
+/** Put the phones that are in the drawer into it (none before they arrive), each with how lit its glass is: see switchGlass. */
+export async function setPhones(phones: { id: string; glow: number }[]): Promise<void> {
+  const ids = phones.map((p) => `${p.id}:${p.glow}`);
   const same = ids.join() === v.phones.join() && v.room?.drawer.userData.filled === true;
   v.phones = ids;
   const room = v.room;
@@ -437,7 +438,7 @@ export async function setPhones(ids: string[]): Promise<void> {
   if (!inside) return;
   const model = ids.length ? await phoneModel() : undefined;
   if (v.phones !== ids) return; // something newer came in while the model loaded
-  fillDrawer(inside, ids.map((id) => ({ id, copy: model?.clone(true) ?? new Group() })), room.pickables);
+  fillDrawer(inside, phones.map(({ id, glow }) => ({ id, glow, copy: model?.clone(true) ?? new Group() })), room.pickables);
   room.drawer.userData.filled = true;
 }
 
@@ -481,6 +482,8 @@ export async function holdPhone(): Promise<void> {
   key.position.set(-1, 2, 3);
   scene.add(key);
   const copy = model.clone(true);
+  // Its own glass stays dark: the phone's screen page is laid over it.
+  switchGlass(copy, 0);
   // Centre the phone on its glass, and scale it to fill most of the view's height.
   copy.position.sub(glassBox(copy).getCenter(new Vector3()));
   const fit = new Group();

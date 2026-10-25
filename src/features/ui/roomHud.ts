@@ -213,7 +213,7 @@ export function roomHud(app: App): HTMLElement {
     : state.day === 1 && state.phase === 'boot' ? 'Your first day. This was Sam\u2019s desk. Sam left notes.'
     : 'Sam\u2019s desk. Well, yours now.');
   const here = ui.shot === 'drawer'
-    ? state.phones.filter((p) => p.where === 'drawer').map((p, i) => ({ id: p.id, label: `Company phone ${i + 1}${p.setUp ? ' (set up)' : ''}` }))
+    ? state.phones.filter((p) => p.where === 'drawer').map((p, i) => ({ id: p.id, label: p.owner === SELF ? 'Your phone' : `Company phone ${i + 1}${p.setUp ? ' (set up)' : ''}` }))
     : ROOM_ITEMS.filter((i) => ON_THE_WALL.includes(i.id) === (ui.shot === 'wall'));
   const things = [...here, ...(state.tools.length && ui.shot === 'overview' ? [{ id: 'tool', label: describe(app, 'tool')?.label ?? 'Tool' }] : [])];
   return h('main', { class: 'room-hud', 'data-testid': 'room' },

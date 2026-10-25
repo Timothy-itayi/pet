@@ -2545,7 +2545,8 @@ export const TICKETS: Ticket[] = [
     title: 'Can I have one of the new phones?',
     message: 'Mr. Grisby says Finance get the new phones first, because we hold the money. I don\u2019t know how to do the Verify thing. Could you set it up for me?',
     details: [
-      { label: 'Who', text: 'Dot, Accounts Clerk.', ask: 'which' },
+      { label: 'Who', text: 'Dot, Accounts Clerk.' },
+      { label: 'Phone', text: 'Any of the new ones from your drawer.', ask: 'which' },
       { label: 'Needs', text: 'Oktopus Verify on it, and a passcode.', ask: 'how' },
       { label: 'When', text: 'Before the new sign-in policy goes on.', ask: 'when' },
     ],
@@ -2556,7 +2557,8 @@ export const TICKETS: Ticket[] = [
     title: 'A phone for the Company Secretary',
     message: 'Hoo. I gather there are phones. I gather I am to have one. I would like it set up by someone who knows what they\u2019re doing, and failing that, by you.',
     details: [
-      { label: 'Who', text: 'Otis, Company Secretary.', ask: 'which' },
+      { label: 'Who', text: 'Otis, Company Secretary.' },
+      { label: 'Phone', text: 'Any of the new ones from your drawer.', ask: 'which' },
       { label: 'Needs', text: 'Oktopus Verify on it, and a passcode. Hoo.', ask: 'how' },
       { label: 'When', text: 'Before the policy. He doesn\u2019t want to be locked out of his own minutes.', ask: 'when' },
     ],

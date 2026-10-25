@@ -356,7 +356,7 @@ export const PEOPLE: Record<string, Person> = {
 };
 
 const minutes = (hm: string) => { const [h = 0, m = 0] = hm.split(':').map(Number); return h * 60 + m; };
-const hhmm = (min: number) => `${Math.floor(min / 60)}:${String(min % 60).padStart(2, '0')}`;
+const ampm = (m: number) => `${((Math.floor(m / 60) + 11) % 12) + 1}:${String(m % 60).padStart(2, '0')}${m < 720 ? 'am' : 'pm'}`;
 
 /** Whether someone works at Burrow on a given day, by HR. */
 export const atBurrow = (login: string, day: number) => hrOn(day).some((r) => r.login === login && r.status === 'active');
@@ -402,7 +402,7 @@ export function backAt(login: string, day: number, clock: number): { until: numb
 
 const AWAY_SAYS: Partial<Record<Doing, string>> = { meeting: 'In a meeting', lunch: 'At lunch', out: 'Away from my desk' };
 /** What they say when you message them while they're away. */
-export const awayLine = (b: { until: number; doing: Doing }) => `${AWAY_SAYS[b.doing] ?? 'Away'} till ${hhmm(b.until)}. I’ll look then.`;
+export const awayLine = (b: { until: number; doing: Doing }) => `${AWAY_SAYS[b.doing] ?? 'Away'} till ${ampm(b.until)}. I’ll look then.`;
 
 /** "At lunch · Kitchen", for a status line. */
 export function statusText(login: string, day: number, clock: number): string {

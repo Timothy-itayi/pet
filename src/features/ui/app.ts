@@ -99,6 +99,8 @@ export interface Ui {
   phoneScreen?: PhoneScreen;
   phoneSaid?: string;
   phoneCode?: string;
+  /** You said no to your own sign-in push; Oktopus waits until you ask it to send another. */
+  pushDenied?: boolean;
   /** Oktopus Admin: whose Oktopus Verify enrolment QR code is on the screen. */
   oktaEnrol?: string;
   /** How far the flow canvas is scrolled sideways, and a card just added to scroll to. */

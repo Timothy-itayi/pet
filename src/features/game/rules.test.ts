@@ -332,7 +332,7 @@ describe('people away from their desk', () => {
   it('a question asked while they are at lunch is answered once they are back, and they say so', () => {
     let s = until(dotsTicket(), '12:05'); // Dot lunches 12:00 to 12:40
     s = ask(s, 't101', 'screen');
-    expect(ticketState(s, 't101').messages.at(-1)?.text).toBe('At lunch till 12:40. I’ll look then.');
+    expect(ticketState(s, 't101').messages.at(-1)?.text).toBe('At lunch till 12:40pm. I’ll look then.');
     const c = ticketState(s, 't101').caller;
     expect(c && 'until' in c && c.until).toBeGreaterThanOrEqual(clockTime('12:42'));
   });

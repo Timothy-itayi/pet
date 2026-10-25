@@ -23,8 +23,18 @@ export function glassBox(phone: Object3D): Box3 {
   return new Box3().setFromObject(glass ?? phone);
 }
 
+/**
+ * A phone's glass: black while it's brand new and off, a dim lock screen once it's set up, and lit up when it's
+ * buzzing with a push for you. So you can tell yours from the new ones at a glance.
+ */
+export function switchGlass(phone: Object3D, glow: number): void {
+  const glass = phone.getObjectByName('IP4S_Screen');
+  if (!(glass instanceof Mesh)) return;
+  glass.material = new MeshStandardMaterial({ color: new Color('#050608'), roughness: 0.15, metalness: 0.2, emissive: new Color('#1b2a4a'), emissiveIntensity: [0, 0.6, 2.2][glow] ?? 0 });
+}
+
 /** What's in the drawer: before the budget, a takeaway menu and some rubber bands; after it, the box of phones. */
-export function fillDrawer(inside: Object3D, phones: { id: string; copy: Object3D }[], pickables: Map<string, Object3D>): void {
+export function fillDrawer(inside: Object3D, phones: { id: string; copy: Object3D; glow: number }[], pickables: Map<string, Object3D>): void {
   for (const old of [...inside.children]) {
     inside.remove(old);
     for (const [id, o] of pickables) if (o === old) pickables.delete(id);
@@ -42,11 +52,8 @@ export function fillDrawer(inside: Object3D, phones: { id: string; copy: Object3
   const tray = new Mesh(new RoundedBoxGeometry(0.3, 0.012, 0.29, 2, 0.003), new MeshStandardMaterial({ color: new Color('#c9a878'), roughness: 0.95 }));
   tray.position.set(0, 0.006, -0.17);
   inside.add(tray);
-  // Brand new, still switched off: their glass is black.
-  const off = new MeshStandardMaterial({ color: new Color('#050608'), roughness: 0.15, metalness: 0.2 });
-  phones.forEach(({ id, copy }, i) => {
-    const glass = copy.getObjectByName('IP4S_Screen');
-    if (glass instanceof Mesh) glass.material = off;
+  phones.forEach(({ id, copy, glow }, i) => {
+    switchGlass(copy, glow);
     const holder = new Group();
     copy.rotation.x = -Math.PI / 2;
     holder.add(copy);
