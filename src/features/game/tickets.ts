@@ -328,7 +328,7 @@ export const ISSUES: Issue[] = [
       example: 'Locked out after too many tries. Unlocked it in Active Directory; their password was fine.',
       keys: ['locked', 'lockout', 'lock out', 'unlock', 'too many'],
     },
-    why: 'A lockout means too many wrong tries, not a forgotten password. Unlock the account and they can use the password they already know. A reset was never needed.',
+    why: 'A lockout means too many wrong tries, not a forgotten password. Unlock the account and they can use the password they already know. A reset was never needed. If a phone or another device is still trying an old password, it will lock them out again: update it there too.',
   },
   {
     id: 'forgot-password',
@@ -408,7 +408,7 @@ export const ISSUES: Issue[] = [
       example: 'New app: add it from the catalog, give it an APP-{App}-Users group filled from the department group, assign the app to that group.',
       keys: ['group', 'assign', 'catalog', 'catalogue'],
     },
-    why: 'Apps are assigned to groups, never to people one by one. A group like APP-Hootsweet-Users, filled by a rule from DEPT-Marketing, means everyone in Marketing gets it automatically, and nobody else does.',
+    why: 'Apps are assigned to groups, never to people one by one. A group like APP-{app}-Users, filled by rules from the department groups, means {team} get {app} automatically, and nobody else does.',
   },
   {
     id: 'joiner',
@@ -448,7 +448,7 @@ export const ISSUES: Issue[] = [
       example: 'Mover: update their profile from HR. The rules swap their groups, so old access goes and new access comes.',
       keys: ['hr', 'profile', 'mover', 'moved', 'sales', 'group'],
     },
-    why: 'A mover keeps their account but not their old team\u2019s access. Update their profile from HR and the group rules move them: out of DEPT-Marketing and its apps, into DEPT-Sales. Keeping old access “just in case” is how people end up with access to everything.',
+    why: 'A mover keeps their account but not their old team\u2019s access. Update {who}\u2019s profile from HR and the group rules move them: out of their old department\u2019s group and its apps, into the new one and its apps. Keeping old access “just in case” is how people end up with access to everything.',
   },
   {
     id: 'leaver',
@@ -545,8 +545,8 @@ export const ISSUES: Issue[] = [
       { id: 'see', text: 'Is there something you need to see?', none: 'Who has what. The investors keep asking.' },
     ],
     fixes: [
-      { id: 'super', grave: true, label: 'Make them a Super Administrator in Oktopus', fail: 'Mr. Grisby clicks around, deactivates Finance by accident, and blames the octopus.' },
-      { id: 'report', label: 'Send them a read-only report of who has which app' },
+      { id: 'super', grave: true, label: 'Make them a Super Administrator in Oktopus', fail: 'Within a minute Mr. Grisby is clicking “Deactivate” to see what it does. You take the rights back just in time. He has already told the board.' },
+      { id: 'report', label: 'Explain why not, and send a read-only list of who has which app', works: 'A list! For the board pack! I didn’t actually want to click anything. Don’t tell anyone.' },
       { id: 'share', grave: true, label: 'Let them use your admin login', fail: 'Every change he makes now says it was you. The System Log is very clear about that.' },
     ],
     correctFix: 'report',
@@ -1181,8 +1181,8 @@ export const TICKETS: Ticket[] = [
     title: 'Printer ate the tea rota',
     message: 'The printer ATE the tea rota!! It’s making a grinding noise and the screen says “Jam”!! I need the rota!!',
     details: [
-      { label: 'Printer screen', text: '“Paper jam: tray 2.”', ask: 'screen' },
-      { label: 'Tray 2', text: 'A crumpled rota, folded like a fan, right at the back.', ask: 'tray' },
+      { label: 'Printer screen', text: 'PAPER JAM – TRAY 2', ask: 'screen' },
+      { label: 'Tray 2', text: 'A crumpled tea rota, folded like a fan, wedged at the back.', ask: 'tray' },
     ],
     workaround: 'Print it on the other printer upstairs',
   },
@@ -1191,8 +1191,8 @@ export const TICKETS: Ticket[] = [
     title: 'Tablet cannot find the minutes',
     message: 'Hoo. My new tablet shows the internet, but not the shared drive where the minutes live. The minutes must be read.',
     details: [
-      { label: 'Wi-Fi', text: '“Burrow-Guest.” He picked it because it said Guest and he felt like one.', ask: 'network' },
-      { label: 'Shared drive', text: '“Not found.”', ask: 'drive' },
+      { label: 'Wi-Fi', text: 'Burrow-Guest. (“It said Guest. I felt like one.”)', ask: 'network' },
+      { label: 'Shared drive', text: 'Shared drive: not found', ask: 'drive' },
     ],
     workaround: 'Print the minutes for him',
   },
@@ -1201,8 +1201,8 @@ export const TICKETS: Ticket[] = [
     title: 'Locked out, mid-deal',
     message: 'Locked out of my laptop. I am closing a deal. The deal cannot wait. I typed my new password perfectly, many times.',
     details: [
-      { label: 'Login screen', text: '“This account has been locked.”', ask: 'error' },
-      { label: 'Phone', text: 'He changed his password on Friday. His phone still has the old one and keeps trying it.', ask: 'devices' },
+      { label: 'Login screen', text: 'This account has been locked.', ask: 'error' },
+      { label: 'Phone', text: 'Password changed on Friday. The phone still has the old one, and keeps trying it.', ask: 'devices' },
     ],
     workaround: 'Lend him the hot-desk PC',
   },
@@ -1211,8 +1211,8 @@ export const TICKETS: Ticket[] = [
     title: 'Second screen is blue and sad',
     message: 'My second screen just says “No signal”. It’s blue. I like blue, but not like this. Ribbit.',
     details: [
-      { label: 'Screen', text: '“No signal: HDMI 1.”', ask: 'screen' },
-      { label: 'Cable', text: 'Plugged into the socket marked HDMI 2. Pip moved desks on Friday.', ask: 'cable' },
+      { label: 'Screen', text: 'No signal – HDMI 1', ask: 'screen' },
+      { label: 'Cable', text: 'Plugged into the socket marked HDMI 2. (New desk since Friday.)', ask: 'cable' },
     ],
     workaround: 'Use the laptop screen on its own',
   },
@@ -1221,8 +1221,8 @@ export const TICKETS: Ticket[] = [
     title: 'Oktopus says my password is wrong',
     message: 'I have typed my password into Oktopus four times. It is correct. I know it is correct. I check things.',
     details: [
-      { label: 'Keyboard', text: 'The Caps Lock light is on. It has been on since Biscuit borrowed her desk.', ask: 'keyboard' },
-      { label: 'Error', text: '“Wrong password.”', ask: 'error' },
+      { label: 'Keyboard', text: 'Caps Lock light: on. (Biscuit borrowed the desk yesterday.)', ask: 'keyboard' },
+      { label: 'Error', text: 'Wrong password.', ask: 'error' },
     ],
     workaround: 'Tell her to try again after lunch',
   },
@@ -1233,7 +1233,7 @@ export const TICKETS: Ticket[] = [
     details: [
       { label: 'Which app', text: 'Voyago. Travel and expenses. Finance only. Marlo is not to have it.', ask: 'which' },
       { label: 'Who', text: 'Everyone in Finance, and anyone who joins Finance.', ask: 'who' },
-      { label: 'Dashboard', text: 'Her Oktopus dashboard is empty.', ask: 'dashboard' },
+      { label: 'Dashboard', text: 'An empty Oktopus dashboard.', ask: 'dashboard' },
     ],
     workaround: 'Tell her to do expenses on paper this month',
   },
@@ -1263,7 +1263,7 @@ export const TICKETS: Ticket[] = [
     title: 'Contracts printing into the void',
     message: 'I have printed this contract three times. None of them came out. Somewhere a printer is very well informed.',
     details: [
-      { label: 'Default printer', text: 'Ticked: “Finance-Upstairs”. Sales is downstairs.', ask: 'settings' },
+      { label: 'Default printer', text: 'Ticked: Finance-Upstairs. (Sales is downstairs.)', ask: 'settings' },
       { label: 'Near him', text: 'Nothing. The Sales printer is cold.', ask: 'near' },
     ],
     workaround: 'Email the contract instead',
@@ -1273,7 +1273,7 @@ export const TICKETS: Ticket[] = [
     title: 'Mouse is napping',
     message: 'My mouse won’t move the arrow!! I gave it a little shake. It didn’t like that.',
     details: [
-      { label: 'Mouse', text: 'Wireless. No light underneath.', ask: 'kind' },
+      { label: 'Mouse', text: 'Wireless. The little light underneath is off.', ask: 'kind' },
       { label: 'Keyboard', text: 'Typing works fine.', ask: 'keyboard' },
     ],
     workaround: 'Lend her the spare wired mouse',
@@ -1283,8 +1283,8 @@ export const TICKETS: Ticket[] = [
     title: 'No internet at the cupboard desk',
     message: 'No internet. I was moving boxes. A box may have moved something. Ribbit.',
     details: [
-      { label: 'Network icon', text: '“Network cable unplugged.”', ask: 'screen' },
-      { label: 'Under the desk', text: 'The cable is lying on the floor next to a box of A4.', ask: 'under' },
+      { label: 'Network icon', text: 'Network cable unplugged', ask: 'screen' },
+      { label: 'Under the desk', text: 'The network cable is on the floor, next to a box of A4.', ask: 'under' },
     ],
     workaround: 'Let him use the guest Wi-Fi for now',
   },
@@ -1293,7 +1293,7 @@ export const TICKETS: Ticket[] = [
     title: 'Hazel starts in Finance today',
     message: 'Our new Accounts Assistant, Hazel, starts today. She has a desk, a chair and a calculator. She does not have a login.',
     details: [
-      { label: 'Start', text: 'Today. She’s here now, holding the calculator.', ask: 'start' },
+      { label: 'Start', text: 'Today. She’s here now, holding a calculator.', ask: 'start' },
       { label: 'Role', text: 'Accounts Assistant. She needs what Finance has.', ask: 'role' },
       { label: 'HR', text: 'HR added her yesterday afternoon.', ask: 'hr' },
       { label: 'HR file', text: 'New row: Hazel, Finance, Accounts Assistant, manager Dot.' },
@@ -1308,7 +1308,7 @@ export const TICKETS: Ticket[] = [
     details: [
       { label: 'Which app', text: 'Canvass, from the catalog.', ask: 'which' },
       { label: 'Who', text: 'Marketing and Sales. Nobody else.', ask: 'who' },
-      { label: 'Dashboard', text: 'Basil’s dashboard has nothing on it. He finds that ugly.', ask: 'dashboard' },
+      { label: 'Dashboard', text: 'Basil’s dashboard is empty. (“It’s ugly.”)', ask: 'dashboard' },
     ],
     workaround: 'Tell Basil to use the free trial',
   },
@@ -1318,7 +1318,7 @@ export const TICKETS: Ticket[] = [
     message: 'Can I have admin rights for like two minutes? I need to install a font for the campaign. It’s a very important font.',
     details: [
       { label: 'Install', text: 'The brand font, “Burrow Sans”.', ask: 'what' },
-      { label: 'Company Portal', text: 'She didn’t know there was one. It has Burrow Sans in it.', ask: 'portal' },
+      { label: 'Company Portal', text: 'Never heard of it. (It has Burrow Sans in it.)', ask: 'portal' },
     ],
     workaround: 'Use a font that’s already installed',
   },
@@ -1327,8 +1327,8 @@ export const TICKETS: Ticket[] = [
     title: 'Email refuses me',
     message: 'Hoo. My email will not open. It says something about my password having lived its full life.',
     details: [
-      { label: 'Message', text: '“Your password has expired. Change it to continue.”', ask: 'error' },
-      { label: 'Last changed', text: 'Ninety-one days ago. To the same thing as before, plus a 2.', ask: 'changed' },
+      { label: 'Message', text: 'Your password has expired. Change it to continue.', ask: 'error' },
+      { label: 'Last changed', text: 'Ninety-one days ago. (Same as before, plus a 2.)', ask: 'changed' },
     ],
     workaround: 'Read his emails to him over the phone',
   },
@@ -1338,7 +1338,7 @@ export const TICKETS: Ticket[] = [
     message: 'My laptop says it’s charging but it’s been at 4% since lunch!! I gave it the kitchen charger. It fits!!',
     details: [
       { label: 'Charger', text: 'A small white phone-style charger. It says 20W.', ask: 'charger' },
-      { label: 'Sticker', text: '“Use a 65W charger.”', ask: 'sticker' },
+      { label: 'Sticker', text: 'Use a 65W or higher USB-C charger.', ask: 'sticker' },
     ],
     workaround: 'Lend her the hot-desk PC',
   },
@@ -1347,8 +1347,8 @@ export const TICKETS: Ticket[] = [
     title: 'Internet has left the building',
     message: 'My laptop has no internet. I was on a plane last week. I mention it only because I like to mention it.',
     details: [
-      { label: 'Settings', text: 'A little aeroplane is lit up in the corner.', ask: 'settings' },
-      { label: 'Others', text: 'Everyone else is online.', ask: 'others' },
+      { label: 'Settings', text: 'Airplane mode: ON', ask: 'settings' },
+      { label: 'Others', text: 'Everyone else is happily online.', ask: 'others' },
     ],
     workaround: 'Lend him your phone as a hotspot',
   },
@@ -1358,7 +1358,7 @@ export const TICKETS: Ticket[] = [
     message: 'New label printer. It came with a CD. I have nothing that eats CDs. Ribbit.',
     details: [
       { label: 'Ports', text: 'Two small oval ports. No disc drive.', ask: 'ports' },
-      { label: 'How', text: 'With the CD, unsuccessfully.', ask: 'how' },
+      { label: 'How', text: 'With the CD that came in the box.', ask: 'how' },
     ],
     workaround: 'Write the labels by hand',
   },
@@ -1379,7 +1379,7 @@ export const TICKETS: Ticket[] = [
     title: 'Password forgotten in the excitement',
     message: 'I changed my password yesterday to something REALLY clever and now I can’t remember what it was!! It had a cake in it!!',
     details: [
-      { label: 'Login screen', text: '“Wrong password.”', ask: 'error' },
+      { label: 'Login screen', text: 'Wrong password.', ask: 'error' },
       { label: 'Changed', text: 'Yesterday. “Something with cake and a number.”', ask: 'changed' },
     ],
     workaround: 'Let her use the hot-desk PC',
@@ -1389,7 +1389,7 @@ export const TICKETS: Ticket[] = [
     title: 'Projector says no',
     message: 'The meeting room screen says “No signal” and I have a whole presentation and Basil is LOOKING at me.',
     details: [
-      { label: 'Screen', text: '“No signal: HDMI 1.”', ask: 'screen' },
+      { label: 'Screen', text: 'No signal – HDMI 1', ask: 'screen' },
       { label: 'Cable', text: 'In the socket marked HDMI 2.', ask: 'cable' },
     ],
     workaround: 'Present from her laptop screen',
@@ -1400,7 +1400,7 @@ export const TICKETS: Ticket[] = [
     message: 'I have a client in the meeting room and I can’t open the price list. Internet works. The shared drive does not. The client is eating our biscuits.',
     details: [
       { label: 'Wi-Fi', text: 'He joined Burrow-Guest so the client could too.', ask: 'network' },
-      { label: 'Shared drive', text: '“Not found.”', ask: 'drive' },
+      { label: 'Shared drive', text: 'Shared drive: not found', ask: 'drive' },
     ],
     workaround: 'Read the prices out from memory',
   },
@@ -1409,7 +1409,7 @@ export const TICKETS: Ticket[] = [
     title: 'Laptop slower than the board',
     message: 'My laptop is slower than the board meeting. And the board meeting has Otis in it.',
     details: [
-      { label: 'Uptime', text: 'Never restarted. He shuts the lid and calls it a night.', ask: 'uptime' },
+      { label: 'Uptime', text: 'Never restarted. (“I shut the lid. That’s a restart.”)', ask: 'uptime' },
       { label: 'Programs', text: 'Everything is slow, even the clock.', ask: 'apps' },
     ],
     workaround: 'Lend him the hot-desk PC',
@@ -1419,7 +1419,7 @@ export const TICKETS: Ticket[] = [
     title: 'Printer jammed during month-end',
     message: 'The printer has jammed in the middle of month-end. I do not have time for the printer to have feelings.',
     details: [
-      { label: 'Printer screen', text: '“Paper jam: tray 1.”', ask: 'screen' },
+      { label: 'Printer screen', text: 'PAPER JAM – TRAY 1', ask: 'screen' },
       { label: 'Tray 1', text: 'A receipt has gone in sideways.', ask: 'tray' },
     ],
     workaround: 'Print on the upstairs printer',
@@ -1430,7 +1430,7 @@ export const TICKETS: Ticket[] = [
     message: 'My mouse is still. I am also still, but I am thinking. The mouse is not. Hoo.',
     details: [
       { label: 'Mouse', text: 'Wireless. No light.', ask: 'kind' },
-      { label: 'Dropped', text: 'Not that he knows of.', ask: 'dropped' },
+      { label: 'Dropped', text: 'Not that I know of.', ask: 'dropped' },
     ],
     workaround: 'Lend him the spare wired mouse',
   },
@@ -1440,7 +1440,7 @@ export const TICKETS: Ticket[] = [
     message: 'Hazel has decided Finance isn’t for her. Yesterday was her last day. She was very polite about it. She took a calculator.',
     details: [
       { label: 'Last day', text: 'Yesterday.', ask: 'when' },
-      { label: 'Access', text: 'Dot isn’t sure. Voyago still lists her.', ask: 'access' },
+      { label: 'Access', text: 'Not sure. Voyago still lists her.', ask: 'access' },
       { label: 'Laptop', text: 'Returned. The calculator was not.', ask: 'laptop' },
       { label: 'HR file', text: 'Hazel: terminated.' },
       { label: 'Oktopus', text: 'Hazel: active.' },
@@ -1454,7 +1454,7 @@ export const TICKETS: Ticket[] = [
     details: [
       { label: 'Sent from', text: 'marlo@burrow.co (his real address)', ask: 'verify' },
       { label: 'HR file', text: 'Marlo: EMP-1007, Sales, Sales Lead, manager EMP-1001.' },
-      { label: 'Where', text: 'At his desk. You can see him from here.', ask: 'where' },
+      { label: 'Where', text: 'At my desk. You can see me from there.', ask: 'where' },
     ],
     workaround: 'Let him use the hot-desk PC',
   },
@@ -1463,8 +1463,8 @@ export const TICKETS: Ticket[] = [
     title: 'Password not working!!',
     message: 'MY PASSWORD ISN’T WORKING!! I’m typing it right!! Why is everyone looking at me!!',
     details: [
-      { label: 'Keyboard', text: 'The Caps Lock light is on. That explains the shouting, too.', ask: 'keyboard' },
-      { label: 'Error', text: '“Wrong password.”', ask: 'error' },
+      { label: 'Keyboard', text: 'Caps Lock light: on. (That explains the shouting.)', ask: 'keyboard' },
+      { label: 'Error', text: 'Wrong password.', ask: 'error' },
     ],
     workaround: 'Ask her to try again tomorrow',
   },
@@ -1473,8 +1473,8 @@ export const TICKETS: Ticket[] = [
     title: 'No internet in Finance',
     message: 'New desk in Finance. No internet. Everyone else in Finance has internet. I feel left out. Ribbit.',
     details: [
-      { label: 'Settings', text: 'A little aeroplane in the corner of the screen.', ask: 'settings' },
-      { label: 'Changed', text: 'Pip turned something on to make the laptop “quieter” during the move.', ask: 'changed' },
+      { label: 'Settings', text: 'Airplane mode: ON', ask: 'settings' },
+      { label: 'Changed', text: 'Turned something on to make the laptop quieter during the move.', ask: 'changed' },
     ],
     workaround: 'Plug him into a cable',
   },
@@ -1483,7 +1483,7 @@ export const TICKETS: Ticket[] = [
     title: 'Minutes printing elsewhere',
     message: 'Hoo. I have printed the minutes. They have not appeared. Somewhere, someone is reading my minutes.',
     details: [
-      { label: 'Default printer', text: 'Ticked: “Sales-Downstairs”.', ask: 'settings' },
+      { label: 'Default printer', text: 'Ticked: Sales-Downstairs.', ask: 'settings' },
       { label: 'Near him', text: 'Nothing from the Finance printer.', ask: 'near' },
     ],
     workaround: 'Walk down and fetch them',
@@ -1503,8 +1503,8 @@ export const TICKETS: Ticket[] = [
     title: 'No internet before the weekend',
     message: 'No internet. Friday afternoon. I have one email to send and then I’m gone. It says something about a cable.',
     details: [
-      { label: 'Network icon', text: '“Network cable unplugged.”', ask: 'screen' },
-      { label: 'Desk', text: 'The cleaners moved his bin. The bin moved the cable.', ask: 'cleaners' },
+      { label: 'Network icon', text: 'Network cable unplugged', ask: 'screen' },
+      { label: 'Desk', text: 'The cleaners moved the bin. The bin moved the cable.', ask: 'cleaners' },
     ],
     workaround: 'Let him send it from his phone',
   },

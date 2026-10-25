@@ -380,7 +380,7 @@ export const awayLine = (b: { until: number; doing: Doing }) => `${AWAY_SAYS[b.d
 /** "At lunch · Kitchen", for a status line. */
 export function statusText(login: string, day: number, clock: number): string {
   const w = whereIs(login, day, clock);
-  const label: Record<Doing, string> = { home: 'Not in', arriving: 'Just arrived', desk: 'At their desk', coffee: 'On a break', meeting: 'In a meeting', lunch: 'At lunch', out: 'Out', leaving: 'Heading home' };
+  const label: Record<Doing, string> = { home: 'Not in', arriving: 'Just arrived', desk: 'At desk', coffee: 'On a break', meeting: 'In a meeting', lunch: 'At lunch', out: 'Out', leaving: 'Heading home' };
   if (w.where === 'Not at Burrow & Co.') return w.where;
   return w.doing === 'home' ? w.where : `${label[w.doing]} · ${w.where}`;
 }

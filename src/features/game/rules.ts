@@ -493,12 +493,21 @@ export function liveFact(s: GameState, t: Ticket, label: string): string | undef
     const apps = appsOf(okta, who).map((a) => CATALOG.find((c) => c.id === a)?.name ?? a);
     return `${name}: ${user.status}, ${user.dept}. Apps: ${apps.length ? apps.join(', ') : 'none'}.`;
   }
-  const people = Object.keys(okta.users).length;
-  return people ? `${people} ${people === 1 ? 'person' : 'people'} in Oktopus, ${okta.groups.length} groups, ${Object.keys(okta.apps).length} apps.` : 'A brand-new org. Nobody in it yet.';
+  const people = Object.values(okta.users).filter((u) => u.status === 'active').length;
+  return Object.keys(okta.users).length ? `${people} active ${people === 1 ? 'person' : 'people'} in Oktopus, ${okta.groups.length} groups, ${Object.keys(okta.apps).length} apps.` : 'A brand-new org. Nobody in it yet.';
 }
 
-/** A question as you'd ask it on this ticket: "{who}" is whoever the ticket is about. */
-export const askText = (t: Ticket, text: string) => text.replaceAll('{who}', t.subject ? hrOn(DAYS).find((r) => r.login === t.subject)?.name ?? t.subject : '');
+/**
+ * Text as it reads on this ticket: "{who}" is whoever it's about, "{app}" its app and "{team}" its departments, so
+ * one kind of problem can be about Fern and Hootsweet one week and Hazel and Voyago the next.
+ */
+export function fill(t: Ticket, text: string): string {
+  const team = t.team ?? ['Marketing'];
+  return text
+    .replaceAll('{who}', t.subject ? hrOn(DAYS).find((r) => r.login === t.subject)?.name ?? t.subject : 'them')
+    .replaceAll('{app}', CATALOG.find((c) => c.id === (t.app ?? 'hootsweet'))?.name ?? t.app ?? '')
+    .replaceAll('{team}', team.length >= 5 ? 'everyone' : teamWords(team));
+}
 
 /** The suggestion that really fixes this ticket: usually the issue's fix, unless this one's cause is different. */
 export const fixFor = (t: Ticket) => t.fixedBy ?? issueOf(t).correctFix;
@@ -507,13 +516,13 @@ export const fixFor = (t: Ticket) => t.fixedBy ?? issueOf(t).correctFix;
 const CONSOLE_CHECK: Record<ConsoleFix, string> = {
   unlock: 'Ask them to try signing in again',
   reset: 'Ask them to sign in with the temporary password and choose their own',
-  mfa: 'Ask her to sign in and set up her new phone',
+  mfa: 'Ask them to sign in and set up their new phone',
   disable: 'Ask them to check nobody can sign in as Sam now',
-  'okta-setup': 'Ask them to check Marketing are all set up',
-  'okta-app': 'Ask them to check Hootsweet is on their dashboard',
-  joiner: 'Ask them to check Fern can sign in',
-  mover: 'Ask them to check Basil has the right access',
-  leaver: 'Ask them to check Wren can\u2019t sign in',
+  'okta-setup': 'Ask them to check {team} are all set up',
+  'okta-app': 'Ask them to check {app} is on the right dashboards',
+  joiner: 'Ask them to check {who} can sign in',
+  mover: 'Ask them to check {who} has the right access',
+  leaver: 'Ask them to check {who} can\u2019t sign in',
 };
 
 /** Everything you could suggest on a ticket: your tool, a check after console work, and the usual fixes. */
@@ -522,7 +531,7 @@ export function suggestions(s: GameState, t: Ticket): Fix[] {
   const tool = toolFor(s, t);
   return [
     ...(tool ? [{ id: 'tool', label: tool.fixLabel }] : []),
-    ...(issue.console ? [{ id: 'console', label: CONSOLE_CHECK[issue.console] }] : []),
+    ...(issue.console ? [{ id: 'console', label: fill(t, CONSOLE_CHECK[issue.console]) }] : []),
     ...issue.fixes,
   ];
 }
@@ -558,7 +567,7 @@ export function ask(s: GameState, id: string, askId: string): GameState {
   return act(s, (d) => {
     const st = ticketState(d, id);
     st.status = 'open';
-    st.messages.push({ from: 'you', text: askText(t, q.text), at: d.clock });
+    st.messages.push({ from: 'you', text: fill(t, q.text), at: d.clock });
     st.caller = { doing: 'answer', id: askId, until: replyAt(d, t, callerMinutes(d, t, CALLER[t.priority].answer)) };
     advance(d, COST.ask);
   });
@@ -597,6 +606,7 @@ function hear(d: GameState, t: Ticket, c: { doing: 'answer' | 'try'; id: string;
   const f = suggestions(d, t).find((x) => x.id === c.id);
   const problem = c.id === 'console' ? accountProblem(d, t) : undefined;
   if (c.id === 'tool' || (c.id === 'console' ? !problem : c.id === fixFor(t))) {
+    if (d.notice?.ticketId === t.id) d.notice = undefined;
     st.caller = { doing: 'confirmed', id: c.id };
     said(f?.works ?? THANKS[st.mood]);
     return;
@@ -610,7 +620,7 @@ function hear(d: GameState, t: Ticket, c: { doing: 'answer' | 'try'; id: string;
   d.today.wrongFixes += 1;
   said('It\u2019s still not working.');
   d.notice = { ticketId: t.id, text: problem ?? f?.fail ?? 'That didn\u2019t work.' };
-  if (relation(d, t.who) === 'friend') d.notice.text += ' They give you an encouraging smile anyway.';
+  if (relation(d, t.who) === 'friend') d.notice.text += ` ${VILLAGERS[t.who].name} gives you an encouraging smile anyway.`;
   else slip(d, t);
   // Some mistakes are too serious to keep quiet, whoever it was for.
   if (f?.grave) complain(d, t, true);

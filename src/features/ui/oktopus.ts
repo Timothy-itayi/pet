@@ -69,7 +69,8 @@ function dashboard(app: App): HTMLElement {
       h('div', {}, h('strong', {}, String(active)), h('span', {}, 'Active people')),
       h('div', {}, h('strong', {}, String(okta.groups.length)), h('span', {}, 'Groups')),
       h('div', {}, h('strong', {}, String(Object.keys(okta.apps).length)), h('span', {}, 'Applications'))),
-    h('section', { class: 'okta-card', 'data-testid': 'okta-pilot' },
+    // The pilot checklist helps in week 2; once every step's done it gets out of the way.
+    pilotSteps(app.state).some(([, done]) => !done) && h('section', { class: 'okta-card', 'data-testid': 'okta-pilot' },
       h('h2', {}, 'Getting started: the Marketing pilot'),
       h('ol', { class: 'okta-steps' }, ...pilotSteps(app.state).map(([step, done, where]) => h('li', { class: done ? 'done' : '' },
         h('span', { class: 'okta-tick', 'aria-label': done ? 'Done' : 'Not done' }, done ? '✔' : '○'),

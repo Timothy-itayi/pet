@@ -2,7 +2,7 @@ import { DAYS, ISSUES, MANAGER, MAX_PUSHES, POLICY, REPLIES, TICKETS, VILLAGERS,
 import { OKTOPUS_DAY } from '../game/oktopus.ts';
 import { sayNow, statusText } from '../game/people.ts';
 import {
-  ask, askText, canPush, canWorkaround, fixFor, isKnown, issueOf, liveFact, moodName, next, noteTarget, pushBack, relation, reply, resolve,
+  ask, canPush, canWorkaround, fixFor, isKnown, issueOf, fill, liveFact, moodName, next, noteTarget, pushBack, relation, reply, resolve,
   scriptFor, suggest, suggestions, ticketById, ticketState, workaround, writeNote, type GameState, type Outcome, type Status, type TicketState,
 } from '../game/rules.ts';
 import type { ConsoleFix, Ticket } from '../game/types.ts';
@@ -122,12 +122,15 @@ function knowledge(s: GameState, t: Ticket): HTMLElement {
 }
 
 /** Where the conversation stands, in a line: whose move it is. */
+/** Someone's words in quotes, unless they already are. */
+const quoted = (text: string) => (text.startsWith('\u201C') ? text : `\u201C${text}\u201D`);
+
 function callerLine(app: App, t: Ticket): HTMLElement {
   const st = ticketState(app.state, t.id);
   const name = VILLAGERS[t.who].name;
   const c = st.caller;
   if (c?.doing === 'confirmed') {
-    return h('div', { class: 'sn-info ok', 'data-testid': 'caller-line' }, `\u2714 ${name}: \u201C${st.messages.at(-1)?.text ?? 'It works.'}\u201D `,
+    return h('div', { class: 'sn-info ok', 'data-testid': 'caller-line' }, `\u2714 ${name}: ${quoted(st.messages.at(-1)?.text ?? 'It works.')} `,
       h('button', { class: 'sn-btn primary', 'data-testid': 'resolve-now', onclick: () => app.set(resolve(app.state, t.id)) }, 'Resolve'));
   }
   if (c) {
@@ -137,7 +140,7 @@ function callerLine(app: App, t: Ticket): HTMLElement {
   }
   const said = st.heard.length || st.tried.length ? st.messages.at(-1) : undefined;
   return h('div', { class: 'sn-info said', 'data-testid': 'caller-line' }, said?.from === 'them'
-    ? h('p', { class: 'sn-said' }, h('strong', {}, `${name}: `), `\u201C${said.text}\u201D`)
+    ? h('p', { class: 'sn-said' }, h('strong', {}, `${name}: `), quoted(said.text))
     : h('p', {}, `Find out what\u2019s really going on: ask ${name} a question, or suggest something to try.`));
 }
 
@@ -162,7 +165,7 @@ function troubleshoot(app: App, t: Ticket): HTMLElement {
     st.caller?.doing !== 'confirmed' && h('div', { class: 'sn-chips' },
       asks.length > 0 && h('div', { role: 'group', 'aria-label': 'Ask' },
         h('p', { class: 'sn-chip-title' }, 'Ask'),
-        ...asks.map((a) => chip(askText(t, a.text), `ask-${a.id}`, () => app.set(ask(state, t.id, a.id))))),
+        ...asks.map((a) => chip(fill(t, a.text), `ask-${a.id}`, () => app.set(ask(state, t.id, a.id))))),
       h('div', { role: 'group', 'aria-label': 'Suggest' },
         h('p', { class: 'sn-chip-title' }, 'Suggest'),
         issue.console && h('button', { class: 'sn-btn', 'data-testid': 'open-registry', onclick: () => consoleFor(issue.console ?? 'unlock').open(app, t) },
@@ -285,10 +288,10 @@ export function outcomeCard(app: App, o: Outcome): HTMLElement {
     asked: 'Please log a ticket',
   }[o.kind];
   const body = {
-    fix: issue.why,
+    fix: fill(ticketById(o.ticketId), issue.why),
     workaround: `${v.name} is happy for now. It’ll probably come back in ${WORKAROUND_RETURNS_AFTER} days. Fix it properly to learn what was really wrong.`,
     push: `On hold until tomorrow. ${v.name} understands: these things take time.`,
-    asked: `${v.name} rolls their eyes and heads back to their desk to fill one in. It\u2019ll land in your queue soon, a bit grumpier, and this time Mr. Grisby will count it.`,
+    asked: `${v.name} sighs, and goes off to fill one in. It\u2019ll land in your queue soon, a bit grumpier, and this time Mr. Grisby will count it.`,
     complaint: o.grave
       ? `That one was serious enough that ${v.name} went straight to ${MANAGER}. It\u2019s on your day report. It still needs fixing properly, and it\u2019s still in your queue.`
       : `${v.name} has had enough of waiting and complains to ${MANAGER}. They still need it fixed, so it\u2019s still in your queue. Send updates so people know you haven\u2019t forgotten them.`,
