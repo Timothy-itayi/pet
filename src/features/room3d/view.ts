@@ -25,6 +25,16 @@ const SHOTS: Record<Shot, Pose> = {
   // Close enough that the glass fills the view, with a little bezel showing round the edge.
   computer: { pos: [0, SCREEN_Y, SCREEN_Z + 0.36], look: [0, SCREEN_Y, SCREEN_Z] },
 };
+/**
+ * A shot, fitted to the window. At the computer the camera sits close enough to fill a 4:3 or wider window with the
+ * screen; in a narrower one (a phone, a tall window) it backs off so the whole screen still fits side to side.
+ */
+function shotFor(shot: Shot): Pose {
+  const pose = SHOTS[shot];
+  if (shot !== 'computer') return pose;
+  const back = 0.36 * Math.max(1, 4 / 3 / (innerWidth / innerHeight));
+  return { pos: [pose.pos[0], pose.pos[1], SCREEN_Z + back], look: pose.look };
+}
 const MOVE_MS = 1500;
 /** How far the camera drifts as you move the mouse, so the room never feels like a still picture. */
 const DRIFT = { overview: 0.035, wall: 0.015, computer: 0 } as const;
@@ -86,6 +96,8 @@ function resize(): void {
   v.css?.setSize(innerWidth, innerHeight);
   v.camera.aspect = innerWidth / innerHeight;
   v.camera.updateProjectionMatrix();
+  // Sitting at the computer when the window changes shape: refit so the screen still fits.
+  if (v.shot === 'computer') v.from = v.to = shotFor('computer');
   if (v.inspect) {
     v.inspect.renderer.setSize(innerWidth, innerHeight);
     v.inspect.camera.aspect = innerWidth / innerHeight;
@@ -185,7 +197,7 @@ export function goTo(shot: Shot): Promise<void> {
   const now = performance.now();
   const t = v.reduced ? 1 : Math.min(1, (now - v.started) / MOVE_MS);
   v.from = cameraAt(v.from, v.to, t, [0, 0]);
-  v.to = SHOTS[shot];
+  v.to = shotFor(shot);
   v.shot = shot;
   v.started = now;
   setHover(undefined);
@@ -194,7 +206,7 @@ export function goTo(shot: Shot): Promise<void> {
 
 /** Jump straight to a view, no glide (on page load). */
 export function snapTo(shot: Shot): void {
-  v.from = v.to = SHOTS[shot];
+  v.from = v.to = shotFor(shot);
   v.shot = shot;
   v.started = 0;
 }

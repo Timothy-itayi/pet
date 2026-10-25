@@ -288,7 +288,7 @@ export const PEOPLE: Record<string, Person> = {
     },
   },
   hazel: {
-    about: 'Joins Finance in week three as Accounts Assistant: quiet, precise, unfailingly polite and very fond of a spreadsheet. Brings her own calculator. Leaves after three days, just as politely, with the calculator.',
+    about: 'Joins Finance in week three as Accounts Assistant: quiet, precise, unfailingly polite and very fond of a spreadsheet. Brings her own calculator. Leaves after two days, just as politely, with the calculator.',
     routine: [
       { at: '8:50', doing: 'arriving', where: 'Front door, a little early' },
       { at: '9:00', doing: 'desk', where: 'Finance corner, the new desk' },

@@ -109,16 +109,16 @@ export const ISSUES: Issue[] = [
     ],
     fixes: [
       { id: 'offon', label: 'Turn it off and on again', ruledOut: 'Restarted. The CD still doesn’t fit anywhere.' },
-      { id: 'download', label: 'Download the current driver from the printer maker’s website' },
+      { id: 'download', label: 'Install the current driver from the Company Portal' },
       { id: 'cd', label: 'Find a laptop with a CD drive', fail: 'The oldest laptop in the building has no CD drive either.' },
       { id: 'usb', label: 'Run a long USB cable to the printer', fail: 'Facilities has asked you to stop.' },
     ],
     correctFix: 'download',
     note: {
-      example: 'New laptops have no CD drive. Get drivers from the maker’s website.',
-      keys: ['website', 'download', 'online', 'maker', 'manufacturer', 'no cd', 'no disc'],
+      example: 'New laptops have no CD drive. Install the current driver from the Company Portal, not the CD.',
+      keys: ['portal', 'website', 'download', 'online', 'maker', 'manufacturer', 'no cd', 'no disc'],
     },
-    why: 'Runbooks go out of date. Get drivers from the maker’s website so they’re current and safe.',
+    why: 'Runbooks and CDs go out of date. The Company Portal has the current driver, checked and safe, the same as any other software: install from there.',
   },
   {
     id: 'guest-wifi',
@@ -260,7 +260,7 @@ export const ISSUES: Issue[] = [
       example: 'Password expired. Owner changes it themselves; IT never learns it.',
       keys: ['expired', 'expiry', 'expire'],
     },
-    why: 'Nothing was broken: the password had expired. People change their own passwords, so only they know them. The old runbook page had it backwards.',
+    why: 'Nothing was broken: the password had expired. People change their own passwords, so only they know them. The old runbook page had it backwards. This one was real: the message came up on their own computer, from the system itself. A “password expired” message that arrives by email with a link is phishing.',
   },
   {
     id: 'mouse-battery',
@@ -654,7 +654,7 @@ export const ISSUES: Issue[] = [
       { id: 'plugged', text: 'Have you plugged it in anywhere?', none: 'Not yet. I wanted to ask first.' },
     ],
     fixes: [
-      { id: 'handin', label: 'Thank them, take it, and don’t plug it in anywhere: it goes in the bin for destroying' },
+      { id: 'handin', label: 'Thank them, take it, and don’t plug it in anywhere: it goes in the bin for destroying', works: 'You’re taking it? Without even looking? Okay. That’s probably right.' },
       { id: 'look', grave: true, label: 'Plug it into your computer to see whose it is', fail: 'Your computer opens a file nobody clicked. It was never a lost stick: it was bait. Never plug in a stick you found.' },
       { id: 'spare', label: 'Plug it into the old spare laptop instead, to be safe', fail: 'The spare laptop is on the network too. It’s now telling someone outside about it.' },
     ],
@@ -1997,10 +1997,10 @@ export const TICKETS: Ticket[] = [
   {
     id: 't1901', day: 19, at: '9:30', who: 'dot', via: 'walkup', where: 'Finance corner', priority: 'high', issue: 'ceo-fraud', mood: 1,
     title: 'Mr. Grisby wants a payment. Quietly.',
-    message: 'An email from Mr. Grisby. He wants me to pay a new supplier £9,400 today and not to mention it to anyone. He has never once been quiet about money.',
+    message: 'An email from Mr. Grisby. He wants me to pay a new supplier $9,400 today and not to mention it to anyone. He has never once been quiet about money.',
     details: [
       { label: 'Address', text: 'm.grisby.md@gmall.com. His real one is grisby@burrow.co.', ask: 'from' },
-      { label: 'Request', text: 'Pay £9,400 to a new supplier before noon. “Don’t mention it to anyone.”', ask: 'asked' },
+      { label: 'Request', text: 'Pay $9,400 to a new supplier before noon. “Don’t mention it to anyone.”', ask: 'asked' },
       { label: 'Checked', text: 'No. The email says he’s in meetings all day.', ask: 'check' },
     ],
     workaround: 'Tell her to wait until Monday',
@@ -2071,7 +2071,7 @@ export const TICKETS: Ticket[] = [
   {
     id: 't2002', day: 20, at: '10:10', who: 'juniper', via: 'tray', priority: 'normal', issue: 'phish', mood: 1,
     title: '“Win a voucher” from HR?',
-    message: 'HR sent a survey and you can win a £50 voucher!! But it asks for my Oktopus password at the end. HR wouldn’t ask that. Would they?',
+    message: 'HR sent a survey and you can win a $50 voucher!! But it asks for my Oktopus password at the end. HR wouldn’t ask that. Would they?',
     details: [
       { label: 'Sender', text: 'hr-rewards@burrow-co-hr.net. HR’s real address is hr@burrow.co.', ask: 'from' },
       { label: 'Clicked', text: 'She opened the survey but stopped at the password box.', ask: 'clicked' },
@@ -2342,7 +2342,7 @@ export const TICKETS: Ticket[] = [
   {
     id: 't2404', day: 24, at: '13:10', who: 'marlo', via: 'tray', priority: 'high', issue: 'phish', mood: 1,
     title: '“Rowan” wants gift cards',
-    message: 'Got an email from Rowan asking me to buy £500 of gift cards for a client, urgently. Rowan has been here two days. Rowan doesn’t know any clients.',
+    message: 'Got an email from Rowan asking me to buy $500 of gift cards for a client, urgently. Rowan has been here two days. Rowan doesn’t know any clients.',
     details: [
       { label: 'Sender', text: 'rowan.sales.burrow@gmall.com. Rowan’s real address is rowan@burrow.co.', ask: 'from' },
       { label: 'Clicked', text: 'Didn’t click, didn’t buy. Did laugh.', ask: 'clicked' },
