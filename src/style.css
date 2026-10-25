@@ -42,8 +42,6 @@ h3 { font-size: 1.1rem; }
 .small-heading, .status, .meta, .taskbar, .titlebar, .icon, .mood, .bond {
   font-family: var(--pixel); font-weight: 400;
 }
-img.sprite { image-rendering: pixelated; width: 128px; height: 128px; flex: none; }
-img.sprite.small { width: 48px; height: 48px; }
 
 .screen {
   position: relative;
@@ -161,7 +159,6 @@ meter { width: 100%; height: 18px; }
 .queue-item.selected { background: #fff3a8; box-shadow: inset 0 0 0 2px var(--ink); }
 .queue-text { display: flex; flex-direction: column; font-size: 0.95rem; min-width: 0; }
 .queue-empty { color: var(--muted); }
-img.sprite.tiny { width: 40px; height: 40px; }
 .due { font-family: var(--pixel); color: var(--muted); margin: 4px 0 0; }
 .due.urgent { color: var(--honk); }
 
@@ -250,7 +247,6 @@ img.sprite.tiny { width: 40px; height: 40px; }
   .icons { flex-direction: row; flex-wrap: wrap; width: auto; }
   .icon { width: 88px; }
   .toast { position: static; margin: 0 16px 16px; max-width: none; }
-  img.sprite { width: 72px; height: 72px; }
   .desk { height: auto; }
   .desk-body { grid-template-columns: 1fr; }
   .queue { border-right: 0; border-bottom: 6px solid var(--wood-dark); max-height: 40vh; }
@@ -408,7 +404,6 @@ body.in-room #app .room-hud > * { pointer-events: auto; }
 .chat-head { display: flex; gap: 16px; align-items: center; }
 .chat-head h2 { margin: 0; }
 .chat-face { margin: 0; padding: 6px; display: flex; flex-direction: column; align-items: center; gap: 4px; background: #1f1712; border: 3px solid var(--ink); border-radius: 6px; }
-.chat-face .sprite { width: 112px; height: 112px; }
 .chat-face figcaption { font: 0.85rem var(--pixel); color: #fff; }
 .chat-face.mood-2 { box-shadow: 0 0 0 3px #f8c79a; }
 .chat-face.mood-3 { box-shadow: 0 0 0 3px var(--honk); animation: fume 0.6s ease-in-out infinite alternate; }
@@ -1204,3 +1199,5 @@ button.profile-face:hover, button.profile-face:focus-visible { box-shadow: 0 0 0
 .okta-catalog-name { display: inline-flex; align-items: center; gap: 8px; }
 .okta-app-title { display: flex; align-items: center; gap: 10px; }
 .painted-glyph { width: 1.6em; height: 1.6em; border-radius: 22%; vertical-align: middle; }
+
+.okta-switch { display: flex; align-items: center; gap: 8px; cursor: pointer; }

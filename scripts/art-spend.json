@@ -352,5 +352,167 @@
     "kind": "image",
     "usd": 0.036,
     "at": "2026-10-25T13:19:32.413Z"
+  },
+  {
+    "id": "icon-oktopus",
+    "kind": "image",
+    "usd": 0.036,
+    "at": "2026-10-25T13:34:18.372Z"
+  },
+  {
+    "id": "news-one-sign-in-for-everyone",
+    "kind": "image",
+    "usd": 0.036,
+    "at": "2026-10-25T13:44:29.916Z"
+  },
+  {
+    "id": "news-one-sign-in-for-everyone",
+    "kind": "loop",
+    "usd": 0.36,
+    "at": "2026-10-25T13:45:55.185Z"
+  },
+  {
+    "id": "news-expenses-go-digital",
+    "kind": "image",
+    "usd": 0.036,
+    "at": "2026-10-25T13:46:32.448Z"
+  },
+  {
+    "id": "news-expenses-go-digital",
+    "kind": "loop",
+    "usd": 0.36,
+    "at": "2026-10-25T13:47:57.185Z"
+  },
+  {
+    "id": "news-welcome-hazel",
+    "kind": "image",
+    "usd": 0.036,
+    "at": "2026-10-25T13:48:23.642Z"
+  },
+  {
+    "id": "news-welcome-hazel",
+    "kind": "loop",
+    "usd": 0.36,
+    "at": "2026-10-25T13:49:41.683Z"
+  },
+  {
+    "id": "news-pip-joins-finance",
+    "kind": "image",
+    "usd": 0.036,
+    "at": "2026-10-25T13:50:36.395Z"
+  },
+  {
+    "id": "news-pip-joins-finance",
+    "kind": "loop",
+    "usd": 0.36,
+    "at": "2026-10-25T13:51:59.454Z"
+  },
+  {
+    "id": "news-a-short-goodbye",
+    "kind": "image",
+    "usd": 0.036,
+    "at": "2026-10-25T13:52:37.347Z"
+  },
+  {
+    "id": "news-a-short-goodbye",
+    "kind": "loop",
+    "usd": 0.36,
+    "at": "2026-10-25T13:54:03.418Z"
+  },
+  {
+    "id": "feed-12-marlo",
+    "kind": "image",
+    "usd": 0.036,
+    "at": "2026-10-25T13:54:40.757Z"
+  },
+  {
+    "id": "feed-14-pip",
+    "kind": "image",
+    "usd": 0.036,
+    "at": "2026-10-25T13:56:03.530Z"
+  },
+  {
+    "id": "face-hazel",
+    "kind": "image",
+    "usd": 0.036,
+    "at": "2026-10-25T13:57:18.485Z"
+  },
+  {
+    "id": "face-hazel",
+    "kind": "upscale",
+    "usd": 0.01,
+    "at": "2026-10-25T13:58:40.836Z"
+  },
+  {
+    "id": "news-the-auditors-findings",
+    "kind": "image",
+    "usd": 0.036,
+    "at": "2026-10-25T14:46:38.435Z"
+  },
+  {
+    "id": "news-the-auditors-findings",
+    "kind": "loop",
+    "usd": 0.36,
+    "at": "2026-10-25T14:48:08.151Z"
+  },
+  {
+    "id": "news-sign-in-with-your-phone",
+    "kind": "image",
+    "usd": 0.036,
+    "at": "2026-10-25T14:48:34.363Z"
+  },
+  {
+    "id": "news-sign-in-with-your-phone",
+    "kind": "loop",
+    "usd": 0.36,
+    "at": "2026-10-25T14:49:58.452Z"
+  },
+  {
+    "id": "news-please-stop-plugging-things-in",
+    "kind": "image",
+    "usd": 0.036,
+    "at": "2026-10-25T14:50:24.138Z"
+  },
+  {
+    "id": "news-please-stop-plugging-things-in",
+    "kind": "loop",
+    "usd": 0.36,
+    "at": "2026-10-25T14:51:50.665Z"
+  },
+  {
+    "id": "news-i-would-never-ask-quietly",
+    "kind": "image",
+    "usd": 0.036,
+    "at": "2026-10-25T14:52:16.197Z"
+  },
+  {
+    "id": "news-i-would-never-ask-quietly",
+    "kind": "loop",
+    "usd": 0.36,
+    "at": "2026-10-25T14:53:58.599Z"
+  },
+  {
+    "id": "news-goodbye-auditors",
+    "kind": "image",
+    "usd": 0.036,
+    "at": "2026-10-25T14:54:41.394Z"
+  },
+  {
+    "id": "news-goodbye-auditors",
+    "kind": "loop",
+    "usd": 0.36,
+    "at": "2026-10-25T14:56:14.513Z"
+  },
+  {
+    "id": "feed-18-pip",
+    "kind": "image",
+    "usd": 0.036,
+    "at": "2026-10-25T14:56:46.340Z"
+  },
+  {
+    "id": "feed-20-fern",
+    "kind": "image",
+    "usd": 0.036,
+    "at": "2026-10-25T14:58:29.294Z"
   }
 ]

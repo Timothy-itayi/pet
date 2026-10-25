@@ -80,6 +80,66 @@ export const NEWS: NewsPost[] = [
     moves: 'Static camera. The strings sway slightly and the desk lamp flickers.',
     body: 'Marketing love Oktopus. The auditors love Oktopus. Next month: everyone gets it, and Finance get Voyago for travel. IT will be busy. IT is one intern. Hmm.',
   },
+  {
+    day: 11, title: 'One sign-in for everyone', from: 'Mr. Grisby', scene: '\u{1F419}\u{1F465}', tone: '#1d4ed8',
+    shows: 'A long row of identical office keys hanging on hooks, all on one big key ring in the middle, under a desk lamp',
+    moves: 'Static camera. The key ring sways very slightly and the lamp flickers.',
+    body: 'From today, everyone at Burrow signs in once, with Oktopus, and gets their team\u2019s apps. The intern is doing all of it today. Please be patient. Please be in the HR file.',
+  },
+  {
+    day: 12, title: 'Expenses go digital', from: 'Dot', scene: '\u2708\u{1F9FE}', tone: '#0f766e',
+    shows: 'A tidy stack of paper receipts on a finance desk, slowly being tucked into a small leather travel wallet, an old calculator beside them',
+    moves: 'Static camera. The top receipt lifts in the air-conditioning and settles again.',
+    body: 'Finance will use Voyago for travel and expenses from today. Paper receipts will be accepted until Friday, and resented forever.',
+  },
+  {
+    day: 13, title: 'Welcome, Hazel!', from: 'Dot', scene: '\u{1F33F}\u{1F9EE}', tone: '#4d7c0f',
+    shows: 'A neat new desk in a finance office with a brand-new calculator, a pot plant and a fresh notebook, a nameplate with no name on it yet',
+    moves: 'Static camera. The plant’s leaves move slightly; a pen rolls a little and stops.',
+    body: 'Please welcome Hazel, our new Accounts Assistant. She likes spreadsheets, quiet and tea with no sugar. We are going to get on very well.',
+  },
+  {
+    day: 14, title: 'Pip joins Finance', from: 'Otis', scene: '\u{1F4CA}\u{1F438}', tone: '#065f46',
+    shows: 'A cardboard box of desk things being carried from a cluttered supply cupboard towards a tidy finance office, a stapler on top',
+    moves: 'Static camera. The supply cupboard door swings gently shut.',
+    body: 'Pip moves from Operations to Finance today. Operations will miss Pip\u2019s encyclopaedic knowledge of cables. Finance will gain it. Hoo.',
+  },
+  {
+    day: 15, title: 'A short goodbye', from: 'Dot', scene: '\u{1F44B}\u{1F9EE}', tone: '#7c2d12',
+    shows: 'An empty finance desk with a single calculator-shaped gap in the dust, a thank-you card propped against the monitor',
+    moves: 'Static camera. The card tips over very slowly and lies flat.',
+    body: 'Hazel has decided Finance isn\u2019t for her. She was with us three days, and she was lovely. If you have seen a calculator, please return it to Finance.',
+  },
+  {
+    day: 16, title: 'The auditors\u2019 findings', from: 'Otis', scene: '\u{1F50E}\u{1F4CB}', tone: '#334155',
+    shows: 'A thick report on a meeting room table with coloured flags sticking out of it, a red pen beside it, blinds half drawn',
+    moves: 'Static camera. The report\u2019s flags flutter slightly in the air-conditioning and the light through the blinds shifts.',
+    body: 'The auditors\u2019 report is in. Three findings: leavers who can still sign in, passwords on their own, and a shared login at reception. IT is on it. IT is one intern. Hoo.',
+  },
+  {
+    day: 17, title: 'Sign in with your phone', from: 'Mr. Grisby', scene: '\u{1F4F1}\u{1F510}', tone: '#1e3a8a',
+    shows: 'An old desk phone and a small modern mobile phone side by side on a desk, a padlock between them, lit by a monitor',
+    moves: 'Static camera. The mobile phone\u2019s screen lights up softly, then dims.',
+    body: 'From today Oktopus will ask for your phone as well as your password. This is called MFA, apparently. If you don\u2019t have a phone, Biscuit has a drawer of them.',
+  },
+  {
+    day: 18, title: 'Please stop plugging things in', from: 'IT', scene: '\u{1F50C}\u{1F6AB}', tone: '#7f1d1d',
+    shows: 'A single USB stick lying on wet tarmac in an empty car park at night under a street lamp, with a handwritten label',
+    moves: 'Static camera. Rain falls lightly through the lamp light and the puddles ripple.',
+    body: 'If you find a USB stick, do not plug it in to see whose it is. Bring it to IT. If you find one labelled \u201CSalaries\u201D, especially do not plug it in. Thank you, Pip.',
+  },
+  {
+    day: 19, title: 'I would never ask quietly', from: 'Mr. Grisby', scene: '\u{1F4B7}\u{1F92B}', tone: '#78350f',
+    shows: 'A finance desk with a payment form left unsigned, a pen set down beside it, and an old telephone off its hook as if someone is calling to check',
+    moves: 'Static camera. The pen rolls a little and stops against the form.',
+    body: 'Someone pretending to be me asked Finance to pay a stranger, quietly. I have never done anything quietly in my life. If I ask for money, I will ask loudly, in person, and probably twice.',
+  },
+  {
+    day: 20, title: 'Goodbye, auditors', from: 'Otis', scene: '\u{1F44B}\u{1F4CB}', tone: '#3f6212',
+    shows: 'An empty meeting room after a long stay, a neat stack of returned folders, a single half-eaten biscuit on a plate',
+    moves: 'Static camera. The door slowly swings shut on its own.',
+    body: 'The auditors leave us today. Two of three findings are closed, and the third is a shared login that Biscuit misses. They said we had \u201Cimproved markedly\u201D. I have framed it. Hoo.',
+  },
 ];
 
 /** Every post up to today, newest first. */

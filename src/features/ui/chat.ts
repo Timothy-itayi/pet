@@ -2,7 +2,7 @@ import { VILLAGERS } from '../game/data.ts';
 import { newsFor } from '../game/news.ts';
 import { askForTicket, moodName, ticketById, ticketState, type GameState } from '../game/rules.ts';
 import type { Ticket } from '../game/types.ts';
-import { face } from '../art/sprites.ts';
+import { portrait } from './portrait.ts';
 import type { App } from './app.ts';
 import { openIncident } from './desk.ts';
 import { clockText, h } from './dom.ts';
@@ -66,7 +66,7 @@ function chatView(app: App, t: Ticket): HTMLElement {
   return h('article', { class: 'chat-dm', 'aria-label': `Chat with ${v.name}` },
     h('header', { class: 'chat-head' },
       h('figure', { class: `chat-face mood-${st.mood}` },
-        h('img', { class: 'sprite', src: face(v, st.mood), alt: `${v.name}, looking ${moodName(st.mood).toLowerCase()}`, 'data-testid': 'chat-face' }),
+        portrait(v.name, 96),
         h('figcaption', {}, moodName(st.mood))),
       h('div', {},
         h('h2', {}, v.name),

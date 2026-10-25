@@ -16,6 +16,8 @@ export interface Art {
   face?: true;
   /** A square app icon, in place of the scene style. */
   icon?: true;
+  /** Its own look, in place of the shared one for its kind. */
+  style?: string;
   /** What the picture shows. */
   shows: string;
   /** How it moves, for a looping clip. Without it, it's a still. */
@@ -53,6 +55,7 @@ const FACES: Record<string, string> = {
   Biscuit: 'Office assistant, fair skin, curly golden-ginger hair, mustard-yellow jumper, a beaming cheerful smile',
   Pip: 'Operations assistant, deep brown skin, short black hair, glasses, green shirt, a curious smile',
   Fern: 'Social media assistant, very fair skin, copper-red bob, green top, friendly',
+  Hazel: 'New accounts assistant, warm brown skin, neat dark hair tied back, small round glasses, cream blouse under a grey cardigan, polite and slightly nervous',
   Sam: 'IT administrator, tan skin, short brown hair, beard, grey hoodie, tired kind eyes',
   IT: 'Young IT intern, light skin, short dark brown hair, blue shirt with a staff lanyard, a hopeful nervous smile',
 };
@@ -65,7 +68,12 @@ const ICONS: Record<string, string> = {
   hootsweet: 'A friendly round owl with big eyes holding a tiny paper speech bubble, on a teal tile',
   voyago: 'A small paper aeroplane over a suitcase with a luggage tag, on a sky-blue tile',
   canvass: 'A paint palette with a fat brush and three bright blobs of paint, on a warm coral tile',
-  oktopus: 'A cheerful purple octopus holding a small brass key in one tentacle, on a deep indigo tile',
+  oktopus: 'A thick bold ring like the letter O, drawn as one octopus tentacle curled round until its tip meets its base, small round suckers along the inside edge',
+};
+
+/** Oktopus is a big modern sign-on company: its icon is a clean flat mark, like the real ones, not a painting. */
+const ICON_LOOKS: Record<string, string> = {
+  oktopus: 'Flat modern tech company logo mark, minimal vector style, solid royal blue on a plain white rounded square tile, crisp edges, generous margin, no gradients, no text, no letters other than the ring shape',
 };
 
 export const iconId = (app: string) => `icon-${app}`;
@@ -80,5 +88,5 @@ export const feedArt = (p: SocialPost): Art | undefined => (p.shows ? { id: `fee
 export const ALL_ART: Art[] = [
   BANNER, ...NEWS.map(newsArt), ...SOCIAL.flatMap((p) => feedArt(p) ?? []),
   ...Object.entries(FACES).map(([name, shows]): Art => ({ id: faceId(name), shows, face: true })),
-  ...Object.entries(ICONS).map(([app, shows]): Art => ({ id: iconId(app), shows, icon: true })),
+  ...Object.entries(ICONS).map(([app, shows]): Art => ({ id: iconId(app), shows, icon: true, style: ICON_LOOKS[app] })),
 ];

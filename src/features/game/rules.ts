@@ -5,7 +5,7 @@ import {
 } from './data.ts';
 import { MINUTES_A_DAY, newAccounts, type Account } from './directory.ts';
 import { awayLine, backAt, dayMood } from './people.ts';
-import { appsOf, groupsOf, hrOn, newOkta, type Okta } from './oktopus.ts';
+import { appsOf, CATALOG, hrOn, needsMfa, newOkta, type Okta } from './oktopus.ts';
 import { MOODS, type ConsoleFix, type Fix, type Issue, type Note, type Job, type Mood, type PageStatus, type Relation, type Skill, type Ticket, type Tool } from './types.ts';
 
 export type Phase = 'boot' | 'desktop' | 'desk' | 'dayEnd' | 'ending';
@@ -402,7 +402,10 @@ export function reply(s: GameState, id: string): GameState {
 export function accountProblem(s: GameState, t: Ticket): string | undefined {
   const fixBy = issueOf(t).console;
   if (!fixBy) return undefined;
-  if (fixBy === 'disable') return s.accounts.sam?.enabled ? 'Sam\u2019s account is still enabled in Active Directory. Anyone with his old password can still get in.' : undefined;
+  if (fixBy === 'disable') {
+    const on = (t.subjects ?? ['sam']).filter((l) => s.accounts[l]?.enabled);
+    return on.length ? `${named(s, on)}${on.length > 1 ? '\u2019s accounts are' : '\u2019s account is'} still enabled in Active Directory. Anyone with the old password can still get in.` : undefined;
+  }
   if (fixBy !== 'unlock' && fixBy !== 'reset') return oktaProblem(s, t, fixBy);
   const a = s.accounts[t.who];
   if (!a) return undefined;
@@ -415,45 +418,105 @@ export function accountProblem(s: GameState, t: Ticket): string | undefined {
   return undefined;
 }
 
-/** Marketing, as HR has them today. */
-const marketing = (s: GameState) => hrOn(s.day).filter((r) => r.dept === 'Marketing' && r.status === 'active');
+/** Everyone in some departments, as HR has them today. */
+const staffIn = (s: GameState, team: readonly string[]) => hrOn(s.day).filter((r) => team.includes(r.dept) && r.status === 'active');
 const named = (s: GameState, logins: string[]) => logins.map((l) => hrOn(s.day).find((r) => r.login === l)?.name ?? l).join(', ');
+/** People's names from their logins, as a list: "Wren and Sam". Anyone who's ever been on the HR file. */
+const nameList = (logins: string[]) => teamWords(logins.map((l) => hrOn(DAYS).find((r) => r.login === l)?.name ?? l));
+const isAre = (n: number) => (n > 1 ? 'aren\u2019t' : 'isn\u2019t');
+const teamWords = (team: readonly string[]) => new Intl.ListFormat('en', { type: 'conjunction' }).format(team);
 
 /** What's still wrong in Oktopus for a ticket, in a sentence; undefined once it's right. */
 function oktaProblem(s: GameState, t: Ticket, fixBy: Exclude<NonNullable<Issue['console']>, 'unlock' | 'reset' | 'disable'>): string | undefined {
   const { okta } = s;
   const has = (login: string, app: string) => appsOf(okta, login).includes(app);
+  const who = t.subject ?? t.who;
+  const name = named(s, [who]);
+  const user = okta.users[who];
+  const row = hrOn(s.day).find((r) => r.login === who);
+  /** Apps someone else on the same team gets: what a joiner or mover should end up with too. */
+  const teamApps = (dept: string) => Object.keys(okta.apps).filter((app) =>
+    Object.keys(okta.users).some((l) => l !== who && okta.users[l]?.dept === dept && has(l, app)));
   switch (fixBy) {
     case 'okta-setup': {
-      const missing = marketing(s).filter((r) => !okta.users[r.login]).map((r) => r.login);
-      if (missing.length) return `${named(s, missing)} ${missing.length > 1 ? 'aren\u2019t' : 'isn\u2019t'} in Oktopus yet. Import Marketing from the HR file.`;
-      const grouped = marketing(s).every((r) => okta.rules.some((rule) => 'dept' in rule && rule.dept === 'Marketing' && groupsOf(okta, r.login).includes(rule.group)));
-      return grouped ? undefined : 'Marketing need a group of their own, filled by a rule: everyone whose department is Marketing.';
+      const team = t.team ?? ['Marketing'];
+      const missing = staffIn(s, team).filter((r) => !okta.users[r.login]).map((r) => r.login);
+      if (missing.length) return `${named(s, missing)} ${isAre(missing.length)} in Oktopus yet. Import them from the HR file.`;
+      const loose = team.filter((dept) => !okta.rules.some((rule) => 'dept' in rule && rule.dept === dept));
+      return loose.length ? `${teamWords(loose)} need${loose.length > 1 ? '' : 's'} a group of ${loose.length > 1 ? 'their' : 'its'} own, filled by a rule on department.` : undefined;
     }
     case 'okta-app': {
-      if (!okta.apps.hootsweet) return 'Hootsweet isn\u2019t in Oktopus. Add it from the App Catalog.';
-      const without = marketing(s).filter((r) => !has(r.login, 'hootsweet')).map((r) => r.login);
-      if (without.length) return `${named(s, without)} still can\u2019t see Hootsweet. Assign it to a group that\u2019s filled with Marketing.`;
-      const extra = Object.keys(okta.users).filter((l) => has(l, 'hootsweet') && !marketing(s).some((r) => r.login === l));
-      return extra.length ? `${named(s, extra)} can see Hootsweet too, and ${extra.length > 1 ? 'they\u2019re' : 'they\u2019re'} not in Marketing. Only Marketing should have it.` : undefined;
+      const app = t.app ?? 'hootsweet';
+      const team = t.team ?? ['Marketing'];
+      const appName = CATALOG.find((c) => c.id === app)?.name ?? app;
+      if (!okta.apps[app]) return `${appName} isn\u2019t in Oktopus. Add it from the App Catalog.`;
+      const without = staffIn(s, team).filter((r) => !has(r.login, app)).map((r) => r.login);
+      if (without.length) return `${named(s, without)} still can\u2019t see ${appName}. Assign it to a group that\u2019s filled with ${teamWords(team)}.`;
+      const extra = Object.keys(okta.users).filter((l) => has(l, app) && !staffIn(s, team).some((r) => r.login === l));
+      return extra.length ? `${named(s, extra)} can see ${appName} too, and ${extra.length > 1 ? 'they\u2019re' : 'they\u2019re'} not in ${teamWords(team)}. Only ${teamWords(team)} should have it.` : undefined;
     }
-    case 'joiner':
-      if (!okta.users.fern) return 'Fern isn\u2019t in Oktopus. HR added her this morning: create her from the HR file.';
-      return has('fern', 'hootsweet') ? undefined : 'Fern is in Oktopus but has no Hootsweet. Her group rules should give it to her: is her department right?';
+    case 'joiner': {
+      if (!user) return `${name} isn\u2019t in Oktopus. HR added them this morning: create them from the HR file.`;
+      const missing = teamApps(user.dept).filter((app) => !has(who, app));
+      return missing.length ? `${name} is in Oktopus but can\u2019t see what the rest of ${user.dept} can. Their group rules should do that: is their department right?` : undefined;
+    }
     case 'mover': {
-      const basil = okta.users.basil;
-      if (!basil) return 'Basil isn\u2019t in Oktopus at all.';
-      if (basil.status !== 'active') return 'Basil can\u2019t sign in at all now. He moved to Sales; he didn\u2019t leave. Activate him again.';
-      if (basil.dept !== 'Sales') return 'Oktopus still thinks Basil is in Marketing. Update his profile from the HR file.';
-      return has('basil', 'hootsweet') ? 'Basil is in Sales now but still has Hootsweet. Marketing\u2019s app should come from Marketing\u2019s rule, not be given to him by hand.' : undefined;
+      if (!user) return `${name} isn\u2019t in Oktopus at all.`;
+      if (user.status !== 'active') return `${name} can\u2019t sign in at all now. They moved; they didn\u2019t leave. Activate them again.`;
+      if (row && user.dept !== row.dept) return `Oktopus still thinks ${name} is in ${user.dept}. Update their profile from the HR file.`;
+      const kept = appsOf(okta, who).filter((app) => !teamApps(user.dept).includes(app));
+      if (kept.length) return `${name} is in ${user.dept} now but can still see ${named(s, kept)}, which the rest of ${user.dept} can\u2019t. Old access should go with the old team.`;
+      const missing = teamApps(user.dept).filter((app) => !has(who, app));
+      return missing.length ? `${name} can\u2019t see what the rest of ${user.dept} can yet.` : undefined;
     }
     case 'leaver':
-      return okta.users.wren?.status === 'active' ? 'Wren can still sign in to Oktopus and everything in it. Deactivate her.' : undefined;
+      return user?.status === 'active' ? `${name} can still sign in to Oktopus and everything in it. Deactivate them.` : undefined;
+    case 'mfa-policy': {
+      const loose = Object.keys(okta.users).filter((l) => okta.users[l]?.status === 'active' && !needsMfa(okta, l));
+      if (!loose.length) return undefined;
+      return loose.length > 3 ? `${loose.length} people can still sign in with just a password. A sign-on policy on a group covers everyone in it: which group has everyone?`
+        : `${named(s, loose)} can still sign in with just a password.`;
+    }
     case 'mfa': {
       const reset = okta.users[t.who]?.mfaResetAt ?? -1;
-      return reset >= t.day * MINUTES_A_DAY + clockTime(t.at) ? undefined : 'Her old phone is still the only way in. Reset her sign-in methods in Oktopus, once you\u2019ve checked it\u2019s really her.';
+      return reset >= t.day * MINUTES_A_DAY + clockTime(t.at) ? undefined : 'Their old phone is still the only way in. Reset their sign-in methods in Oktopus, once you\u2019ve checked it\u2019s really them.';
     }
   }
+}
+
+/**
+ * What a console shows right now, for a fact on a ticket that comes from one: so "No user called Fern" doesn't stay
+ * true after you've created her. Undefined for anything the caller told you, which doesn't change.
+ */
+export function liveFact(s: GameState, t: Ticket, label: string): string | undefined {
+  if (label === 'Active Directory') {
+    const logins = issueOf(t).console === 'disable' ? t.subjects ?? ['sam'] : [t.who];
+    return logins.map((l) => { const a = s.accounts[l]; return a ? `${l}: ${a.enabled ? 'enabled' : 'disabled'}${a.locked ? ', locked out' : ''}.` : ''; }).join(' ') || undefined;
+  }
+  if (label !== 'Oktopus') return undefined;
+  const { okta } = s;
+  const who = t.subject;
+  if (who) {
+    const user = okta.users[who];
+    const name = named(s, [who]);
+    if (!user) return `No user called ${name}.`;
+    const apps = appsOf(okta, who).map((a) => CATALOG.find((c) => c.id === a)?.name ?? a);
+    return `${name}: ${user.status}, ${user.dept}. Apps: ${apps.length ? apps.join(', ') : 'none'}.`;
+  }
+  const people = Object.values(okta.users).filter((u) => u.status === 'active').length;
+  return Object.keys(okta.users).length ? `${people} active ${people === 1 ? 'person' : 'people'} in Oktopus, ${okta.groups.length} groups, ${Object.keys(okta.apps).length} apps.` : 'A brand-new org. Nobody in it yet.';
+}
+
+/**
+ * Text as it reads on this ticket: "{who}" is whoever it's about, "{app}" its app and "{team}" its departments, so
+ * one kind of problem can be about Fern and Hootsweet one week and Hazel and Voyago the next.
+ */
+export function fill(t: Ticket, text: string): string {
+  const team = t.team ?? ['Marketing'];
+  return text
+    .replaceAll('{who}', nameList(t.subjects ?? (t.subject ? [t.subject] : issueOf(t).console === 'disable' ? ['sam'] : [])) || 'them')
+    .replaceAll('{app}', CATALOG.find((c) => c.id === (t.app ?? 'hootsweet'))?.name ?? t.app ?? '')
+    .replaceAll('{team}', team.length >= 5 ? 'everyone' : teamWords(team));
 }
 
 /** The suggestion that really fixes this ticket: usually the issue's fix, unless this one's cause is different. */
@@ -463,13 +526,14 @@ export const fixFor = (t: Ticket) => t.fixedBy ?? issueOf(t).correctFix;
 const CONSOLE_CHECK: Record<ConsoleFix, string> = {
   unlock: 'Ask them to try signing in again',
   reset: 'Ask them to sign in with the temporary password and choose their own',
-  mfa: 'Ask her to sign in and set up her new phone',
-  disable: 'Ask them to check nobody can sign in as Sam now',
-  'okta-setup': 'Ask them to check Marketing are all set up',
-  'okta-app': 'Ask them to check Hootsweet is on their dashboard',
-  joiner: 'Ask them to check Fern can sign in',
-  mover: 'Ask them to check Basil has the right access',
-  leaver: 'Ask them to check Wren can\u2019t sign in',
+  mfa: 'Ask them to sign in and set up their new phone',
+  disable: 'Ask them to check nobody can sign in as {who} now',
+  'mfa-policy': 'Ask them to check everyone is asked for their phone',
+  'okta-setup': 'Ask them to check {team} are all set up',
+  'okta-app': 'Ask them to check {app} is on the right dashboards',
+  joiner: 'Ask them to check {who} can sign in',
+  mover: 'Ask them to check {who} has the right access',
+  leaver: 'Ask them to check {who} can\u2019t sign in',
 };
 
 /** Everything you could suggest on a ticket: your tool, a check after console work, and the usual fixes. */
@@ -478,7 +542,7 @@ export function suggestions(s: GameState, t: Ticket): Fix[] {
   const tool = toolFor(s, t);
   return [
     ...(tool ? [{ id: 'tool', label: tool.fixLabel }] : []),
-    ...(issue.console ? [{ id: 'console', label: CONSOLE_CHECK[issue.console] }] : []),
+    ...(issue.console ? [{ id: 'console', label: fill(t, CONSOLE_CHECK[issue.console]) }] : []),
     ...issue.fixes,
   ];
 }
@@ -514,7 +578,7 @@ export function ask(s: GameState, id: string, askId: string): GameState {
   return act(s, (d) => {
     const st = ticketState(d, id);
     st.status = 'open';
-    st.messages.push({ from: 'you', text: q.text, at: d.clock });
+    st.messages.push({ from: 'you', text: fill(t, q.text), at: d.clock });
     st.caller = { doing: 'answer', id: askId, until: replyAt(d, t, callerMinutes(d, t, CALLER[t.priority].answer)) };
     advance(d, COST.ask);
   });
@@ -553,6 +617,7 @@ function hear(d: GameState, t: Ticket, c: { doing: 'answer' | 'try'; id: string;
   const f = suggestions(d, t).find((x) => x.id === c.id);
   const problem = c.id === 'console' ? accountProblem(d, t) : undefined;
   if (c.id === 'tool' || (c.id === 'console' ? !problem : c.id === fixFor(t))) {
+    if (d.notice?.ticketId === t.id) d.notice = undefined;
     st.caller = { doing: 'confirmed', id: c.id };
     said(f?.works ?? THANKS[st.mood]);
     return;
@@ -566,7 +631,7 @@ function hear(d: GameState, t: Ticket, c: { doing: 'answer' | 'try'; id: string;
   d.today.wrongFixes += 1;
   said('It\u2019s still not working.');
   d.notice = { ticketId: t.id, text: problem ?? f?.fail ?? 'That didn\u2019t work.' };
-  if (relation(d, t.who) === 'friend') d.notice.text += ' They give you an encouraging smile anyway.';
+  if (relation(d, t.who) === 'friend') d.notice.text += ` ${VILLAGERS[t.who].name} gives you an encouraging smile anyway.`;
   else slip(d, t);
   // Some mistakes are too serious to keep quiet, whoever it was for.
   if (f?.grave) complain(d, t, true);
@@ -785,6 +850,8 @@ export function parseSave(raw: string | null): GameState | undefined {
     for (const st of Object.values(s.tickets ?? {})) st.heard ??= [];
     // Saves from before you typed your notes: the pages you wrote show the example text.
     s.written ??= {};
+    // Saves from before Oktopus had sign-on policies: none set yet.
+    if (s.okta) s.okta.mfa ??= [];
     // Saves from before you could stay late: no overtime yet.
     if (s.today) s.today.overtime ??= 0;
     const known = new Set(TICKETS.map((t) => t.id));

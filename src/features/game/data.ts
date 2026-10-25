@@ -2,9 +2,9 @@ import type { DayScript, Job, Villager } from './types.ts';
 
 export const COMPANY = 'Burrow & Co.';
 export const MANAGER = 'Mr. Grisby';
-/** Two working weeks: Sam's old system in week 1, Oktopus for Marketing in week 2. */
-export const DAYS = 10;
-/** Enough for two weeks of bus fare and food, if most days go well. */
+/** Working weeks so far: Sam's old system, Oktopus for Marketing, Oktopus for everyone, then security week. */
+export const DAYS = 20;
+/** Enough for a few weeks of bus fare and food, if most days go well: meeting the goal pays for the day. */
 export const START_SAVINGS = 80;
 export const DAILY_COST = 12;
 /** A met goal's lunch voucher covers the day's bus fare and food; a missed one costs you. */
@@ -66,25 +66,25 @@ export const POLICY = [
 export const WORKAROUND_RETURNS_AFTER = 2;
 
 export const VILLAGERS = {
-  dot: { opener: 'hiii are you free for a quick coffee?? \u2615', name: 'Dot', species: 'duck', ears: 'none', fur: '#f4f1e6', beak: '#f2a33a',
+  dot: { opener: 'hiii are you free for a quick coffee?? \u2615', name: 'Dot',
     fond: 'Oh thank goodness, it\u2019s you. You\u2019re the only one who listens.',
     grudge: 'Oh. It\u2019s YOU. I told everyone at lunch about last time.' },
-  juniper: { opener: 'hey!! do you want to hang out for like 5 min', name: 'Juniper', species: 'rabbit', ears: 'long', fur: '#d9c2a7',
+  juniper: { opener: 'hey!! do you want to hang out for like 5 min', name: 'Juniper',
     fond: 'You saved me last time! Okay, deep breaths, I trust you.',
     grudge: 'Can I get someone else? No? Fine. FINE.' },
-  marlo: { opener: 'Fancy a stroll? My desk. Now-ish.', name: 'Marlo', species: 'hedgehog', ears: 'round', fur: '#8a6a4f',
+  marlo: { opener: 'Fancy a stroll? My desk. Now-ish.', name: 'Marlo',
     fond: 'My favourite intern. Don\u2019t tell the others.',
     grudge: 'You again. I\u2019ve written a strongly worded memo about you. Unsent. For now.' },
-  pip: { opener: 'ribbit. you around? want to see something cool', name: 'Pip', species: 'frog', ears: 'none', fur: '#7fbf6a',
+  pip: { opener: 'ribbit. you around? want to see something cool', name: 'Pip',
     fond: 'Ribbit! I brought you a biscuit. Not Biscuit. A biscuit.',
     grudge: 'I remember what you did. Ribbit.' },
-  biscuit: { opener: 'HI!! wanna grab a snack?? i have biscuits', name: 'Biscuit', species: 'dog', ears: 'floppy', fur: '#c98d52',
+  biscuit: { opener: 'HI!! wanna grab a snack?? i have biscuits', name: 'Biscuit',
     fond: 'Hi hi hi! It\u2019s my friend! You\u2019re so good at this!',
     grudge: 'Oh. Hi. I\u2019m not wagging. You can\u2019t tell, but I\u2019m not.' },
-  otis: { opener: 'Hoo. A moment of your time, young one?', name: 'Otis', species: 'owl', ears: 'pointy', fur: '#9c8670', beak: '#e7b84a',
+  otis: { opener: 'Hoo. A moment of your time, young one?', name: 'Otis',
     fond: 'Ah, the wise one. Hoo.',
     grudge: 'Hoo. Hoo do you think you are.' },
-  grisby: { opener: 'Pop by my office. Social call. Bring your toolkit.', name: MANAGER, species: 'goose', ears: 'none', fur: '#e9e9e4', beak: '#e8762f',
+  grisby: { opener: 'Pop by my office. Social call. Bring your toolkit.', name: MANAGER,
     fond: 'Ah, my star intern. Unpaid star, but a star.',
     grudge: 'Make this quick. I have a meeting about you.' },
 } satisfies Record<string, Villager>;
@@ -152,8 +152,73 @@ export const DAY_SCRIPTS: DayScript[] = [
   {
     goal: 6,
     memo: 'Friday! 6 tickets, and then: The Conversation. I mean it this time.',
-    metGoal: 'Six! Come see me after. About The Conversation.',
-    missedGoal: 'Well. We’ll still have The Conversation. It’s shorter now.',
+    metGoal: 'Six! About The Conversation: the investors want everyone on Oktopus first. Next Friday. Definitely. Voucher.',
+    missedGoal: 'The Conversation is postponed. The investors want everyone on Oktopus first. Next Friday. Probably.',
+  },
+  {
+    goal: 5,
+    memo: 'Week 3! The investors want EVERYONE on Oktopus. Today. Five tickets, and the whole company.',
+    rule: 'Every department gets its own group. Apps go to departments, never to people.',
+    metGoal: 'The whole company on one sign-in! I told the board I did it. Voucher.',
+    missedGoal: 'Half the company still has seventeen passwords. One of them is mine.',
+  },
+  {
+    goal: 5,
+    memo: 'Finance want Voyago. I want something too, but I’ll tell you in person. Five tickets.',
+    rule: 'Least privilege applies to everyone. Even me. Apparently.',
+    metGoal: 'Finance are expensing things already. Too many things. Voucher.',
+    missedGoal: 'Finance are doing expenses on paper. The paper is also an expense.',
+  },
+  {
+    goal: 6,
+    memo: 'A new starter in Finance, and the designers want their toys. Six tickets.',
+    metGoal: 'Hazel says Burrow is “very organised”. She hasn’t seen my desk. Voucher.',
+    missedGoal: 'Hazel spent the morning with a calculator and no login. She was very polite about it.',
+  },
+  {
+    goal: 6,
+    memo: 'Pip is moving to Finance. Do the IT thing. Six tickets.',
+    metGoal: 'Pip counted all of Finance’s staplers before lunch. Voucher.',
+    missedGoal: 'Pip still thinks they work in Operations. So does Oktopus.',
+  },
+  {
+    goal: 6,
+    memo: 'Friday. Hazel has left us already. Six tickets, and then: The Conversation. In my office. I have biscuits.',
+    metGoal: 'Six! Ah. The auditors arrive Monday. The Conversation will have to wait one more week. I ate the biscuits. Voucher.',
+    missedGoal: 'The auditors arrive Monday, so The Conversation waits a week. Which, frankly, is lucky for you.',
+  },
+  {
+    goal: 5,
+    memo: 'The auditors’ report is in. It has findings. Plural. Five tickets, and make the findings go away.',
+    rule: 'Leavers are switched off everywhere on their last day. Every system. Every time.',
+    metGoal: 'Finding 1: closed. The auditors nodded. Voucher.',
+    missedGoal: 'The auditors asked who Sam is and why Sam signed in on Saturday. I said “IT”.',
+  },
+  {
+    goal: 5,
+    memo: 'The auditors want everyone signing in with their phones. Including me. I have a phone. Somewhere. Five tickets.',
+    rule: 'Policies go on groups, not people. Just like apps.',
+    metGoal: 'Everyone has a phone sign-in! Mine works! I signed in four times to check. Voucher.',
+    missedGoal: 'The auditors tried my password. It worked. They wrote that down.',
+  },
+  {
+    goal: 6,
+    memo: 'People keep finding things in the car park and clicking things in emails. Six tickets. Stop them.',
+    metGoal: 'Nobody plugged anything in that they found on the floor. Low bar. Cleared. Voucher.',
+    missedGoal: 'I have had a very long talk about USB sticks. Mostly with myself.',
+  },
+  {
+    goal: 6,
+    memo: 'Someone pretending to be me tried to get money out of Finance. I would never ask quietly. Six tickets.',
+    rule: 'Urgent and secret is how a scam sounds. Check in person.',
+    metGoal: 'Dot didn’t pay the fake me. The real me is very grateful. Voucher.',
+    missedGoal: 'Finance are now suspicious of every email I send. That’s new. I don’t hate it.',
+  },
+  {
+    goal: 6,
+    memo: 'The auditors leave today. Six tickets, and then The Conversation. Truly. I’ve cleared my diary. It was already clear.',
+    metGoal: 'Six! The auditors left smiling. Now: The Conversation. Sit down.',
+    missedGoal: 'The auditors left. The Conversation is still happening. Brace yourself.',
   },
 ];
 
@@ -170,7 +235,14 @@ export const JOBS: Job[] = [
     title: 'IT Support Technician',
     company: 'Big Ocean Corp',
     blurb: 'Fast-paced team supporting 2,000 staff. Accounts, access and networking experience a must.',
-    needs: { devices: 60, networks: 24, access: 56 },
+    needs: { devices: 110, networks: 44, access: 115 },
+  },
+  {
+    id: 'lighthouse',
+    title: 'Junior Security Analyst',
+    company: 'Lighthouse Security',
+    blurb: 'Help small companies spot phishing, lock down sign-ins and clean up after leavers. You\u2019ll need to know access inside out.',
+    needs: { access: 120 },
   },
 ];
 

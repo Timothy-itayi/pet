@@ -1,6 +1,6 @@
 import { DAILY_COST, GOAL_VOUCHER, JOBS, MANAGER, VILLAGERS } from '../game/data.ts';
 import { goHome, newGame, peopleWho, scriptFor } from '../game/rules.ts';
-import { face } from '../art/sprites.ts';
+import { portrait } from './portrait.ts';
 import type { App } from './app.ts';
 import { h, money } from './dom.ts';
 
@@ -30,7 +30,7 @@ export function dayEndScreen(app: App): HTMLElement {
         neutral: 'has moved on. You\u2019re back to neutral.',
       }[now]}`))),
     h('div', { class: 'toast inline' },
-      h('img', { class: 'sprite small', src: face(VILLAGERS.grisby), alt: '' }),
+      portrait(MANAGER, 48),
       h('p', {}, `${MANAGER}: ${today.voucher ? script.metGoal : script.missedGoal}`)),
     state.savings <= 0 && h('p', { class: 'notice' }, 'Your savings are gone.'),
     h('button', { class: 'btn primary', 'data-testid': 'go-home', 'data-autofocus': true, onclick: () => app.set(goHome(state)) }, 'Go home'),
@@ -51,7 +51,7 @@ export function endingScreen(app: App): HTMLElement {
   const ending = {
     hired: {
       title: 'You’re hired!',
-      text: `${job?.company ?? 'They'} called back. ${job?.title ?? 'A real job'}. In the interview you talked about printers that were just jammed, a runbook that was years out of date, rolling out single sign-on for Marketing, joiners, movers and leavers, and why you didn’t give anyone admin rights. They loved it.${refs}${grudges} Your last day at Burrow & Co. is Friday. ${MANAGER} asks if you can still “pop in on weekends”. You cannot.`,
+      text: `${job?.company ?? 'They'} called back. ${job?.title ?? 'A real job'}. In the interview you talked about printers that were just jammed, a runbook that was years out of date, rolling out single sign-on to a whole company, joiners, movers and leavers, and why you didn’t give anyone admin rights. They loved it.${refs}${grudges} Your last day at Burrow & Co. is Friday. ${MANAGER} asks if you can still “pop in on weekends”. You cannot.`,
     },
     burnout: {
       title: 'Burnt out',

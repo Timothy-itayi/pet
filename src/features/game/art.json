@@ -127,5 +127,61 @@
   },
   "icon-oktopus": {
     "image": true
+  },
+  "news-one-sign-in-for-everyone": {
+    "image": true,
+    "loop": true
+  },
+  "news-expenses-go-digital": {
+    "image": true,
+    "loop": true
+  },
+  "news-welcome-hazel": {
+    "image": true,
+    "loop": true
+  },
+  "news-pip-joins-finance": {
+    "image": true,
+    "loop": true
+  },
+  "news-a-short-goodbye": {
+    "image": true,
+    "loop": true
+  },
+  "feed-12-marlo": {
+    "image": true
+  },
+  "feed-14-pip": {
+    "image": true
+  },
+  "face-hazel": {
+    "image": true,
+    "large": true
+  },
+  "news-the-auditors-findings": {
+    "image": true,
+    "loop": true
+  },
+  "news-sign-in-with-your-phone": {
+    "image": true,
+    "loop": true
+  },
+  "news-please-stop-plugging-things-in": {
+    "image": true,
+    "loop": true
+  },
+  "news-i-would-never-ask-quietly": {
+    "image": true,
+    "loop": true
+  },
+  "news-goodbye-auditors": {
+    "image": true,
+    "loop": true
+  },
+  "feed-18-pip": {
+    "image": true
+  },
+  "feed-20-fern": {
+    "image": true
   }
 }
