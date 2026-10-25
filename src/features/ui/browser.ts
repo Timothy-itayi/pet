@@ -1,9 +1,14 @@
 import { COMPANY, DAYS, POLICY } from '../game/data.ts';
+import { artFor, BANNER, feedArt, newsArt } from '../game/art.ts';
 import { NEWS, newsFor, type NewsPost } from '../game/news.ts';
 import { HISTORY, socialFor, type SocialPost } from '../game/social.ts';
-import { hrOn } from '../game/oktopus.ts';
+import { hrOn, OKTOPUS_DAY } from '../game/oktopus.ts';
 import { weekday, weekOf } from '../game/rules.ts';
-import type { App } from './app.ts';
+import {
+  ArrowDownRight, ArrowUpRight, Building2, CalendarDays, CircleHelp, Clock, createElement, FolderTree, History, House, KeyRound, LayoutGrid,
+  LifeBuoy, Mail, Megaphone, MessageCircle, MessagesSquare, Newspaper, Search, ShieldCheck, ThumbsUp, Ticket, TrendingUp, Users, type IconNode,
+} from 'lucide';
+import type { App, AppId } from './app.ts';
 import { openApp } from './desktop.ts';
 import { h } from './dom.ts';
 import { portrait } from './portrait.ts';
@@ -116,29 +121,89 @@ function addressFor(typed: string): string {
 // ---- Pages -----------------------------------------------------------------------------------------------------
 
 type Link = (label: string, url: string, cls?: string) => HTMLElement;
+type Part = HTMLElement | SVGElement | string | false | undefined;
 
 interface Page { title: string; body: (app: App, link: Link) => HTMLElement }
 
-const NAV: [string, string][] = [['Home', '/'], ['Burrow Feed', '/feed'], ['People', '/people'], ['IT Help', '/it'], ['About', '/about']];
+const icon = (node: IconNode, size = 16) => createElement(node, { width: size, height: size, 'aria-hidden': 'true' });
+/** A white icon on a coloured rounded square, the way the portal marks every section and card. */
+const tile = (node: IconNode, colour: string, big = false) => h('span', { class: `tile${big ? ' big' : ''}`, style: `--tile:${colour}` }, icon(node, big ? 22 : 15));
 
-function siteHeader(link: Link, path: string): HTMLElement {
-  const brand = h('div', { class: 'site-brand' });
-  brand.append(logo(), h('div', {}, h('strong', {}, COMPANY), h('span', {}, 'Supplies, sundries & good intentions since 1987')));
-  return h('header', { class: 'site-head' }, brand,
-    h('nav', { class: 'site-nav', 'aria-label': 'Intranet' }, ...NAV.map(([label, to]) => link(label, `http://${HOST}${to}`, to === path ? 'on' : ''))));
+interface Section { path: string; label: string; icon: IconNode; colour: string }
+const SECTIONS = {
+  home: { path: '/', label: 'Home', icon: House, colour: '#0176d3' },
+  feed: { path: '/feed', label: 'Burrow Feed', icon: MessagesSquare, colour: '#2e844a' },
+  people: { path: '/people', label: 'People', icon: Users, colour: '#7f56d9' },
+  it: { path: '/it', label: 'IT Help', icon: LifeBuoy, colour: '#d83a00' },
+  about: { path: '/about', label: 'About', icon: Building2, colour: '#3a49da' },
+} satisfies Record<string, Section>;
+
+/** The App Launcher: the programs on this computer, opened from the intranet. Oktopus only once it's arrived. */
+const LAUNCHER: { id: AppId; label: string; about: string; icon: IconNode; colour: string }[] = [
+  { id: 'desk', label: 'Service Desk', about: 'Tickets and requests', icon: Ticket, colour: '#0176d3' },
+  { id: 'chat', label: 'Burrow Chat', about: 'Messages from the team', icon: MessageCircle, colour: '#2e844a' },
+  { id: 'directory', label: 'Active Directory', about: 'Accounts and passwords', icon: FolderTree, colour: '#5867e8' },
+  { id: 'okta', label: 'Oktopus Admin', about: 'Sign-on and apps', icon: ShieldCheck, colour: '#9050e9' },
+  { id: 'mail', label: 'Mail', about: 'Burrow Mail', icon: Mail, colour: '#e3066a' },
+];
+
+function launcher(app: App): HTMLElement {
+  const apps = LAUNCHER.filter((a) => a.id !== 'okta' || app.state.day >= OKTOPUS_DAY);
+  return h('details', { class: 'launcher' },
+    h('summary', { 'aria-label': 'App Launcher', title: 'App Launcher' }, icon(LayoutGrid, 18)),
+    h('div', { class: 'launcher-panel' },
+      h('p', { class: 'launcher-title' }, 'App Launcher'),
+      h('div', { class: 'launcher-grid' }, ...apps.map((a) => h('button', { class: 'launcher-app', onclick: () => openApp(app, a.id) },
+        tile(a.icon, a.colour, true), h('span', {}, h('strong', {}, a.label), h('span', {}, a.about)))))));
 }
 
-const siteFoot = () => h('footer', { class: 'site-foot' },
-  `© 1987–2026 ${COMPANY} Ltd · Registered in Burrow Hollow · Intranet v2.1, lovingly held together by Sam`);
-
-function card(title: string, ...body: (HTMLElement | SVGElement | string | false)[]): HTMLElement {
-  const el = h('article', { class: 'ridge-card' }, h('p', { class: 'card-title' }, title));
-  for (const b of body) if (b !== false) el.append(b);
-  return el;
+/** Every intranet page sits in the same portal: the search bar along the top, the section tabs, then the page. */
+function portal(app: App, at: Section | undefined, ...body: Part[]): HTMLElement {
+  const q = h('input', { class: 'gh-input', type: 'search', name: 'q', placeholder: 'Search Burrow Hub…', 'aria-label': 'Search the intranet', autocomplete: 'off' }) as HTMLInputElement;
+  const to = (s: Section) => () => go(app, `http://${HOST}${s.path}`);
+  const me = h('span', { class: 'gh-me', title: 'Intern (you)' });
+  me.append(portrait('IT', 26));
+  const brand = h('button', { class: 'gh-brand', onclick: to(SECTIONS.home) });
+  brand.append(logo(26), h('span', {}, 'Burrow ', h('strong', {}, 'Hub')));
+  return h('div', { class: 'portal' },
+    h('header', { class: 'gh' }, brand,
+      h('form', { class: 'gh-search', role: 'search', onsubmit: (e) => { e.preventDefault(); if (q.value.trim()) go(app, `ridge://search?q=${encodeURIComponent(q.value.trim())}`); } }, icon(Search, 14), q),
+      h('div', { class: 'gh-tools' },
+        h('button', { class: 'gh-tool', 'aria-label': 'Help', title: 'IT Help', onclick: to(SECTIONS.it) }, icon(CircleHelp, 18)),
+        me)),
+    h('nav', { class: 'ab', 'aria-label': 'Intranet' }, launcher(app), h('span', { class: 'ab-name' }, 'Intranet'),
+      ...Object.values(SECTIONS).map((s) => h('button', { class: `ab-tab${s === at ? ' on' : ''}`, 'aria-current': s === at ? 'page' : undefined, onclick: to(s) }, s.label))),
+    h('main', { class: 'pz' }, h('div', { class: 'pz-banner', 'aria-hidden': 'true' }, art(BANNER.id, true)), ...body),
+    h('footer', { class: 'site-foot' }, `© 1987–2026 ${COMPANY} Ltd · Registered in Burrow Hollow · Burrow Hub v2.1, lovingly held together by Sam`));
 }
 
-/** A news story's picture: its scene on its colour, with a soft light across it, like a photo. */
-const picture = (p: NewsPost, big = false) => h('div', { class: `news-picture${big ? ' big' : ''}`, style: `--tone:${p.tone}`, 'aria-hidden': 'true' }, h('span', {}, p.scene));
+/** The banner at the top of each page: its icon, what it is, and anything you can do from here. */
+const pageHead = (s: Section, eyebrow: string, title: string, sub?: string, ...actions: HTMLElement[]) =>
+  h('section', { class: 'ph' }, tile(s.icon, s.colour, true),
+    h('div', { class: 'ph-text' }, h('p', { class: 'ph-eyebrow' }, eyebrow), h('h1', {}, title), sub && h('p', { class: 'ph-sub' }, sub)),
+    actions.length > 0 && h('div', { class: 'ph-actions' }, ...actions));
+
+function card(title: string, ic: IconNode, colour: string, ...body: Part[]): HTMLElement {
+  return h('article', { class: 'lc' }, h('header', { class: 'lc-head' }, tile(ic, colour), h('h2', {}, title)), h('div', { class: 'lc-body' }, ...body));
+}
+
+/** A generated picture, once it's been made: moving if it loops and you're happy with motion, otherwise still. */
+function art(id: string | undefined, moving = false): HTMLElement | undefined {
+  const made = id ? artFor(id) : undefined;
+  if (!made) return undefined;
+  const still = import.meta.env.BASE_URL + made.image;
+  if (!moving || !made.loop || matchMedia('(prefers-reduced-motion: reduce)').matches) return h('img', { class: 'art', src: still, alt: '', loading: 'lazy' });
+  const clip = h('video', { class: 'art', src: import.meta.env.BASE_URL + made.loop, poster: still, autoplay: true, loop: true, playsinline: true }) as HTMLVideoElement;
+  // The property, not the attribute: browsers only autoplay a video that's muted.
+  clip.muted = true;
+  return clip;
+}
+
+/** A news story's picture: its generated painting (moving, for the lead story), or until then its scene on its colour. */
+function picture(p: NewsPost, big = false): HTMLElement {
+  const painted = art(newsArt(p).id, big);
+  return h('div', { class: `news-picture${big ? ' big' : ''}${painted ? ' painted' : ''}`, style: `--tone:${p.tone}`, 'aria-hidden': 'true' }, painted ?? h('span', {}, p.scene));
+}
 
 /** Who someone is, from HR: their name and job, for the top of their posts. */
 function role(name: string, day: number): string {
@@ -148,7 +213,17 @@ function role(name: string, day: number): string {
 
 const when = (day: number) => (day < 1 ? (day < -5 ? 'Two weeks ago' : 'Last week') : `${weekday(day)}, week ${weekOf(day)}`);
 
-/** The home page: the company's news front page. The big story with its picture, then the rest. */
+function byline(p: NewsPost): HTMLElement {
+  const el = h('p', { class: 'byline' });
+  el.append(portrait(p.from, 22), ` ${p.from} · ${when(p.day)}`);
+  return el;
+}
+
+/** One figure across the top of the home page. */
+const kpi = (label: string, value: string, extra?: HTMLElement, testid?: string) =>
+  h('div', { class: 'kpi', 'data-testid': testid }, h('span', { class: 'kpi-label' }, label), h('strong', {}, value), extra);
+
+/** The home page: today at a glance, the company news, and what's coming up. */
 function home(app: App, link: Link): HTMLElement {
   const { state } = app;
   const day = Math.min(state.day, DAYS);
@@ -157,33 +232,29 @@ function home(app: App, link: Link): HTMLElement {
   const change = ((price - before) / before) * 100;
   const [lead, ...rest] = newsFor(state.day);
   const upcoming = NEWS.filter((p) => p.day > state.day && p.day <= DAYS).slice(0, 3);
-  const byline = (p: NewsPost) => {
-    const el = h('p', { class: 'byline' });
-    el.append(portrait(p.from, 22), ` ${p.from} \u00b7 ${when(p.day)}`);
-    return el;
-  };
-  return h('div', { class: 'site' },
-    siteHeader(link, '/'),
-    h('div', { class: 'news-front' },
-      h('section', { class: 'news-main', 'aria-label': 'Company news' },
-        lead && h('article', { class: 'news-hero' }, picture(lead, true),
-          h('div', { class: 'news-hero-text' }, h('p', { class: 'kicker' }, 'Latest from Burrow'), h('h1', {}, lead.title), h('p', {}, lead.body), byline(lead))),
-        rest.length > 0 && h('h2', { class: 'section-title' }, 'More company news'),
-        h('div', { class: 'news-grid' }, ...rest.map((p) => h('article', { class: 'news-story' }, picture(p),
-          h('div', {}, h('h3', {}, p.title), h('p', {}, p.body), byline(p))))),
-        h('div', { class: 'feed-teaser' }, h('span', {}, 'What everyone\u2019s talking about'), link('Go to Burrow Feed \u2192', `http://${HOST}/feed`, 'more'))),
-      h('aside', { class: 'news-side' },
-        upcoming.length > 0 && card('Coming up', h('ul', { class: 'ridge-list' }, ...upcoming.map((p) => h('li', {}, h('strong', {}, `${weekday(p.day)}: `), p.title)))),
-        card('Markets',
-          h('p', { class: 'stock-line', 'data-testid': 'stock' }, h('strong', {}, 'BRRW'), h('span', {}, `$${price.toFixed(2)}`),
-            h('span', { class: change >= 0 ? 'up' : 'down' }, `${change >= 0 ? '\u25B2' : '\u25BC'} ${Math.abs(change).toFixed(1)}%`)),
+  const hello = state.clock < 12 * 60 ? 'Good morning' : state.clock < 17 * 60 ? 'Good afternoon' : 'Good evening';
+  const trend = h('span', { class: change >= 0 ? 'up' : 'down' }, icon(change >= 0 ? ArrowUpRight : ArrowDownRight, 13), `${Math.abs(change).toFixed(1)}%`);
+  return portal(app, SECTIONS.home,
+    pageHead(SECTIONS.home, 'Burrow Hub', `${hello}, Intern`, `${weekday(day)}, week ${weekOf(day)} · Burrow Hollow`),
+    h('div', { class: 'kpis' },
+      kpi('BRRW share price', `$${price.toFixed(2)}`, trend, 'stock'),
+      kpi('Weather', WEATHER[day - 1] ?? 'Sunny'),
+      kpi('Tickets you resolved today', String(state.today.resolved)),
+      kpi('In the canteen', CANTEEN[(day - 1) % CANTEEN.length] ?? '')),
+    h('div', { class: 'cols' },
+      h('div', { class: 'col-main' },
+        lead && card('Latest from Burrow', Megaphone, '#0176d3',
+          h('article', { class: 'news-hero' }, picture(lead, true), h('div', { class: 'news-hero-text' }, h('h3', {}, lead.title), h('p', {}, lead.body), byline(lead)))),
+        rest.length > 0 && card('More company news', Newspaper, '#3296ed',
+          h('div', { class: 'news-grid' }, ...rest.map((p) => h('article', { class: 'news-story' }, picture(p), h('div', {}, h('h3', {}, p.title), h('p', {}, p.body), byline(p)))))),
+        h('div', { class: 'feed-teaser' }, tile(MessagesSquare, SECTIONS.feed.colour), h('span', {}, 'What everyone’s talking about'), link('Go to Burrow Feed', `http://${HOST}/feed`, 'more'))),
+      h('aside', { class: 'col-side' },
+        upcoming.length > 0 && card('Coming up', CalendarDays, '#eb7092', h('ul', { class: 'lc-list' }, ...upcoming.map((p) => h('li', {}, h('strong', {}, weekday(p.day)), h('span', {}, p.title))))),
+        card('Today at Burrow', Clock, '#0d9dda', h('ul', { class: 'lc-list' }, ...(TODAY[day - 1] ?? []).map((line) => h('li', {}, line)))),
+        card('Markets', TrendingUp, '#2e844a',
+          h('p', { class: 'stock-line' }, h('strong', {}, 'BRRW'), h('span', {}, `$${price.toFixed(2)}`), trend.cloneNode(true) as HTMLElement),
           sparkline(day),
-          h('p', { class: 'stock-line small' }, h('span', {}, 'BIG OCEAN CORP'), h('span', {}, '$212.40'), h('span', { class: 'up' }, '\u25B2 0.3%'))),
-        card('Today at Burrow', h('ul', { class: 'ridge-list' }, ...(TODAY[day - 1] ?? []).map((line) => h('li', {}, line)))),
-        card('Weather \u00b7 Burrow Hollow', h('p', { class: 'weather' }, WEATHER[day - 1] ?? 'Sunny')),
-        card('In the canteen', h('p', {}, CANTEEN[(day - 1) % CANTEEN.length] ?? '')))),
-    siteFoot(),
-  );
+          h('p', { class: 'stock-line small' }, h('span', {}, 'BIG OCEAN CORP'), h('span', {}, '$212.40'), h('span', { class: 'up' }, '▲ 0.3%'))))));
 }
 
 /** A post in Burrow Feed: who posted it, what they said, a picture if there is one, likes and a couple of comments. */
@@ -200,13 +271,13 @@ function feedPost(app: App, p: SocialPost): HTMLElement {
   }));
   return h('article', { class: 'feed-post' }, head,
     h('p', {}, p.text),
-    p.scene && h('div', { class: 'post-scene', 'aria-hidden': 'true' }, p.scene),
-    h('p', { class: 'post-counts meta' }, `\u{1F44D} ${p.likes + (liked ? 1 : 0)} \u00b7 ${p.comments.length} comment${p.comments.length === 1 ? '' : 's'}`),
+    p.scene && h('div', { class: 'post-scene', 'aria-hidden': 'true' }, art(feedArt(p)?.id) ?? p.scene),
+    h('p', { class: 'post-counts meta' }, `${p.likes + (liked ? 1 : 0)} likes · ${p.comments.length} comment${p.comments.length === 1 ? '' : 's'}`),
     h('div', { class: 'post-actions' },
       h('button', {
         class: `post-action${liked ? ' on' : ''}`, 'aria-pressed': liked ? 'true' : 'false', 'data-testid': 'like',
         onclick: () => { ui.liked = liked ? (ui.liked ?? []).filter((k) => k !== key) : [...(ui.liked ?? []), key]; app.rerender(); },
-      }, liked ? '\u{1F44D} Liked' : '\u{1F44D} Like')),
+      }, icon(ThumbsUp, 14), liked ? 'Liked' : 'Like')),
     comments);
 }
 
@@ -215,82 +286,83 @@ function feed(app: App, link: Link): HTMLElement {
   const { state } = app;
   const day = Math.min(state.day, DAYS);
   const staff = hrOn(day).filter((r) => r.status === 'active');
-  const company = h('div', { class: 'feed-company' });
-  company.append(logo(48), h('strong', {}, COMPANY), h('span', { class: 'meta' }, `Office supplies \u00b7 Burrow Hollow \u00b7 ${staff.length} people`));
-  const me = h('section', { class: 'ridge-card feed-me' });
+  const me = h('div', { class: 'feed-me' });
   me.append(portrait('IT', 56), h('strong', {}, 'Intern (you)'), h('span', { class: 'meta' }, `IT Intern at ${COMPANY}`), h('p', { class: 'meta' }, `Tickets resolved today: ${state.today.resolved}`));
+  const company = h('div', { class: 'feed-me' });
+  company.append(logo(40), h('strong', {}, COMPANY), h('span', { class: 'meta' }, `Office supplies · ${staff.length} people`));
   const team = h('ul', { class: 'feed-team' }, ...staff.filter((r) => r.login !== 'intern').slice(0, 8).map((r) => {
     const li = h('li', {});
     li.append(portrait(r.name, 28), h('span', {}, h('strong', {}, r.name), h('span', { class: 'meta' }, r.title)));
     return li;
   }));
-  return h('div', { class: 'site' },
-    siteHeader(link, '/feed'),
+  return portal(app, SECTIONS.feed,
+    pageHead(SECTIONS.feed, 'Burrow Hub', 'Burrow Feed', 'What everyone at Burrow is up to'),
     h('div', { class: 'feed' },
-      h('aside', { class: 'feed-left' }, me, h('section', { class: 'ridge-card' }, company)),
+      h('aside', { class: 'feed-left' }, card('You', Users, SECTIONS.people.colour, me), card('Your company', Building2, SECTIONS.about.colour, company)),
       h('section', { class: 'feed-main', 'aria-label': 'Burrow Feed' }, ...socialFor(state.day).map((p) => feedPost(app, p))),
-      h('aside', { class: 'feed-right' }, card('People at Burrow', team), link('See everyone \u2192', `http://${HOST}/people`, 'more'))),
-    siteFoot());
+      h('aside', { class: 'feed-right' }, card('People at Burrow', Users, SECTIONS.people.colour, team, link('See everyone', `http://${HOST}/people`, 'more')))));
 }
 
-function people(app: App, link: Link): HTMLElement {
+/** People: everyone at Burrow from HR, as a list you'd sort and filter. */
+function people(app: App): HTMLElement {
   const rows = hrOn(Math.min(app.state.day, DAYS)).filter((r) => r.status === 'active').sort((a, b) => a.dept.localeCompare(b.dept) || a.name.localeCompare(b.name));
-  return h('div', { class: 'site' }, siteHeader(link, '/people'),
-    h('h1', { class: 'site-title' }, 'People'),
-    h('p', { class: 'site-column' }, 'Everyone at Burrow, straight from HR. If you\u2019re not on here, talk to Otis.'),
-    h('ul', { class: 'site-people' }, ...rows.map((r, i) => {
-      const li = h('li', {});
-      li.append(portrait(r.name, 44), h('div', {}, h('strong', {}, r.name), h('span', {}, r.title), h('span', { class: 'meta' }, `${r.dept} \u00b7 ext. ${201 + i}`)));
-      return li;
-    })),
-    siteFoot());
+  const cell = (r: (typeof rows)[number]) => {
+    const name = h('span', { class: 'lt-name' });
+    name.append(portrait(r.name, 24), r.name);
+    return h('td', {}, name);
+  };
+  return portal(app, SECTIONS.people,
+    pageHead(SECTIONS.people, 'People', 'All staff', `${rows.length} people · Sorted by department · Straight from HR. If you’re not on here, talk to Otis.`),
+    h('div', { class: 'lc lt-wrap' },
+      h('table', { class: 'lt' },
+        h('thead', {}, h('tr', {}, ...['Name', 'Title', 'Department', 'Phone'].map((c) => h('th', { scope: 'col' }, c)))),
+        h('tbody', {}, ...rows.map((r, i) => h('tr', {}, cell(r), h('td', {}, r.title), h('td', {}, h('span', { class: 'pill' }, r.dept)), h('td', {}, `ext. ${201 + i}`)))))));
 }
 
-function itHelp(app: App, link: Link): HTMLElement {
-  return h('div', { class: 'site' }, siteHeader(link, '/it'),
-    h('h1', { class: 'site-title' }, 'IT Help'),
-    h('div', { class: 'site-column' },
-      card('Need something fixed?',
-        h('p', {}, 'Log a ticket. That\u2019s how it gets fixed, and it\u2019s how we know what keeps breaking. The IT team (one intern) will reply as soon as they can.'),
-        h('button', { class: 'btn primary', onclick: () => openApp(app, 'desk') }, 'Open the Service Desk')),
-      card('How IT handles things', h('ol', { class: 'policy-list' }, ...POLICY.map((rule) => h('li', {}, rule)))),
-      card('Your password', h('p', {}, 'Nobody from IT will ever ask for your password. Not even nicely. Not even Mr. Grisby.'))),
-    siteFoot());
+function itHelp(app: App): HTMLElement {
+  return portal(app, SECTIONS.it,
+    pageHead(SECTIONS.it, 'IT Help', 'Need something fixed?', 'Log a ticket. That’s how it gets fixed, and it’s how we know what keeps breaking. The IT team (one intern) will reply as soon as they can.',
+      h('button', { class: 'lb brand', onclick: () => openApp(app, 'desk') }, icon(Ticket, 14), 'Open the Service Desk')),
+    h('div', { class: 'cols' },
+      h('div', { class: 'col-main' }, card('How IT handles things', ShieldCheck, '#3a49da', h('ol', { class: 'policy-list' }, ...POLICY.map((rule) => h('li', {}, rule))))),
+      h('aside', { class: 'col-side' }, card('Your password', KeyRound, '#d83a00', h('p', {}, 'Nobody from IT will ever ask for your password. Not even nicely. Not even Mr. Grisby.')))));
 }
 
-function about(_app: App, link: Link): HTMLElement {
-  return h('div', { class: 'site' }, siteHeader(link, '/about'),
-    h('div', { class: 'about-cover', 'aria-hidden': 'true' }, h('span', {}, '\u{1F3E1}\u{1F333}\u{1F69A}\u{1F333}\u{1F3EA}')),
-    h('h1', { class: 'site-title' }, `About ${COMPANY}`),
-    h('div', { class: 'site-column' },
-      h('p', {}, 'Burrow & Co. began in 1987 in a garden shed in Burrow Hollow, when a young Mr. Grisby started selling stationery, string and \u201Cuseful odds and ends\u201D to the businesses on the high street.'),
-      h('p', {}, 'Today we supply offices across the valley with paper, pens, printers (and, increasingly, apologies about printers). We\u2019re a small team who care about doing things properly, eventually.'),
-      card('Burrow through the years', h('ol', { class: 'history' }, ...HISTORY.map(([year, what]) => h('li', {}, h('strong', {}, year), h('span', {}, what))))),
-      h('p', {}, 'Our values: Be helpful. Be honest. Log a ticket.')),
-    siteFoot());
+function about(app: App): HTMLElement {
+  return portal(app, SECTIONS.about,
+    pageHead(SECTIONS.about, 'About', COMPANY, 'Supplies, sundries & good intentions since 1987'),
+    h('div', { class: 'cols' },
+      h('div', { class: 'col-main' },
+        card('Our story', Building2, SECTIONS.about.colour,
+          h('p', {}, 'Burrow & Co. began in 1987 in a garden shed in Burrow Hollow, when a young Mr. Grisby started selling stationery, string and “useful odds and ends” to the businesses on the high street.'),
+          h('p', {}, 'Today we supply offices across the valley with paper, pens, printers (and, increasingly, apologies about printers). We’re a small team who care about doing things properly, eventually.'),
+          h('p', { class: 'values' }, 'Our values: Be helpful. Be honest. Log a ticket.'))),
+      h('aside', { class: 'col-side' },
+        card('Burrow through the years', History, '#7f56d9', h('ol', { class: 'history' }, ...HISTORY.map(([year, what]) => h('li', {}, h('strong', {}, year), h('span', {}, what))))))));
 }
 
 /** Search results: the intranet pages that mention it. The wider web is blocked. */
 function search(q: string): Page {
-  const pages: [string, string, string][] = [['Home', '/', 'news announcements share price weather canteen'], ['Burrow Feed', '/feed', 'feed posts birthday cake kudos stapler'],
-    ['People', '/people', 'people staff directory phone extension'], ['IT Help', '/it', 'it help password ticket policy printer'], ['About', '/about', 'about history company 1987']];
-  const hits = pages.filter(([title, , words]) => `${title} ${words}`.toLowerCase().includes(q.toLowerCase()));
+  const pages: [Section, string][] = [[SECTIONS.home, 'news announcements share price weather canteen'], [SECTIONS.feed, 'feed posts birthday cake kudos stapler'],
+    [SECTIONS.people, 'people staff directory phone extension'], [SECTIONS.it, 'it help password ticket policy printer'], [SECTIONS.about, 'about history company 1987']];
+  const hits = pages.filter(([s, words]) => `${s.label} ${words}`.toLowerCase().includes(q.toLowerCase()));
   return {
-    title: `${q} - Ridge Search`,
-    body: (_app, link) => h('div', { class: 'site' },
-      h('h1', { class: 'site-title' }, `Results for \u201C${q}\u201D`),
-      h('div', { class: 'site-column' },
-        ...(hits.length ? hits.map(([title, path]) => h('p', {}, link(title, `http://${HOST}${path}`), h('span', { class: 'meta' }, ` ${HOST}${path}`))) : [h('p', {}, 'Nothing on the intranet matches that.')]),
-        h('p', { class: 'meta' }, 'Results from the wider web are hidden: internet access is limited during the budget freeze.'))),
+    title: `${q} - Burrow Hub Search`,
+    body: (app) => portal(app, undefined,
+      h('section', { class: 'ph' }, tile(Search, '#54698d', true), h('div', { class: 'ph-text' }, h('p', { class: 'ph-eyebrow' }, 'Search results'), h('h1', {}, `“${q}”`))),
+      h('div', { class: 'lc' }, h('ul', { class: 'results' },
+        ...(hits.length ? hits.map(([s]) => h('li', {}, h('button', { class: 'result', onclick: () => go(app, `http://${HOST}${s.path}`) }, tile(s.icon, s.colour),
+          h('span', {}, h('strong', {}, s.label), h('span', { class: 'meta' }, `${HOST}${s.path}`))))) : [h('li', { class: 'meta' }, 'Nothing on the intranet matches that.')]),
+        h('li', { class: 'meta' }, 'Results from the wider web are hidden: internet access is limited during the budget freeze.')))),
   };
 }
 
 const PAGES: Record<string, Page> = {
-  '/': { title: 'Burrow Intranet', body: home },
-  '/feed': { title: 'Burrow Feed - Burrow Intranet', body: feed },
-  '/people': { title: 'People - Burrow Intranet', body: people },
-  '/it': { title: 'IT Help - Burrow Intranet', body: itHelp },
-  '/about': { title: 'About - Burrow Intranet', body: about },
+  '/': { title: 'Burrow Hub', body: home },
+  '/feed': { title: 'Burrow Feed - Burrow Hub', body: feed },
+  '/people': { title: 'People - Burrow Hub', body: people },
+  '/it': { title: 'IT Help - Burrow Hub', body: itHelp },
+  '/about': { title: 'About - Burrow Hub', body: about },
 };
 
 function pageAt(url: string): Page {
@@ -323,7 +395,7 @@ export function browser(app: App): HTMLElement {
     h('div', { class: 'ridge-tabs', role: 'tablist' },
       ...all.map((t, i) => h('span', { class: `ridge-tab${i === ui.tab ? ' on' : ''}` },
         h('button', { class: 'ridge-tab-name', role: 'tab', 'aria-selected': i === ui.tab ? 'true' : 'false', onclick: () => { ui.tab = i; app.rerender(); } },
-          pageAt(urlOf(t)).title.replace(/ - Burrow Intranet$/, '')),
+          pageAt(urlOf(t)).title.replace(/ - Burrow Hub$/, '')),
         h('button', {
           class: 'ridge-tab-close', 'aria-label': 'Close tab',
           onclick: () => { all.splice(i, 1); if (!all.length) all.push({ history: [HOME], at: 0 }); ui.tab = Math.max(0, Math.min(ui.tab ?? 0, all.length - 1)); app.rerender(); },

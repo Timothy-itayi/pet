@@ -21,7 +21,7 @@ const APPS: Record<AppId, { title: string; label: string; glyph: string; w: numb
   chat: { title: 'Burrow Chat', label: 'Burrow Chat', glyph: '\u{1F4AC}', w: 780, h: 520 },
   directory: { title: 'Active Directory Users and Computers', label: 'Active Directory', glyph: '\u{1F5C2}', w: 860, h: 480 },
   okta: { title: 'Oktopus Admin \u2014 Ridge', label: 'Oktopus Admin', glyph: '\u{1F419}', w: 940, h: 640, max: true },
-  browser: { title: 'Burrow Intranet — Ridge', label: 'Ridge', glyph: '\u{1F310}', w: 920, h: 620, max: true },
+  browser: { title: 'Burrow Hub — Ridge', label: 'Ridge', glyph: '\u{1F310}', w: 920, h: 620, max: true },
   mail: { title: 'Burrow Mail', label: 'Mail', glyph: '✉', w: 640, h: 420 },
   runbook: { title: 'The Runbook', label: 'Runbook', glyph: '\u{1F4D6}', w: 560, h: 500 },
   policy: { title: 'IT Service Policy \u2014 WordPad', label: 'IT Service Policy', glyph: '\u{1F4CB}', w: 600, h: 460 },
@@ -206,7 +206,7 @@ const ticketStateText = (s: GameState, id: string) => s.tickets[id]?.messages[0]
 export function morningNotes(app: App, s: GameState): void {
   notify(app, { app: 'mail', from: `Burrow Mail · ${MANAGER}`, text: isWeekOver(s) ? 'The Conversation' : scriptFor(s.day).memo });
   const latest = newsFor(s.day)[0];
-  if (latest && newsFor(s.day).length > s.newsRead) notify(app, { app: 'browser', from: 'Burrow Intranet', text: latest.title });
+  if (latest && newsFor(s.day).length > s.newsRead) notify(app, { app: 'browser', from: 'Burrow Hub', text: latest.title });
 }
 
 function toasts(app: App): HTMLElement {

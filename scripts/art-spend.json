@@ -1,0 +1,188 @@
+[
+  {
+    "id": "banner",
+    "kind": "image",
+    "usd": 0.036,
+    "at": "2026-10-25T11:47:03.678Z"
+  },
+  {
+    "id": "banner",
+    "kind": "loop",
+    "usd": 0.36,
+    "at": "2026-10-25T11:48:33.397Z"
+  },
+  {
+    "id": "news-welcome-our-new-it-intern",
+    "kind": "image",
+    "usd": 0.036,
+    "at": "2026-10-25T11:55:12.392Z"
+  },
+  {
+    "id": "news-welcome-our-new-it-intern",
+    "kind": "loop",
+    "usd": 0.36,
+    "at": "2026-10-25T11:56:23.793Z"
+  },
+  {
+    "id": "news-farewell-sam",
+    "kind": "image",
+    "usd": 0.036,
+    "at": "2026-10-25T11:57:21.880Z"
+  },
+  {
+    "id": "news-farewell-sam",
+    "kind": "loop",
+    "usd": 0.36,
+    "at": "2026-10-25T11:58:42.415Z"
+  },
+  {
+    "id": "news-budget-freeze",
+    "kind": "image",
+    "usd": 0.036,
+    "at": "2026-10-25T11:59:14.174Z"
+  },
+  {
+    "id": "news-budget-freeze",
+    "kind": "loop",
+    "usd": 0.36,
+    "at": "2026-10-25T12:00:34.928Z"
+  },
+  {
+    "id": "news-password-reminder-from-it",
+    "kind": "image",
+    "usd": 0.036,
+    "at": "2026-10-25T12:01:02.752Z"
+  },
+  {
+    "id": "news-password-reminder-from-it",
+    "kind": "loop",
+    "usd": 0.36,
+    "at": "2026-10-25T12:02:25.178Z"
+  },
+  {
+    "id": "news-marketing-smashes-it",
+    "kind": "image",
+    "usd": 0.036,
+    "at": "2026-10-25T12:02:58.172Z"
+  },
+  {
+    "id": "news-marketing-smashes-it",
+    "kind": "loop",
+    "usd": 0.36,
+    "at": "2026-10-25T12:04:18.419Z"
+  },
+  {
+    "id": "news-big-news-we-re-growing",
+    "kind": "image",
+    "usd": 0.036,
+    "at": "2026-10-25T12:04:49.686Z"
+  },
+  {
+    "id": "news-big-news-we-re-growing",
+    "kind": "loop",
+    "usd": 0.36,
+    "at": "2026-10-25T12:06:03.780Z"
+  },
+  {
+    "id": "news-oktopus-is-here",
+    "kind": "image",
+    "usd": 0.036,
+    "at": "2026-10-25T12:06:31.195Z"
+  },
+  {
+    "id": "news-oktopus-is-here",
+    "kind": "loop",
+    "usd": 0.36,
+    "at": "2026-10-25T12:08:02.981Z"
+  },
+  {
+    "id": "news-welcome-fern",
+    "kind": "image",
+    "usd": 0.036,
+    "at": "2026-10-25T12:08:31.325Z"
+  },
+  {
+    "id": "news-welcome-fern",
+    "kind": "loop",
+    "usd": 0.36,
+    "at": "2026-10-25T12:09:51.478Z"
+  },
+  {
+    "id": "news-basil-joins-sales",
+    "kind": "image",
+    "usd": 0.036,
+    "at": "2026-10-25T12:10:35.878Z"
+  },
+  {
+    "id": "news-basil-joins-sales",
+    "kind": "loop",
+    "usd": 0.36,
+    "at": "2026-10-25T12:11:42.635Z"
+  },
+  {
+    "id": "news-goodbye-wren",
+    "kind": "image",
+    "usd": 0.036,
+    "at": "2026-10-25T12:12:36.074Z"
+  },
+  {
+    "id": "news-goodbye-wren",
+    "kind": "loop",
+    "usd": 0.36,
+    "at": "2026-10-25T12:14:02.924Z"
+  },
+  {
+    "id": "news-oktopus-what-s-next",
+    "kind": "image",
+    "usd": 0.036,
+    "at": "2026-10-25T12:14:40.373Z"
+  },
+  {
+    "id": "news-oktopus-what-s-next",
+    "kind": "loop",
+    "usd": 0.36,
+    "at": "2026-10-25T12:15:54.384Z"
+  },
+  {
+    "id": "feed--6-biscuit",
+    "kind": "image",
+    "usd": 0.036,
+    "at": "2026-10-25T12:16:35.152Z"
+  },
+  {
+    "id": "feed--1-dot",
+    "kind": "image",
+    "usd": 0.036,
+    "at": "2026-10-25T12:17:57.535Z"
+  },
+  {
+    "id": "feed-2-otis",
+    "kind": "image",
+    "usd": 0.036,
+    "at": "2026-10-25T12:19:08.258Z"
+  },
+  {
+    "id": "feed-3-biscuit",
+    "kind": "image",
+    "usd": 0.036,
+    "at": "2026-10-25T12:20:24.142Z"
+  },
+  {
+    "id": "feed-4-wren",
+    "kind": "image",
+    "usd": 0.036,
+    "at": "2026-10-25T12:21:41.890Z"
+  },
+  {
+    "id": "feed-6-basil",
+    "kind": "image",
+    "usd": 0.036,
+    "at": "2026-10-25T12:23:07.077Z"
+  },
+  {
+    "id": "feed-9-juniper",
+    "kind": "image",
+    "usd": 0.036,
+    "at": "2026-10-25T12:24:37.245Z"
+  }
+]
