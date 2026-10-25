@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { CLOSE, DAILY_COST, LOCKUP, DAYS, GOAL_VOUCHER, ISSUES, REPLIES, START_SAVINGS, THANKS, TICKETS, TOOLS, VILLAGERS } from './data.ts';
 import { addApp, addGroup, addRule, assignApp, createFromHr, requireMfa, resetMfa, setActive, updateFromHr } from './identity.ts';
 import type { Department } from './directory.ts';
-import { appsOf, groupsOf, hrOn, newOkta } from './oktopus.ts';
+import { appsOf, groupsOf, hrOn, needsMfa, newOkta } from './oktopus.ts';
 import {
   accountProblem, acceptOffer, apply, ask, liveFact, askForTicket, clockOut, clockTime, fixFor, goHome, goTo, issueOf, newGame, next, noteProblem, noteTarget, parseSave,
   pushBack, relation, reply, resetPassword, resolve, setEnabled, suggest, tick, ticketById, ticketState, unlockAccount, workaround, writeNote, type GameState,
@@ -462,7 +462,7 @@ describe('Oktopus', () => {
     return goTo(s, 'desk');
   }
 
-  it('weeks 2 and 3 play through: every Oktopus ticket resolved, and everyone ends up with the right apps', () => {
+  it('weeks 2 to 5 play through: every Oktopus ticket resolved, and everyone ends up with the right access', () => {
     let s = morningOf(6);
     while (s.day <= DAYS) s = workDay(s);
     for (const t of TICKETS.filter((x) => x.day >= 6 && issueOf(x).console)) expect(ticketState(s, t.id).status, t.id).toBe('resolved');
@@ -473,7 +473,9 @@ describe('Oktopus', () => {
     expect(appsOf(s.okta, 'marlo')).toEqual(['canvass']); // Sales: Canvass, never Voyago
     expect(s.okta.users.wren?.status).toBe('deactivated'); // leavers can't sign in
     expect(s.okta.users.hazel?.status).toBe('deactivated');
-    expect(Object.keys(s.okta.users)).toHaveLength(12); // everyone who's been on the HR file since Oktopus arrived
+    expect(appsOf(s.okta, 'rowan')).toEqual(['canvass']); // week 5's joiner: Sales' app, from the rules
+    expect(needsMfa(s.okta, 'rowan')).toBe(true); // and phone sign-in, because the policy is on Everyone
+    expect(Object.keys(s.okta.users)).toHaveLength(13); // everyone who's been on the HR file since Oktopus arrived
   });
 
   it('gives an app to everyone a rule puts in its group, and to nobody else', () => {

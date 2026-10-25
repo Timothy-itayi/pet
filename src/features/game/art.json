@@ -183,5 +183,35 @@
   },
   "feed-20-fern": {
     "image": true
+  },
+  "news-welcome-to-the-new-floor": {
+    "image": true,
+    "loop": true
+  },
+  "news-welcome-rowan": {
+    "image": true,
+    "loop": true
+  },
+  "news-the-investors-visit": {
+    "image": true,
+    "loop": true
+  },
+  "news-wi-fi-by-the-window": {
+    "image": true,
+    "loop": true
+  },
+  "news-party-on-the-new-floor": {
+    "image": true,
+    "loop": true
+  },
+  "feed-23-juniper": {
+    "image": true
+  },
+  "feed-24-pip": {
+    "image": true
+  },
+  "face-rowan": {
+    "image": true,
+    "large": true
   }
 }
