@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { addCard, flowProblem, hrEvents, newFlow, removeCard, runToday, setInput, testFlow, type Card, type Flow } from './flows.ts';
+import { addCard, flowProblem, goodFlows, hrEvents, inputProblem, newFlow, removeCard, runToday, setInput, testFlow, upgradeFlow, withGoodFlows, type Card, type Flow } from './flows.ts';
 import { addApp, addGroup, addRule, assignApp, createFromHr } from './identity.ts';
+import { runNow } from './flows.ts';
 import { appsOf, hrOn } from './oktopus.ts';
 import { goTo, newGame, type GameState } from './rules.ts';
 
 const wire = (card: string, field: string) => ({ wire: { card, field } });
-const PERSON_WIRES = { Login: wire('e', 'Login'), Name: wire('e', 'Name'), Department: wire('e', 'Department'), Title: wire('e', 'Title'), Manager: wire('e', 'Manager'), 'Employee ID': wire('e', 'Employee ID') };
+const p = (f: string) => wire('e', `Person.${f}`);
+const PERSON_WIRES = { Login: p('Login'), Name: p('Name'), Department: p('Department'), Title: p('Title'), Manager: p('Manager'), 'Employee ID': p('Employee ID') };
 const event: Card = { id: 'e', kind: 'event', inputs: {} };
 const flow = (trigger: Flow['trigger'], cards: Card[], on = true): Flow => ({ id: trigger, name: trigger, trigger, cards, on });
 const joiner = (inputs: Card['inputs'] = PERSON_WIRES) => flow('hr.joined', [event, { id: 'c', kind: 'okta-create', inputs }]);
@@ -46,7 +48,7 @@ describe('flows', () => {
   });
 
   it('wired wrong, it does the wrong thing without complaint: Title into Department means no rule matches, so no apps', () => {
-    const wrong = joiner({ ...PERSON_WIRES, Department: wire('e', 'Title') });
+    const wrong = joiner({ ...PERSON_WIRES, Department: p('Title') });
     const d = morning(financeOn(13), [wrong]);
     expect(d.okta.users.hazel?.dept).toBe('Accounts Assistant');
     expect(appsOf(d.okta, 'hazel')).toEqual([]);
@@ -72,15 +74,15 @@ describe('flows', () => {
     let s = financeOn(9);
     s = createFromHr({ ...s, day: 8 }, 'wren');
     s = { ...s, day: 9 };
-    const leaver = flow('hr.left', [event, { id: 'x', kind: 'okta-deactivate', inputs: { Login: wire('e', 'Login') } }, { id: 'a', kind: 'ad-disable', inputs: { Login: wire('e', 'Login') } }]);
+    const leaver = flow('hr.left', [event, { id: 'x', kind: 'okta-deactivate', inputs: { Login: p('Login') } }, { id: 'a', kind: 'ad-disable', inputs: { Login: p('Login') } }]);
     const d = morning(s, [leaver]);
     expect(d.okta.users.wren?.status).toBe('deactivated');
     expect(d.accounts.wren?.enabled).toBe(false);
   });
 
   it('builds text with Concatenate, like Login and "@burrow.co"', () => {
-    const f = flow('hr.joined', [event, { id: 't', kind: 'concat', inputs: { First: wire('e', 'Login'), Separator: { text: '@' }, Second: { text: 'burrow.co' } } }]);
-    expect(testFlow(financeOn(13), f).run.steps.at(-1)?.values.Combined).toBe('sam.sample@burrow.co');
+    const f = flow('hr.joined', [event, { id: 't', kind: 'concat', inputs: { First: p('Login'), Second: { text: '@' }, Third: { text: 'burrow.co' } } }]);
+    expect(testFlow(financeOn(13), f).run.steps.at(-1)?.values['→ Combined']).toBe('sam.sample@burrow.co');
   });
 
   it('testing a flow never touches the real game', () => {
@@ -98,10 +100,78 @@ describe('flows', () => {
     const [, concat, create] = s.okta.flows[0]?.cards ?? [];
     expect([concat?.kind, create?.kind]).toEqual(['concat', 'okta-create']);
     s = setInput(s, 'flow-1', create?.id ?? '', 'Login', wire(concat?.id ?? '', 'Combined'));
+    expect(s.okta.flows[0]?.cards[2]?.inputs.Login).toBeDefined();
     expect(setInput(s, 'flow-1', concat?.id ?? '', 'First', wire(create?.id ?? '', 'Login'))).toBe(s); // right to left: refused
     expect(setInput(s, 'flow-1', create?.id ?? '', 'Login', wire('c1', 'Nonsense'))).toBe(s); // no such output: refused
     s = removeCard(s, 'flow-1', concat?.id ?? '');
     expect(s.okta.flows[0]?.cards.find((c) => c.kind === 'okta-create')?.inputs).toEqual({});
     expect(removeCard(s, 'flow-1', 'c1')).toBe(s); // the event stays
+  });
+
+  it('types: a whole person or a list can\u2019t go where one piece of text is wanted, and the refusal says what to do', () => {
+    const f = flow('schedule', [{ id: 's', kind: 'schedule', inputs: {} }, { id: 'l', kind: 'hr-list', inputs: {} }, { id: 'r', kind: 'okta-read', inputs: {} }, { id: 'c', kind: 'call', inputs: {} }]);
+    expect(inputProblem(f, 'r', 'Login', wire('l', 'People'))).toMatch(/People is a list of people, and Login wants text\. For Each or Map/);
+    expect(inputProblem(f, 'c', 'User', wire('l', 'People'))).toMatch(/Use For Each or Map/);
+    expect(inputProblem(f, 'c', 'User', wire('r', 'User.Login'))).toMatch(/Wire the whole person/);
+    expect(inputProblem(f, 'c', 'User', wire('r', 'User'))).toBeUndefined();
+    expect(inputProblem(f, 'c', 'User', { text: 'hazel' })).toMatch(/can\u2019t type/);
+    const j = flow('hr.joined', [event, { id: 'c', kind: 'okta-create', inputs: {} }]);
+    expect(inputProblem(j, 'c', 'Login', wire('e', 'Person'))).toMatch(/Open the person/);
+    expect(inputProblem(j, 'c', 'Login', wire('e', 'Person.Login'))).toBeUndefined();
+  });
+
+  it('a mover flow that wires the old department (from Oktopus) instead of the new one (from HR) changes nothing', () => {
+    const wrong = flow('hr.moved', [event, { id: 'r', kind: 'okta-read', inputs: { Login: p('Login') } },
+      { id: 'u', kind: 'okta-update-user', inputs: { Login: p('Login'), Department: wire('r', 'User.Department'), Title: p('Title'), Manager: p('Manager') } }]);
+    const s = financeOn(14);
+    expect(flowProblem({ ...s, okta: { ...s.okta, flows: [wrong] } }, 'hr.moved')).toMatch(/left them with the department \u201CMarketing\u201D/);
+    expect(flowProblem(withGoodFlows(s, 'hr.moved'), 'hr.moved')).toBeUndefined();
+  });
+
+  it('a leaver flow should hand the person to a helper, and the helper\u2019s steps show under the card that called it', () => {
+    const s = financeOn(15);
+    const inline = flow('hr.left', [event, { id: 'x', kind: 'okta-deactivate', inputs: { Login: p('Login') } }]);
+    expect(flowProblem({ ...s, okta: { ...s.okta, flows: [inline] } }, 'hr.left')).toMatch(/helper flow/);
+    const good = withGoodFlows(s, 'hr.left');
+    expect(flowProblem(good, 'hr.left')).toBeUndefined();
+    const run = testFlow(good, good.okta.flows.find((f) => f.trigger === 'hr.left') as Flow).run;
+    expect(run.steps[1]?.calls?.[0]?.steps.map((x) => x.values.Login)).toEqual([undefined, 'sam.sample']);
+  });
+
+  it('the morning sweep runs the helper for every leaver in HR, switching each off in Oktopus and Active Directory', () => {
+    const s = withGoodFlows(financeOn(17), 'sweep');
+    expect(flowProblem(s, 'sweep')).toBeUndefined();
+    const d = morning(s, s.okta.flows);
+    expect(d.accounts.wren?.enabled).toBe(false);
+    expect(d.accounts.sam?.enabled).toBe(false);
+    // A sweep whose helper only does Oktopus leaves Active Directory on.
+    const halfway = { ...s, okta: { ...s.okta, flows: s.okta.flows.map((f) => (f.trigger === 'helper' ? { ...f, cards: f.cards.filter((c) => c.kind !== 'ad-disable') } : f)) } };
+    expect(flowProblem(halfway, 'sweep')).toMatch(/leaves Sam Sample and Pat Sample able to sign in/);
+  });
+
+  it('a helper that calls itself stops, rather than running for ever', () => {
+    const loop: Flow = { id: 'h', name: 'Loop', trigger: 'helper', on: true, cards: [{ id: 'c1', kind: 'helper-input', inputs: {} }, { id: 'c2', kind: 'call', helper: 'h', inputs: { User: wire('c1', 'User') } }] };
+    const caller = flow('hr.left', [event, { id: 'c', kind: 'call', helper: 'h', inputs: { User: wire('e', 'Person') } }]);
+    const s = financeOn(15);
+    expect(flowProblem({ ...s, okta: { ...s.okta, flows: [loop, caller] } }, 'hr.left')).toMatch(/went 3 deep/);
+  });
+
+  it('the Voyago report: Map collects what the helper returns; For Each in its place gives nothing to post', () => {
+    let s = financeOn(23);
+    s = withGoodFlows(s, 'report');
+    expect(flowProblem(s, 'report')).toBeUndefined();
+    const posted = s.okta.runs.at(-1)?.steps.at(-1)?.values.Message;
+    expect(posted).toContain('Dot (Accounts Clerk)');
+    const forEach = { ...s, okta: { ...s.okta, runs: [], flows: s.okta.flows.map((f) => ({ ...f, cards: f.cards.map((c) => (c.kind === 'map' ? { ...c, kind: 'foreach' as const } : c)) })) } };
+    const after = runNow(forEach, 'flow-report');
+    expect(after.okta.runs.at(-1)?.steps.at(-1)?.error).toMatch(/List is empty/);
+    expect(flowProblem(after, 'report')).toMatch(/hasn\u2019t seen anything/);
+  });
+
+  it('flows saved before types upgrade: event fields move inside the Person, and Concatenate keeps its parts in order', () => {
+    const old = flow('hr.joined', [event, { id: 't', kind: 'concat', inputs: { First: wire('e', 'Login'), Separator: { text: '@' }, Second: { text: 'burrow.co' } } }]);
+    const up = upgradeFlow(structuredClone(old));
+    expect(up.cards[1]?.inputs).toEqual({ First: p('Login'), Second: { text: '@' }, Third: { text: 'burrow.co' } });
+    expect(goodFlows('hr.joined')[0]?.cards[1]?.inputs.Login).toEqual(wire('c1', 'Person.Login'));
   });
 });

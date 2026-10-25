@@ -866,10 +866,10 @@ export const ISSUES: Issue[] = [
     correctFix: 'console',
     console: 'flow',
     note: {
-      example: 'Automate JML in Oktopus Workflows: an HR event card, then the action card, with every field wired from the event. Test it on Sam Sample, then switch it on.',
-      keys: ['flow', 'workflow', 'wire', 'wired', 'event', 'automat', 'test'],
+      example: 'Automate it in Oktopus Workflows: open the Person on the first card and wire each field where it belongs; lists go through For Each or Map, which run a helper flow for each person. Test it on Sam Sample, then switch it on.',
+      keys: ['flow', 'workflow', 'wire', 'wired', 'event', 'automat', 'test', 'helper', 'for each', 'map'],
     },
-    why: 'Now Oktopus handles \u201C{flow}\u201D by itself, at 9 in the morning, the same way every time, without anyone remembering. The work is in the wiring: each field has to come from the right place, because a flow never asks if you meant it. That\u2019s why you test it on someone made up before it runs on someone real.',
+    why: 'Now Oktopus handles \u201C{flow}\u201D by itself, at 9 in the morning, the same way every time, without anyone remembering. The work is in the wiring: each field has to come from the right place, and a list of people is not one person. For Each and Map run a helper for each of them, like a function. A flow never asks if you meant it. That\u2019s why you test it on someone made up before it runs on someone real.',
   },
 ];
 
@@ -2479,23 +2479,34 @@ export const TICKETS: Ticket[] = [
   {
     id: 't1408', day: 14, at: '10:15', who: 'otis', via: 'tray', priority: 'normal', issue: 'flow-build', mood: 1, flow: 'hr.left',
     title: 'Leavers, automatically',
-    message: 'Hoo. Hazel leaves us tomorrow, after two days. When HR marks someone as gone, they should lose their sign-in that same morning. Not when someone remembers.',
+    message: 'Hoo. Hazel leaves us tomorrow, after two days. When HR marks someone as gone, they should lose their sign-in that same morning. And put the leaver steps in a helper flow of their own, please. The auditors will want to use them for more than one thing. Mark my words.',
     details: [
-      { label: 'What', text: 'When HR marks someone as left, deactivate them in Oktopus.', ask: 'what' },
+      { label: 'What', text: 'A helper flow (“Called by another flow”) that deactivates the User it’s given. Then a leaver flow that calls it, handing it the person who left.', ask: 'what' },
       { label: 'When', text: 'Hazel, tomorrow morning.', ask: 'when' },
-      { label: 'Check', text: 'Test it on Sam Sample first. Hoo.', ask: 'check' },
+      { label: 'Check', text: 'Test the leaver flow on Sam Sample. The helper’s steps show up under the card that called it. Hoo.', ask: 'check' },
     ],
     workaround: 'Deactivate Hazel by hand tomorrow',
   },
   {
-    id: 't1607', day: 16, at: '14:40', who: 'otis', via: 'tray', priority: 'normal', issue: 'flow-build', mood: 1, flow: 'hr.left', everywhere: true,
-    title: 'Auditors: leavers, everywhere',
-    message: 'Hoo. The auditors read about our leaver flow. They like it. They\u2019d like it more if it also switched leavers off in Active Directory, not just Oktopus.',
+    id: 't1607', day: 16, at: '14:40', who: 'otis', via: 'tray', priority: 'normal', issue: 'flow-build', mood: 1, flow: 'sweep',
+    title: 'Auditors: sweep every leaver, every morning',
+    message: 'Hoo. Told you. The auditors found Wren and Sam this morning, months gone and still in Active Directory. Never again: every morning, everyone HR has as left should be switched off. Oktopus AND Active Directory. And the leaver flow should do the same.',
     details: [
-      { label: 'What', text: 'The leaver flow should also disable their Active Directory account.', ask: 'what' },
-      { label: 'When', text: 'Before the next leaver. Ideally before the auditors leave.', ask: 'when' },
-      { label: 'Check', text: 'Look at the flow: does it touch Active Directory at all?', ask: 'check' },
+      { label: 'What', text: 'A flow every morning at 9: get everyone HR has as terminated, and run your leaver helper for each of them. The helper should switch them off in Active Directory too.', ask: 'what' },
+      { label: 'When', text: 'From tomorrow morning. Ideally before the auditors leave.', ask: 'when' },
+      { label: 'Check', text: 'Test it: Sam and Pat Sample both leave in the test. Both should end up off everywhere.', ask: 'check' },
     ],
-    workaround: 'Promise to disable Active Directory by hand for every leaver',
+    workaround: 'Promise to check the HR file for leavers by hand every morning',
+  },
+  {
+    id: 't2307', day: 23, at: '15:20', who: 'otis', via: 'tray', priority: 'normal', issue: 'flow-build', mood: 1, flow: 'report',
+    title: 'Auditors: who can use Voyago?',
+    message: 'Hoo. Last thing the auditors want: everyone who can book travel on Voyago, as Name (Title), posted in #general by Oktopus itself. Not typed by you. They want to see a machine did it.',
+    details: [
+      { label: 'What', text: 'A flow that lists everyone in APP-Voyago-Users, turns each one into “Name (Title)” with a helper, joins them up and posts them in #general.', ask: 'what' },
+      { label: 'When', text: 'Today. Run it now, don’t wait for the morning.', ask: 'when' },
+      { label: 'Check', text: 'Test it first. If the list comes out empty, check the group name letter by letter.', ask: 'check' },
+    ],
+    workaround: 'Type the list out by hand for Otis',
   },
 ];

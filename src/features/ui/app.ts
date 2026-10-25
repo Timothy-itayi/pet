@@ -90,6 +90,8 @@ export interface Ui {
   flowMappings?: boolean;
   flowSaid?: string;
   flowTyping?: string;
+  /** People opened (▸) into their fields, as card:output. */
+  flowOpened?: string[];
   oktaApp?: string;
   oktaVerify?: string;
   /** Burrow Chat: a channel you're reading, or a direct message (ui.chat) when unset. */

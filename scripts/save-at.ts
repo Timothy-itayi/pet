@@ -9,7 +9,7 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { DAYS } from '../src/features/game/data.ts';
 import type { Department } from '../src/features/game/directory.ts';
-import { goodFlow } from '../src/features/game/flows.ts';
+import { withGoodFlows } from '../src/features/game/flows.ts';
 import { addApp, addGroup, addRule, assignApp, createFromHr, requireMfa, resetMfa, setActive, updateFromHr } from '../src/features/game/identity.ts';
 import { CATALOG, hrOn } from '../src/features/game/oktopus.ts';
 import {
@@ -40,7 +40,7 @@ function admin(s: GameState, id: string): GameState {
     case 'reset': return resetPassword(s, t.who, { mustChange: true, unlock: true });
     case 'disable': return (t.subjects ?? ['sam']).reduce((x, l) => setEnabled(x, l, false), s);
     case 'mfa-policy': return requireMfa(s, 'Everyone', true);
-    case 'flow': return t.flow ? { ...s, okta: { ...s.okta, flows: [...s.okta.flows.filter((f) => f.trigger !== t.flow), goodFlow(t.flow, t.everywhere)] } } : s;
+    case 'flow': return t.flow ? withGoodFlows(s, t.flow, t.everywhere) : s;
     case 'okta-setup': return teams(s, t.team);
     case 'okta-app': return app(s, t.app, t.team);
     case 'joiner': return createFromHr(s, t.subject ?? '');

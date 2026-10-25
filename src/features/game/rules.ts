@@ -4,7 +4,7 @@ import {
   WORKAROUND_RETURNS_AFTER, XP, type VillagerId,
 } from './data.ts';
 import { MINUTES_A_DAY, newAccounts, type Account } from './directory.ts';
-import { flowProblem, runToday, TRIGGERS } from './flows.ts';
+import { flowProblem, runToday, TASKS, TRIGGERS, upgradeFlow } from './flows.ts';
 import { awayLine, backAt, dayMood } from './people.ts';
 import { appsOf, CATALOG, hrOn, needsMfa, newOkta, type Okta } from './oktopus.ts';
 import { MOODS, type ConsoleFix, type Fix, type Issue, type Note, type Job, type Mood, type PageStatus, type Relation, type Skill, type Ticket, type Tool } from './types.ts';
@@ -528,7 +528,7 @@ export function fill(t: Ticket, text: string): string {
     .replaceAll('{who}', nameList(t.subjects ?? (t.subject ? [t.subject] : issueOf(t).console === 'disable' ? ['sam'] : [])) || 'them')
     .replaceAll('{app}', CATALOG.find((c) => c.id === (t.app ?? 'hootsweet'))?.name ?? t.app ?? '')
     .replaceAll('{team}', team.length >= 5 ? 'everyone' : teamWords(team))
-    .replaceAll('{flow}', t.flow ? TRIGGERS[t.flow] : '');
+    .replaceAll('{flow}', t.flow ? TASKS[t.flow] : '');
 }
 
 /** The suggestion that really fixes this ticket: usually the issue's fix, unless this one's cause is different. */
@@ -886,6 +886,8 @@ export function parseSave(raw: string | null): GameState | undefined {
     if (s.okta) s.okta.mfa ??= [];
     // Saves from before Workflows: no flows built yet.
     if (s.okta) { s.okta.flows ??= []; s.okta.runs ??= []; }
+    // Saves from before fields had types: the event's fields move inside its Person.
+    s.okta?.flows.forEach(upgradeFlow);
     // Saves from before you could stay late: no overtime yet.
     if (s.today) s.today.overtime ??= 0;
     const known = new Set(TICKETS.map((t) => t.id));

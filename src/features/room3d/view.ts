@@ -158,6 +158,8 @@ export async function mountRoom(handlers: Handlers): Promise<void> {
   v.renderer = renderer;
   const css = new CSS3DRenderer();
   css.domElement.className = 'screen-layer';
+  // Focusing something far right inside the monitor (a flow card) scrolls this layer and slides the monitor off; keep it put.
+  css.domElement.addEventListener('scroll', () => css.domElement.scrollTo(0, 0));
   document.body.prepend(css.domElement);
   v.css = css;
   v.room = await buildRoom();

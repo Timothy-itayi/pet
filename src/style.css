@@ -1264,3 +1264,28 @@ button.profile-face:hover, button.profile-face:focus-visible { box-shadow: 0 0 0
 .flow-history-step { margin: 6px 0 0 12px; padding-left: 8px; border-left: 2px solid #d9dbe3; font-size: 12px; }
 .flow-history-step.failed { border-color: #d64545; }
 .flow-palette-title { display: flex; justify-content: space-between; align-items: center; }
+
+/* Workflows, round 2: types, people that open into fields, helpers. */
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.flow-type { display: inline-flex; margin-left: auto; color: #8a8a97; }
+.flow-type.t-people, .flow-type.t-texts { color: #e07b2a; }
+.flow-type.t-person { color: #3d8fd0; }
+.flow-label { display: flex; align-items: center; gap: 2px; }
+.flow-pill .flow-type { padding-left: 4px; }
+.flow-pill { width: 100%; }
+.flow-pill.sub { width: calc(100% - 16px); margin-left: 16px; border-left-color: #8a8a97; }
+.flow-object { display: flex; align-items: center; gap: 2px; }
+.flow-chevron { border: 0; background: none; width: 18px; padding: 0; color: #5d5d6b; cursor: pointer; font-size: 12px; }
+.flow-card.g-list { --band: #e0952a; }
+.flow-dot.g-list { --band: #e0952a; } .flow-dot.g-flow-control { --band: #3fae74; }
+.flow-palette { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.flow-palette-group.g-list { --band: #c07a12; }
+.flow-section { margin: 4px 0 0; font-size: 11px; font-weight: 700; color: #3c3c48; }
+.flow-select { width: 100%; padding: 4px 6px; border: 1px solid #d0d2db; border-top: 3px solid #8ab33d; border-radius: 4px; font: 12px 'Segoe UI', sans-serif; background: #fff; }
+.flow-slot.item { cursor: default; gap: 8px; color: #3c3c48; }
+.flow-item { display: inline-grid; place-items: center; width: 20px; height: 20px; background: #1662dd; color: #fff; border-radius: 3px; font-weight: 700; }
+.flow-call { margin: 4px 0 0 4px; font-size: 11px; }
+.flow-call > summary { cursor: pointer; color: #1662dd; }
+.flow-helpers { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+.flow-helpers li { display: flex; justify-content: space-between; align-items: center; }
+.okta-actions { display: flex; gap: 6px; }
