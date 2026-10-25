@@ -1,5 +1,6 @@
 import type { VillagerId } from './data.ts';
 import type { Department } from './directory.ts';
+import type { FlowTask } from './flows.ts';
 
 export type Skill = 'devices' | 'networks' | 'access';
 export const SKILLS: readonly Skill[] = ['devices', 'networks', 'access'];
@@ -68,7 +69,7 @@ export type PageStatus = 'ok' | 'outdated' | 'missing' | 'yours';
  * Problems fixed in an admin console rather than by picking from a list. Active Directory: unlock, reset, disable.
  * Oktopus: setting Marketing up, giving them their app, and a joiner, mover, leaver and lost phone.
  */
-export type ConsoleFix = 'unlock' | 'reset' | 'disable' | 'okta-setup' | 'okta-app' | 'joiner' | 'mover' | 'leaver' | 'mfa' | 'mfa-policy';
+export type ConsoleFix = 'unlock' | 'reset' | 'disable' | 'okta-setup' | 'okta-app' | 'joiner' | 'mover' | 'leaver' | 'mfa' | 'mfa-policy' | 'flow';
 
 /** A kind of problem. Several tickets can be the same issue, which is what makes your notes useful. */
 export interface Issue {
@@ -121,6 +122,12 @@ export interface Ticket {
   team?: Department[];
   /** Oktopus tickets: the app from the catalog. */
   app?: string;
+  /** Workflows tickets: what the flow should do (an HR change, the leaver sweep, the report). */
+  flow?: FlowTask;
+  /** A leaver flow that also switches them off in Active Directory, not just Oktopus. */
+  everywhere?: true;
+  /** From week 3, joiners, movers and leavers should be handled by a flow, not by hand. */
+  automate?: true;
 }
 
 export interface Job {

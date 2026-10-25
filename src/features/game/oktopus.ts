@@ -1,3 +1,4 @@
+import type { Flow, FlowRun } from './flows.ts';
 import type { Department } from './directory.ts';
 
 /**
@@ -54,7 +55,8 @@ export function hrOn(day: number): HrRow[] {
 export interface OktaUser {
   employeeId: string;
   name: string;
-  dept: Department;
+  /** Usually a department from HR; a miswired flow can put anything here, and then no rule matches. */
+  dept: string;
   title: string;
   manager: string;
   status: 'active' | 'deactivated';
@@ -73,12 +75,15 @@ export interface Okta {
   /** Apps added from the catalog, and the groups each is assigned to. */
   apps: Record<string, string[]>;
   /** The System Log: what was done, newest last. */
-  log: { at: number; event: string; target: string }[];
+  log: { at: number; event: string; target: string; by?: string }[];
   /** Groups whose members must sign in with their phone as well as their password (MFA). */
   mfa: string[];
+  /** Workflows: automations you've built, and every time they ran. */
+  flows: Flow[];
+  runs: FlowRun[];
 }
 
-export const newOkta = (): Okta => ({ users: {}, groups: ['Everyone'], rules: [], apps: {}, log: [], mfa: [] });
+export const newOkta = (): Okta => ({ users: {}, groups: ['Everyone'], rules: [], apps: {}, log: [], mfa: [], flows: [], runs: [] });
 
 /** Whether someone has to use their phone to sign in: they're in a group the sign-on policy covers. */
 export const needsMfa = (okta: Okta, login: string) => groupsOf(okta, login).some((g) => okta.mfa.includes(g));

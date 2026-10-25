@@ -1,8 +1,9 @@
 import { DAYS, ISSUES, MANAGER, MAX_PUSHES, POLICY, REPLIES, TICKETS, VILLAGERS, WORKAROUND_RETURNS_AFTER } from '../game/data.ts';
+import { MINUTES_A_DAY } from '../game/directory.ts';
 import { OKTOPUS_DAY } from '../game/oktopus.ts';
 import { sayNow, statusText } from '../game/people.ts';
 import {
-  ask, canPush, canWorkaround, fixFor, isKnown, issueOf, fill, liveFact, moodName, next, noteTarget, pushBack, relation, reply, resolve,
+  ask, canPush, canWorkaround, clockTime, fixFor, isKnown, issueOf, fill, liveFact, moodName, next, noteTarget, pushBack, relation, reply, resolve,
   scriptFor, suggest, suggestions, ticketById, ticketState, workaround, writeNote, type GameState, type Outcome, type Status, type TicketState,
 } from '../game/rules.ts';
 import type { ConsoleFix, Ticket } from '../game/types.ts';
@@ -25,7 +26,9 @@ const IMPACT = { high: '2 - Medium', normal: '3 - Low', low: '3 - Low' } as cons
 const CATEGORY = { devices: 'Hardware', networks: 'Network', access: 'Account access' } as const;
 
 /** The incident number for a ticket, e.g. INC0010004. */
-export const incidentNumber = (t: Ticket) => `INC${String(10000 + TICKETS.indexOf(t)).padStart(7, '0')}`;
+/** Tickets in the order they arrive, which is the order they're numbered in. */
+const ARRIVAL = [...TICKETS].sort((a, b) => a.day - b.day || clockTime(a.at) - clockTime(b.at));
+export const incidentNumber = (t: Ticket) => `INC${String(10000 + ARRIVAL.indexOf(t)).padStart(7, '0')}`;
 /** The knowledge article number for a runbook page. */
 const articleNumber = (issueId: string) => `KB${String(10 + ISSUES.findIndex((i) => i.id === issueId)).padStart(7, '0')}`;
 
@@ -122,6 +125,11 @@ function knowledge(s: GameState, t: Ticket): HTMLElement {
 }
 
 /** Where the conversation stands, in a line: whose move it is. */
+/** The lesson when your flow did a joiner, mover or leaver before anyone asked. */
+const AUTOMATED = 'HR changed, and your flow did the rest at 9:00, before anyone asked: the same job, the same way, every time. Checking with the person afterwards is still part of the job, because a flow never asks if you meant it.';
+/** Did one of your flows handle this ticket's person this morning? */
+const flowRanFor = (s: GameState, t: Ticket) => s.okta.runs.some((r) => !r.test && r.subject === t.subject && Math.floor(r.at / MINUTES_A_DAY) === t.day);
+
 /** Someone's words in quotes, unless they already are. */
 const quoted = (text: string) => (text.startsWith('\u201C') ? text : `\u201C${text}\u201D`);
 
@@ -288,7 +296,7 @@ export function outcomeCard(app: App, o: Outcome): HTMLElement {
     asked: 'Please log a ticket',
   }[o.kind];
   const body = {
-    fix: fill(ticketById(o.ticketId), issue.why),
+    fix: fill(ticketById(o.ticketId), ticketById(o.ticketId).automate && flowRanFor(state, ticketById(o.ticketId)) ? AUTOMATED : issue.why),
     workaround: `${v.name} is happy for now. It’ll probably come back in ${WORKAROUND_RETURNS_AFTER} days. Fix it properly to learn what was really wrong.`,
     push: `On hold until tomorrow. ${v.name} understands: these things take time.`,
     asked: `${v.name} sighs, and goes off to fill one in. It\u2019ll land in your queue soon, a bit grumpier, and this time it counts.`,

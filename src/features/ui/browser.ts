@@ -437,7 +437,8 @@ const missing = (path: string): Page => ({
 });
 
 function pageAt(url: string): Page {
-  if (url.startsWith('ridge://search?q=')) return search(decodeURIComponent(url.slice('ridge://search?q='.length)));
+  const q = searchText(url);
+  if (q !== undefined) return search(q);
   const match = /^[a-z]+:\/\/([^/]+)(\/[^?#]*)?/i.exec(url);
   const host = match?.[1]?.toLowerCase() ?? '';
   const path = (match?.[2] ?? '/').replace(/\/+$/, '') || '/';
@@ -452,6 +453,13 @@ function pageAt(url: string): Page {
   };
 }
 
+/** What was searched for, readable, if this address is a search. */
+function searchText(url: string): string | undefined {
+  if (!url.startsWith('ridge://search?q=')) return undefined;
+  const q = url.slice('ridge://search?q='.length);
+  try { return decodeURIComponent(q); } catch { return q; }
+}
+
 /** The title of the page in the front tab, for the window's title bar. */
 export const browserTitle = (app: App) => `${pageAt(urlOf(tab(app))).title} — Ridge`;
 
@@ -462,7 +470,7 @@ export function browser(app: App): HTMLElement {
   const url = urlOf(current);
   const link: Link = (label, to, cls = '') => h('button', { class: `site-link ${cls}`, onclick: () => go(app, to) }, label);
   const travel = (by: number) => () => { current.at += by; app.rerender(); };
-  const address = h('input', { class: 'ridge-address', name: 'address', value: url.replace(/^ridge:\/\/search\?q=/, ''), 'aria-label': 'Address', autocomplete: 'off', 'data-testid': 'ridge-address' }) as HTMLInputElement;
+  const address = h('input', { class: 'ridge-address', name: 'address', value: searchText(url) ?? url, 'aria-label': 'Address', autocomplete: 'off', 'data-testid': 'ridge-address' }) as HTMLInputElement;
   return h('div', { class: 'ridge', 'data-testid': 'browser' },
     h('div', { class: 'ridge-tabs', role: 'tablist' },
       ...all.map((t, i) => h('span', { class: `ridge-tab${i === ui.tab ? ' on' : ''}` },

@@ -1,3 +1,4 @@
+import type { FlowRun } from '../game/flows.ts';
 import type { Department } from '../game/directory.ts';
 import type { GameState } from '../game/rules.ts';
 import type { OktaPage } from './oktopus.ts';
@@ -77,7 +78,23 @@ export interface Ui {
   toasts: Toast[];
   /** Oktopus: the page you're on, and the person, app or identity check you've opened there. */
   oktaPage?: OktaPage;
+  /** Oktopus: why the last thing you tried wasn't done, if it wasn't. */
+  oktaSaid?: string;
   oktaUser?: string;
+  /** Oktopus Workflows: the flow open in the editor, an output picked to wire, where the card palette is open, the
+   * last test run, whether wires show, a message about the last thing tried, and an input being typed into. */
+  flowOpen?: string;
+  flowPick?: { card: string; field: string };
+  flowAdd?: number;
+  flowTest?: FlowRun;
+  flowMappings?: boolean;
+  flowSaid?: string;
+  flowTyping?: string;
+  /** People opened (▸) into their fields, as card:output. */
+  flowOpened?: string[];
+  /** How far the flow canvas is scrolled sideways, and a card just added to scroll to. */
+  flowScrollX?: number;
+  flowScrollTo?: number;
   oktaApp?: string;
   oktaVerify?: string;
   /** Burrow Chat: a channel you're reading, or a direct message (ui.chat) when unset. */

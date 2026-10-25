@@ -133,7 +133,7 @@ function windowEl(app: App, win: Win, z: number): HTMLElement {
     onkeydown: (e) => { if ((e as KeyboardEvent).key === 'Escape') { e.stopPropagation(); closeApp(app, win.id); } },
   },
     h('header', { class: 'titlebar', ondblclick: toggleMax, onpointerdown: (e) => drag(win, el, e as PointerEvent) },
-      h('span', { class: 'win-title' }, h('span', { class: 'win-glyph', 'aria-hidden': 'true' }, meta.glyph), meta.title),
+      h('span', { class: 'win-title' }, h('span', { class: 'win-glyph', 'aria-hidden': 'true' }, glyph(win.id)), meta.title),
       h('span', { class: 'win-controls' },
         h('button', { class: 'close', 'aria-label': `Minimise ${meta.label}`, 'data-testid': `min-${win.id}`, onclick: () => { win.min = true; app.rerender(); } }, '–'),
         h('button', { class: 'close', 'aria-label': `${win.max ? 'Restore' : 'Maximise'} ${meta.label}`, 'data-testid': `max-${win.id}`, onclick: toggleMax }, win.max ? '❐' : '□'),
@@ -286,7 +286,7 @@ function taskbar(app: App): HTMLElement {
     }, h('span', { class: 'start-logo' }), 'Start'),
     h('div', { class: 'task-buttons' }, ...ui.windows.map((w) => h('button', {
       class: `task${front(app) === w && !w.min ? ' on' : ''}`, 'data-testid': `task-${w.id}`, onclick: taskClick(w),
-    }, h('span', { 'aria-hidden': 'true' }, APPS[w.id].glyph), APPS[w.id].label))),
+    }, h('span', { 'aria-hidden': 'true' }, glyph(w.id)), APPS[w.id].label))),
     h('span', { class: 'tray' },
       h('button', {
         class: 'tray-chat', 'aria-label': `Burrow Chat${state.chats.length ? `, ${state.chats.length} unread` : ''}`, 'data-testid': 'tray-chat',

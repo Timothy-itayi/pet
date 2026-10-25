@@ -2,16 +2,18 @@ import { artFor, iconId } from '../game/art.ts';
 import { DEPARTMENTS, MINUTES_A_DAY, type Department } from '../game/directory.ts';
 import { addApp, addGroup, addRule, assignApp, createFromHr, removeRule, requireMfa, resetMfa, setActive, unassignApp, updateFromHr } from '../game/identity.ts';
 import { appsOf, CATALOG, differences, groupsOf, hrOn, needsMfa, type HrRow, type Okta } from '../game/oktopus.ts';
-import type { GameState } from '../game/rules.ts';
+import { OWN_ACCOUNT, SELF, type GameState } from '../game/rules.ts';
 import type { App } from './app.ts';
 import { clockText, h } from './dom.ts';
+import { workflowsPage } from './flows.ts';
+import { FLOWS_DAY } from '../game/flows.ts';
 
 /**
  * The Oktopus Admin Console, laid out like the real thing: Dashboard, Directory (People, Groups, Import from HR),
  * Applications and the System Log down the side, the page on the right.
  */
 
-export type OktaPage = 'dashboard' | 'people' | 'groups' | 'import' | 'apps' | 'security' | 'log';
+export type OktaPage = 'dashboard' | 'people' | 'groups' | 'import' | 'apps' | 'security' | 'flows' | 'log';
 
 /**
  * The Oktopus wordmark: lowercase and clean like the real sign-on brand it nods to, with the "o" drawn as a thick ring
@@ -91,8 +93,10 @@ function person(app: App, login: string): HTMLElement {
     h('h1', {}, user.name, h('span', { class: `okta-pill ${user.status}` }, user.status === 'active' ? 'Active' : 'Deactivated')),
     h('div', { class: 'okta-actions' },
       diffs.length > 0 && h('button', { class: 'okta-btn primary', 'data-testid': 'okta-update', onclick: () => app.set(updateFromHr(state, login)) }, 'Update profile from HR'),
-      h('button', { class: 'okta-btn', 'data-testid': 'okta-activate', onclick: () => app.set(setActive(state, login, user.status !== 'active')) },
-        user.status === 'active' ? 'Deactivate' : 'Activate'),
+      login === SELF && user.status === 'active'
+        ? h('p', { class: 'meta', 'data-testid': 'okta-own-account' }, OWN_ACCOUNT)
+        : h('button', { class: 'okta-btn', 'data-testid': 'okta-activate', onclick: () => app.set(setActive(state, login, user.status !== 'active')) },
+          user.status === 'active' ? 'Deactivate' : 'Activate'),
       user.status === 'active' && h('button', { class: 'okta-btn', 'data-testid': 'okta-reset-mfa', onclick: () => { ui.oktaVerify = login; app.rerender(); } }, 'Reset Authenticators')),
     verifying && row && h('section', { class: 'okta-card warn', role: 'dialog', 'aria-label': 'Check it’s really them', 'data-testid': 'okta-verify' },
       h('h2', {}, 'Check it’s really them'),
@@ -164,7 +168,7 @@ function importPage(app: App): HTMLElement {
           h('td', { class: 'okta-row-actions' },
             !user && r.status === 'active' && h('button', { class: 'okta-btn small primary', 'data-testid': `okta-create-${r.login}`, onclick: () => app.set(createFromHr(state, r.login)) }, 'Create'),
             user && status !== 'In sync' && differences(user, r).length > 0 && h('button', { class: 'okta-btn small', 'data-testid': `okta-sync-${r.login}`, onclick: () => app.set(updateFromHr(state, r.login)) }, 'Update profile'),
-            user?.status === 'active' && status !== 'In sync' && h('button', { class: 'okta-btn small', 'data-testid': `okta-deactivate-${r.login}`, onclick: () => app.set(setActive(state, r.login, false)) }, 'Deactivate')));
+            user?.status === 'active' && status !== 'In sync' && r.login !== SELF && h('button', { class: 'okta-btn small', 'data-testid': `okta-deactivate-${r.login}`, onclick: () => app.set(setActive(state, r.login, false)) }, 'Deactivate')));
       }))),
   );
 }
@@ -176,10 +180,14 @@ function groupsPage(app: App): HTMLElement {
   const options = (values: readonly string[]) => values.map((v) => h('option', { value: v }, v));
   const newGroup = h('form', { class: 'okta-form', onsubmit: (e) => {
     e.preventDefault();
-    app.set(addGroup(state, field(e.target as HTMLFormElement, 'name')));
+    const name = field(e.target as HTMLFormElement, 'name').trim();
+    // Say why a group wasn't added, rather than doing nothing.
+    app.ui.oktaSaid = !name ? 'A group needs a name.' : okta.groups.includes(name) ? `There\u2019s already a group called ${name}.` : undefined;
+    app.set(addGroup(state, name));
   } },
     h('label', {}, 'Group name ', h('input', { name: 'name', placeholder: 'DEPT-Marketing', required: true, autocomplete: 'off', 'data-testid': 'okta-group-name' })),
-    h('button', { class: 'okta-btn primary', type: 'submit', 'data-testid': 'okta-add-group' }, 'Add group'));
+    h('button', { class: 'okta-btn primary', type: 'submit', 'data-testid': 'okta-add-group' }, 'Add group'),
+    app.ui.oktaSaid && h('p', { class: 'okta-warning', role: 'status', 'data-testid': 'okta-said' }, app.ui.oktaSaid));
   const targets = okta.groups.filter((g) => g !== 'Everyone');
   const deptRule = h('form', { class: 'okta-form', onsubmit: (e) => {
     e.preventDefault();
@@ -262,7 +270,7 @@ function logPage(app: App): HTMLElement {
     log.length === 0 ? h('p', { class: 'okta-empty' }, 'Nothing has happened yet.')
       : h('table', { class: 'okta-table' },
         h('thead', {}, h('tr', {}, ...['When', 'Event', 'Target', 'Actor'].map((c) => h('th', {}, c)))),
-        h('tbody', {}, ...[...log].reverse().map((e) => h('tr', {}, h('td', {}, stamp(e.at)), h('td', {}, h('code', {}, e.event)), h('td', {}, e.target), h('td', {}, 'intern'))))),
+        h('tbody', {}, ...[...log].reverse().map((e) => h('tr', {}, h('td', {}, stamp(e.at)), h('td', {}, h('code', {}, e.event)), h('td', {}, e.target), h('td', {}, e.by ?? 'intern'))))),
   );
 }
 
@@ -293,14 +301,14 @@ function securityPage(app: App): HTMLElement {
 
 const PAGES: [OktaPage, string, string][] = [
   ['dashboard', 'Dashboard', '\u{1F3E0}'], ['people', 'People', '\u{1F464}'], ['groups', 'Groups', '\u{1F465}'],
-  ['import', 'Import from HR', '\u{1F4E5}'], ['apps', 'Applications', '\u{1F9E9}'], ['security', 'Security', '\u{1F512}'], ['log', 'System Log', '\u{1F4DC}'],
+  ['import', 'Import from HR', '\u{1F4E5}'], ['apps', 'Applications', '\u{1F9E9}'], ['security', 'Security', '\u{1F512}'], ['flows', 'Workflows', '\u2699'], ['log', 'System Log', '\u{1F4DC}'],
 ];
 
 export function oktopus(app: App): HTMLElement {
   const { ui } = app;
   const page = ui.oktaPage ?? 'dashboard';
-  const go = (to: OktaPage) => () => { ui.oktaPage = to; ui.oktaUser = undefined; ui.oktaApp = undefined; ui.oktaVerify = undefined; app.rerender(); };
-  const body = { dashboard, people, groups: groupsPage, import: importPage, apps: appsPage, security: securityPage, log: logPage }[page](app);
+  const go = (to: OktaPage) => () => { ui.oktaPage = to; ui.oktaUser = undefined; ui.oktaApp = undefined; ui.oktaVerify = undefined; ui.oktaSaid = undefined; ui.flowOpen = undefined; ui.flowPick = undefined; app.rerender(); };
+  const body = { dashboard, people, groups: groupsPage, import: importPage, apps: appsPage, security: securityPage, flows: workflowsPage, log: logPage }[page](app);
   return h('div', { class: 'okta', 'data-testid': 'oktopus' },
     h('div', { class: 'ridge-bar' },
       h('span', { class: 'ridge-nav', 'aria-hidden': 'true' }, '← → ↻'),
@@ -311,7 +319,7 @@ export function oktopus(app: App): HTMLElement {
       h('span', { class: 'meta' }, 'intern · Super Administrator')),
     h('div', { class: 'okta-body' },
       h('nav', { class: 'okta-nav', 'aria-label': 'Oktopus admin' },
-        ...PAGES.map(([id, label, glyph]) => h('button', {
+        ...PAGES.filter(([id]) => id !== 'flows' || app.state.day >= FLOWS_DAY).map(([id, label, glyph]) => h('button', {
           class: `okta-nav-item${page === id ? ' on' : ''}`, 'aria-current': page === id ? 'page' : 'false', 'data-testid': `okta-nav-${id}`, onclick: go(id),
         }, h('span', { 'aria-hidden': 'true' }, glyph), label))),
       h('section', { class: 'okta-main' }, body)),

@@ -4,6 +4,7 @@ import {
   WORKAROUND_RETURNS_AFTER, XP, type VillagerId,
 } from './data.ts';
 import { MINUTES_A_DAY, newAccounts, type Account } from './directory.ts';
+import { flowProblem, runToday, TASKS, TRIGGERS, upgradeFlow } from './flows.ts';
 import { awayLine, backAt, dayMood } from './people.ts';
 import { appsOf, CATALOG, hrOn, needsMfa, newOkta, type Okta } from './oktopus.ts';
 import { MOODS, type ConsoleFix, type Fix, type Issue, type Note, type Job, type Mood, type PageStatus, type Relation, type Skill, type Ticket, type Tool } from './types.ts';
@@ -312,6 +313,8 @@ function startDay(d: GameState): void {
     ...[...carried, ...back].map((id) => ({ id, at: OPEN })),
     ...TICKETS.filter((t) => t.day === d.day).map((t) => ({ id: t.id, at: clockTime(t.at) })),
   ];
+  // First thing, before anyone's in: your flows handle today's joiners, movers and leavers.
+  runToday(d);
   advance(d, 0);
 }
 
@@ -406,7 +409,15 @@ export function accountProblem(s: GameState, t: Ticket): string | undefined {
     const on = (t.subjects ?? ['sam']).filter((l) => s.accounts[l]?.enabled);
     return on.length ? `${named(s, on)}${on.length > 1 ? '\u2019s accounts are' : '\u2019s account is'} still enabled in Active Directory. Anyone with the old password can still get in.` : undefined;
   }
-  if (fixBy !== 'unlock' && fixBy !== 'reset') return oktaProblem(s, t, fixBy);
+  if (fixBy === 'flow') return t.flow && flowProblem(s, t.flow, t.everywhere);
+  if (fixBy !== 'unlock' && fixBy !== 'reset') {
+    const person = oktaProblem(s, t, fixBy);
+    if (person || !t.automate) return person;
+    // Fixed, but by hand: from week 3 HR changes come too often for that. Is the flow on for next time?
+    const trigger = ({ joiner: 'hr.joined', mover: 'hr.moved', leaver: 'hr.left' } as const)[fixBy as 'joiner' | 'mover' | 'leaver'];
+    return trigger && !s.okta.flows.some((f) => f.on && f.trigger === trigger)
+      ? `${nameList([t.subject ?? t.who])} is sorted now, by hand. HR won\u2019t wait next time: switch on a flow for \u201C${TRIGGERS[trigger]}\u201D in Oktopus Workflows.` : undefined;
+  }
   const a = s.accounts[t.who];
   if (!a) return undefined;
   if (!a.enabled) return 'Their account is disabled, so nothing will let them in. Enable it again in Active Directory.';
@@ -516,7 +527,8 @@ export function fill(t: Ticket, text: string): string {
   return text
     .replaceAll('{who}', nameList(t.subjects ?? (t.subject ? [t.subject] : issueOf(t).console === 'disable' ? ['sam'] : [])) || 'them')
     .replaceAll('{app}', CATALOG.find((c) => c.id === (t.app ?? 'hootsweet'))?.name ?? t.app ?? '')
-    .replaceAll('{team}', team.length >= 5 ? 'everyone' : teamWords(team));
+    .replaceAll('{team}', team.length >= 5 ? 'everyone' : teamWords(team))
+    .replaceAll('{flow}', t.flow ? TASKS[t.flow] : '');
 }
 
 /** The suggestion that really fixes this ticket: usually the issue's fix, unless this one's cause is different. */
@@ -529,6 +541,7 @@ const CONSOLE_CHECK: Record<ConsoleFix, string> = {
   mfa: 'Ask them to sign in and set up their new phone',
   disable: 'Ask them to check nobody can sign in as {who} now',
   'mfa-policy': 'Ask them to check everyone is asked for their phone',
+  flow: 'Ask them to check the flow does the job',
   'okta-setup': 'Ask them to check {team} are all set up',
   'okta-app': 'Ask them to check {app} is on the right dashboards',
   joiner: 'Ask them to check {who} can sign in',
@@ -682,7 +695,12 @@ function administer(s: GameState, login: string, minutes: number, change: (a: Ac
 
 export const unlockAccount = (s: GameState, login: string) => administer(s, login, COST.unlock, (a) => { a.locked = false; });
 
-export const setEnabled = (s: GameState, login: string, enabled: boolean) => administer(s, login, COST.unlock, (a) => { a.enabled = enabled; });
+/** You're the only one in IT: switch your own account off and nobody is left who could switch it back on. */
+export const SELF = 'intern';
+export const OWN_ACCOUNT = 'You can\u2019t switch off your own account. You\u2019re the only one in IT: nobody could switch it back on.';
+
+export const setEnabled = (s: GameState, login: string, enabled: boolean) =>
+  login === SELF && !enabled ? s : administer(s, login, COST.unlock, (a) => { a.enabled = enabled; });
 
 /** Reset someone's password to a temporary one, as the Reset Password box does. */
 export const resetPassword = (s: GameState, login: string, { mustChange, unlock }: { mustChange: boolean; unlock: boolean }) =>
@@ -860,8 +878,16 @@ export function parseSave(raw: string | null): GameState | undefined {
     for (const st of Object.values(s.tickets ?? {})) st.heard ??= [];
     // Saves from before you typed your notes: the pages you wrote show the example text.
     s.written ??= {};
+    // Saves from before you couldn't switch your own account off: switched back on.
+    if (s.accounts?.[SELF]) s.accounts[SELF].enabled = true;
+    const you = s.okta?.users[SELF];
+    if (you) you.status = 'active';
     // Saves from before Oktopus had sign-on policies: none set yet.
     if (s.okta) s.okta.mfa ??= [];
+    // Saves from before Workflows: no flows built yet.
+    if (s.okta) { s.okta.flows ??= []; s.okta.runs ??= []; }
+    // Saves from before fields had types: the event's fields move inside its Person.
+    s.okta?.flows.forEach(upgradeFlow);
     // Saves from before you could stay late: no overtime yet.
     if (s.today) s.today.overtime ??= 0;
     const known = new Set(TICKETS.map((t) => t.id));

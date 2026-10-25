@@ -851,6 +851,26 @@ export const ISSUES: Issue[] = [
     },
     why: 'Names like intranet.burrow.local are turned into addresses by a name server (DNS). Only the office’s own one knows our names. Someone switched this laptop to a public one to “speed it up”: the whole internet still works, but none of our own sites can be found.',
   },
+  {
+    id: 'flow-build',
+    rule: 6,
+    title: 'Automate it in Oktopus Workflows',
+    skill: 'access',
+    page: { status: 'missing', text: '(New system. No page yet.)' },
+    asks: [
+      { id: 'what', text: 'What should happen, exactly, when HR changes?', none: 'Whatever you did by hand last week. But without you doing it.' },
+      { id: 'when', text: 'When does the next one happen?', none: 'Tomorrow, HR says. First thing.' },
+      { id: 'check', text: 'How will we know it worked?', none: 'They\u2019ll be able to sign in. Or they won\u2019t, and you\u2019ll hear about it.' },
+    ],
+    fixes: [],
+    correctFix: 'console',
+    console: 'flow',
+    note: {
+      example: 'Automate it in Oktopus Workflows: open the Person on the first card and wire each field where it belongs; lists go through For Each or Map, which run a helper flow for each person. Test it on Sam Sample, then switch it on.',
+      keys: ['flow', 'workflow', 'wire', 'wired', 'event', 'automat', 'test', 'helper', 'for each', 'map'],
+    },
+    why: 'Now Oktopus handles \u201C{flow}\u201D by itself, at 9 in the morning, the same way every time, without anyone remembering. The work is in the wiring: each field has to come from the right place, and a list of people is not one person. For Each and Map run a helper for each of them, like a function. A flow never asks if you meant it. That\u2019s why you test it on someone made up before it runs on someone real.',
+  },
 ];
 
 export const TICKETS: Ticket[] = [
@@ -1584,9 +1604,9 @@ export const TICKETS: Ticket[] = [
     workaround: 'Let him use the guest Wi-Fi for now',
   },
   {
-    id: 't1301', day: 13, at: '9:10', who: 'dot', via: 'tray', priority: 'high', issue: 'joiner', mood: 1, subject: 'hazel',
-    title: 'Hazel starts in Finance today',
-    message: 'Our new Accounts Assistant, Hazel, starts today. She has a desk, a chair and a calculator. She does not have a login.',
+    id: 't1301', day: 13, at: '9:10', who: 'dot', via: 'tray', priority: 'high', issue: 'joiner', mood: 1, subject: 'hazel', automate: true,
+    title: 'Is Hazel set up?',
+    message: 'Our new Accounts Assistant, Hazel, starts today. She has a desk, a chair and a calculator. Does she have a login? Is she in Oktopus with Finance\u2019s apps?',
     details: [
       { label: 'Start', text: 'Today. She’s here now, holding a calculator.', ask: 'start' },
       { label: 'Role', text: 'Accounts Assistant. She needs what Finance has.', ask: 'role' },
@@ -1658,9 +1678,9 @@ export const TICKETS: Ticket[] = [
     workaround: 'Write the labels by hand',
   },
   {
-    id: 't1401', day: 14, at: '9:30', who: 'otis', via: 'tray', priority: 'normal', issue: 'mover', mood: 1, subject: 'pip',
-    title: 'Pip joins Finance',
-    message: 'Hoo. Pip moves to Finance today, as a Finance Assistant. Pip is very good at counting. HR has done the paperwork. Twice.',
+    id: 't1401', day: 14, at: '9:30', who: 'otis', via: 'tray', priority: 'normal', issue: 'mover', mood: 1, subject: 'pip', automate: true,
+    title: 'Has Pip moved in Oktopus?',
+    message: 'Hoo. Pip moved to Finance this morning, as a Finance Assistant. HR has done the paperwork. Twice. Has Oktopus caught up?',
     details: [
       { label: 'Team', text: 'Finance, from Operations.', ask: 'team' },
       { label: 'Old apps', text: 'Operations never had any apps. Finance has Voyago.', ask: 'apps' },
@@ -1730,8 +1750,8 @@ export const TICKETS: Ticket[] = [
     workaround: 'Lend him the spare wired mouse',
   },
   {
-    id: 't1501', day: 15, at: '9:05', who: 'dot', via: 'tray', priority: 'high', issue: 'leaver', mood: 1, subject: 'hazel',
-    title: 'Hazel has left us',
+    id: 't1501', day: 15, at: '9:05', who: 'dot', via: 'tray', priority: 'high', issue: 'leaver', mood: 1, subject: 'hazel', automate: true,
+    title: 'Hazel has left: is she switched off?',
     message: 'Hazel has decided Finance isn’t for her. Yesterday was her last day. She was very polite about it. She took a calculator.',
     details: [
       { label: 'Last day', text: 'Yesterday.', ask: 'when' },
@@ -2182,8 +2202,8 @@ export const TICKETS: Ticket[] = [
     workaround: 'Lend him the spare wired mouse',
   },
   {
-    id: 't2201', day: 22, at: '9:15', who: 'marlo', via: 'tray', priority: 'high', issue: 'joiner', mood: 1, subject: 'rowan',
-    title: 'Rowan starts in Sales today',
+    id: 't2201', day: 22, at: '9:15', who: 'marlo', via: 'tray', priority: 'high', issue: 'joiner', mood: 1, subject: 'rowan', automate: true,
+    title: 'Is Rowan set up?',
     message: 'New Sales Executive starting today: Rowan. Desk on the new floor, by the window. Needs everything Sales has. Has already asked about the parking.',
     details: [
       { label: 'Start', text: 'Today. Here now, by the window.', ask: 'start' },
@@ -2432,5 +2452,61 @@ export const TICKETS: Ticket[] = [
       { label: 'Changed', text: 'Marlo “sped it up” for him. With a public name server.', ask: 'changed' },
     ],
     workaround: 'Use someone else’s laptop for the intranet',
+  },
+  {
+    id: 't1207', day: 12, at: '10:40', who: 'dot', via: 'tray', priority: 'normal', issue: 'flow-build', mood: 1, flow: 'hr.joined',
+    title: 'Automate new starters, please',
+    message: 'HR says Finance has a new starter tomorrow. And more after that, apparently. Can Oktopus set new people up by itself, so it\u2019s done before they arrive?',
+    details: [
+      { label: 'What', text: 'When HR adds someone, they should be in Oktopus by the time they sit down, with their team\u2019s apps.', ask: 'what' },
+      { label: 'When', text: 'Hazel starts tomorrow at 9.', ask: 'when' },
+      { label: 'Check', text: 'Test it on someone made up first. Oktopus has a Sam Sample for exactly that.', ask: 'check' },
+      { label: 'Oktopus', text: 'Workflows: no flows yet.' },
+    ],
+    workaround: 'Promise to set Hazel up by hand in the morning',
+  },
+  {
+    id: 't1308', day: 13, at: '10:50', who: 'marlo', via: 'tray', priority: 'normal', issue: 'flow-build', mood: 1, flow: 'hr.moved',
+    title: 'People moving teams: automate it',
+    message: 'HR has Pip moving to Finance tomorrow. Basil took you half a morning last time. Make Oktopus do it the moment HR does.',
+    details: [
+      { label: 'What', text: 'When HR changes someone\u2019s department, Oktopus should update them, so the rules move their apps.', ask: 'what' },
+      { label: 'When', text: 'Pip moves tomorrow.', ask: 'when' },
+      { label: 'Check', text: 'Test it on Sam Sample first.', ask: 'check' },
+    ],
+    workaround: 'Say you\u2019ll update Pip by hand tomorrow',
+  },
+  {
+    id: 't1408', day: 14, at: '10:15', who: 'otis', via: 'tray', priority: 'normal', issue: 'flow-build', mood: 1, flow: 'hr.left',
+    title: 'Leavers, automatically',
+    message: 'Hoo. Hazel leaves us tomorrow, after two days. When HR marks someone as gone, they should lose their sign-in that same morning. And put the leaver steps in a helper flow of their own, please. The auditors will want to use them for more than one thing. Mark my words.',
+    details: [
+      { label: 'What', text: 'Whoever leaves can’t sign in from that morning. And the steps for switching someone off should live in a flow of their own, so other flows can reuse them.', ask: 'what' },
+      { label: 'When', text: 'Hazel, tomorrow morning.', ask: 'when' },
+      { label: 'Check', text: 'Test the leaver flow on Sam Sample. The helper’s steps show up under the card that called it. Hoo.', ask: 'check' },
+    ],
+    workaround: 'Deactivate Hazel by hand tomorrow',
+  },
+  {
+    id: 't1607', day: 16, at: '14:40', who: 'otis', via: 'tray', priority: 'normal', issue: 'flow-build', mood: 1, flow: 'sweep',
+    title: 'Auditors: sweep every leaver, every morning',
+    message: 'Hoo. Told you. The auditors found Wren and Sam this morning, months gone and still in Active Directory. Never again: every morning, everyone HR has as left should be switched off. Oktopus AND Active Directory. And the leaver flow should do the same.',
+    details: [
+      { label: 'What', text: 'A flow every morning at 9: get everyone HR has as terminated, and run your leaver helper for each of them. The helper should switch them off in Active Directory too.', ask: 'what' },
+      { label: 'When', text: 'From tomorrow morning. Ideally before the auditors leave.', ask: 'when' },
+      { label: 'Check', text: 'Test it: Sam and Pat Sample both leave in the test. Both should end up off everywhere.', ask: 'check' },
+    ],
+    workaround: 'Promise to check the HR file for leavers by hand every morning',
+  },
+  {
+    id: 't2307', day: 23, at: '15:20', who: 'otis', via: 'tray', priority: 'normal', issue: 'flow-build', mood: 1, flow: 'report',
+    title: 'Auditors: who can use Voyago?',
+    message: 'Hoo. Last thing the auditors want: everyone in Finance who still works here (they’re who can book travel on Voyago), as Name (Title), posted in #general by Oktopus itself. Not typed by you. They want to see a machine did it.',
+    details: [
+      { label: 'What', text: 'One message in #general naming everyone in Finance, each as Name (Title). Only people who still work here. Posted by Oktopus, not by you.', ask: 'what' },
+      { label: 'When', text: 'Today. Run it now, don’t wait for the morning.', ask: 'when' },
+      { label: 'Check', text: 'Test it first. The morning hands you everyone HR has ever had, leavers too. If someone who left turns up, the auditors will turn up too.', ask: 'check' },
+    ],
+    workaround: 'Type the list out by hand for Otis',
   },
 ];
