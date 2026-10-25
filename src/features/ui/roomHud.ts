@@ -7,6 +7,7 @@ import { closeBook, flipBook, openBook } from './book.ts';
 import { announceArrival } from './desktop.ts';
 import { clockText, h } from './dom.ts';
 import { powerAway } from './power.ts';
+import { isMuted, setMuted } from './sound.ts';
 
 
 /** What an item says, including loot in the tray. */
@@ -132,10 +133,20 @@ function putBack(app: App): void {
   app.rerender();
 }
 
-/** While you're at the computer: a way to stand up again. Everything else is on the screen itself. */
+/** Sound on or off, in the same corner wherever you are. */
+function soundChip(app: App): HTMLElement {
+  const off = isMuted();
+  return h('button', {
+    class: 'back-chip sound-chip', 'data-testid': 'sound', 'aria-label': 'Sound', 'aria-pressed': String(!off),
+    title: off ? 'Sound off' : 'Sound on', onclick: () => { setMuted(!off); app.rerender(); },
+  }, off ? '\u{1F507}' : '\u{1F50A}');
+}
+
+/** While you're at the computer: a way to stand up again, and the sound switch. Everything else is on the screen itself. */
 export function computerHud(app: App): HTMLElement {
   return h('main', { class: 'room-hud computer-hud' },
-    h('button', { class: 'back-chip', 'data-testid': 'stand-up', 'aria-label': 'Stand up', title: 'Stand up', onclick: () => leaveComputer(app) }, '\u2190'));
+    h('button', { class: 'back-chip', 'data-testid': 'stand-up', 'aria-label': 'Stand up', title: 'Stand up', onclick: () => leaveComputer(app) }, '\u2190'),
+    soundChip(app));
 }
 
 /** Keys in the room: Esc puts things back or steps back; arrows turn what you're holding. */
@@ -174,6 +185,7 @@ export function roomHud(app: App): HTMLElement {
   const here = ROOM_ITEMS.filter((i) => ON_THE_WALL.includes(i.id) === (ui.shot === 'wall'));
   const things = [...here, ...(state.tools.length && ui.shot === 'overview' ? [{ id: 'tool', label: describe(app, 'tool')?.label ?? 'Tool' }] : [])];
   return h('main', { class: 'room-hud', 'data-testid': 'room' },
+    soundChip(app),
     h('header', { class: 'room-top' },
       h('p', {}, `${COMPANY} IT Help Desk`),
       h('p', {}, state.phase === 'desk' ? `${day}, ${clockText(state.clock)}` : day)),
