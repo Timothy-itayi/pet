@@ -1,8 +1,8 @@
 /** What each day at Burrow is like, outside the tickets: the weather, what's on, the canteen and the share price. */
 
 /** Burrow & Co.'s share price at the end of each day. It jumps on the first Friday, when the investment is announced. */
-export const BRRW = [4.12, 4.05, 3.98, 4.21, 5.37, 5.52, 5.61, 5.48, 5.44, 5.83, 6.02, 6.10, 5.96, 6.21, 6.35, 6.12, 6.28, 6.31, 6.44, 6.60];
-export const WEATHER = ['Drizzle, 13°', 'Showers, 12°', 'Cloudy, 14°', 'Sunny spells, 16°', 'Sunny, 18°', 'Windy, 15°', 'Rain, 11°', 'Fog, 12°', 'Cloudy, 14°', 'Sunny, 19°', 'Showers, 13°', 'Bright, 17°', 'Drizzle, 12°', 'Sunny spells, 16°', 'Sunny, 20°', 'Rain, 10°', 'Fog, 11°', 'Windy, 13°', 'Cloudy, 14°', 'Sunny, 17°'];
+export const BRRW = [4.12, 4.05, 3.98, 4.21, 5.37, 5.52, 5.61, 5.48, 5.44, 5.83, 6.02, 6.10, 5.96, 6.21, 6.35, 6.12, 6.28, 6.31, 6.44, 6.60, 6.91, 7.04, 7.38, 7.25, 7.62];
+export const WEATHER = ['Drizzle, 13°', 'Showers, 12°', 'Cloudy, 14°', 'Sunny spells, 16°', 'Sunny, 18°', 'Windy, 15°', 'Rain, 11°', 'Fog, 12°', 'Cloudy, 14°', 'Sunny, 19°', 'Showers, 13°', 'Bright, 17°', 'Drizzle, 12°', 'Sunny spells, 16°', 'Sunny, 20°', 'Rain, 10°', 'Fog, 11°', 'Windy, 13°', 'Cloudy, 14°', 'Sunny, 17°', 'Bright, 16°', 'Showers, 13°', 'Sunny spells, 17°', 'Rain, 12°', 'Sunny, 21°'];
 export const TODAY = [
   ['9:30 Welcome coffee for the new intern (there is no coffee)', '15:00 Sam’s leaving card, kitchen'],
   ['10:00 Budget meeting (cancelled: no budget)', '16:00 Fire drill (probably)'],
@@ -23,7 +23,12 @@ export const TODAY = [
   ['10:00 Phone sign-in for everyone', '15:00 Mr. Grisby finds his phone'],
   ['11:00 Security talk: “Don’t plug that in”', 'Car park: please stop finding things'],
   ['9:30 Finance double-check every payment', '16:00 Auditors’ last questions'],
-  ['16:00 Auditors’ farewell drinks', '17:00 The Conversation. Truly.'],
+  ['16:00 Auditors’ farewell drinks', '17:00 The Conversation (postponed: new floor)'],
+  ['9:00 Everyone moves to the new floor', '12:00 Tour of the new kitchen'],
+  ['9:30 Rowan’s first day, Sales', '15:00 Find-the-toilets challenge'],
+  ['10:30 Investors visit the new floor', '14:00 Drone video shoot (Juniper)'],
+  ['11:00 Window desks: Wi-Fi “investigation”', '16:00 Pip finds the blue stapler?'],
+  ['17:00 New floor party', '16:00 The Conversation. Upstairs. For real.'],
 ] as const;
 export const CANTEEN = ['Soup of the day (yesterday’s)', 'Cheese toastie', 'Carrot cake (Biscuit made it)', 'Mystery stew', 'Fish & chips Friday'];
 
@@ -59,6 +64,11 @@ const DAY_TAGS: DayTag[][] = [
   ['auditors'],
   ['auditors', 'fire-drill'],
   ['auditors'],
+  ['sun', 'friday', 'drinks'],
+  ['monday', 'reshuffle'],
+  ['rain', 'new-starter'],
+  ['sun', 'client-visit'],
+  ['rain'],
   ['sun', 'friday', 'drinks', 'conversation'],
 ];
 

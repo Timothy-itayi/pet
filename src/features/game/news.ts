@@ -140,6 +140,36 @@ export const NEWS: NewsPost[] = [
     moves: 'Static camera. The door slowly swings shut on its own.',
     body: 'The auditors leave us today. Two of three findings are closed, and the third is a shared login that Biscuit misses. They said we had \u201Cimproved markedly\u201D. I have framed it. Hoo.',
   },
+  {
+    day: 21, title: 'Welcome to the new floor!', from: 'Mr. Grisby', scene: '\u{1F3E2}\u2728', tone: '#0e7490',
+    shows: 'A freshly fitted empty open-plan office floor with big windows over rolling hills, new desks still in plastic, cables coiled on the carpet',
+    moves: 'Static camera. Plastic sheeting on a desk lifts gently in a draught and settles.',
+    body: 'Thanks to our investors, Burrow & Co. now has a second floor. Sales, Marketing and Finance move up today. Please do not run on the new stairs. Please do not bring the old printer.',
+  },
+  {
+    day: 22, title: 'Welcome, Rowan!', from: 'Marlo', scene: '\u{1F91D}\u{1F4C8}', tone: '#9a3412',
+    shows: 'A sales desk by a big window with a brand-new laptop, a fresh notebook and a tidy stack of business cards, the evening sky outside',
+    moves: 'Static camera. The top business card slides off the stack, slowly.',
+    body: 'Please welcome Rowan, our new Sales Executive! Rowan sold me a pen in the interview. I already had a pen. Now I have two.',
+  },
+  {
+    day: 23, title: 'The investors visit', from: 'Mr. Grisby', scene: '\u{1F4BC}\u{1F4CA}', tone: '#1e40af',
+    shows: 'A smart new meeting room with a long table, three empty leather chairs and a projector beam lighting an empty screen',
+    moves: 'Static camera. The projector beam flickers and dust drifts through it.',
+    body: 'Our investors are visiting the new floor today. Please look busy. Please also be busy. If they ask about the coffee machine, it is “on a journey”.',
+  },
+  {
+    day: 24, title: 'Wi-Fi by the window', from: 'Juniper', scene: '\u{1F4F6}\u{1FA9F}', tone: '#047857',
+    shows: 'A new office access point fixed to the ceiling at the far end of a floor near tall windows, its small light glowing green',
+    moves: 'Static camera. The small light on the access point blinks steadily.',
+    body: 'Marketing\u2019s window desks now have Wi-Fi! IT put up a new access point. We can see the hills AND the internet. Best floor ever.',
+  },
+  {
+    day: 25, title: 'Party on the new floor', from: 'Biscuit', scene: '\u{1F389}\u{1F370}', tone: '#be185d',
+    shows: 'A new office floor decorated for a small party, bunting across the ceiling, a table with cakes and paper cups, the windows dark blue at dusk',
+    moves: 'Static camera. The bunting sways gently and a balloon drifts across the ceiling.',
+    body: 'Party at five on the new floor!! There is cake!! There is ANOTHER cake!! Everyone welcome, even Otis, ESPECIALLY Otis!!',
+  },
 ];
 
 /** Every post up to today, newest first. */

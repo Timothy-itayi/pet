@@ -56,6 +56,7 @@ const FACES: Record<string, string> = {
   Pip: 'Operations assistant, deep brown skin, short black hair, glasses, green shirt, a curious smile',
   Fern: 'Social media assistant, very fair skin, copper-red bob, green top, friendly',
   Hazel: 'New accounts assistant, warm brown skin, neat dark hair tied back, small round glasses, cream blouse under a grey cardigan, polite and slightly nervous',
+  Rowan: 'New sales executive, light olive skin, short wavy dark hair, a neat navy jumper over a collared shirt, a confident easy smile',
   Sam: 'IT administrator, tan skin, short brown hair, beard, grey hoodie, tired kind eyes',
   IT: 'Young IT intern, light skin, short dark brown hair, blue shirt with a staff lanyard, a hopeful nervous smile',
 };

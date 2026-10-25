@@ -2,8 +2,8 @@ import type { DayScript, Job, Villager } from './types.ts';
 
 export const COMPANY = 'Burrow & Co.';
 export const MANAGER = 'Mr. Grisby';
-/** Working weeks so far: Sam's old system, Oktopus for Marketing, Oktopus for everyone, then security week. */
-export const DAYS = 20;
+/** Five working weeks: Sam's old system, Oktopus for Marketing, Oktopus for everyone, security week, the new floor. */
+export const DAYS = 25;
 /** Enough for a few weeks of bus fare and food, if most days go well: meeting the goal pays for the day. */
 export const START_SAVINGS = 80;
 export const DAILY_COST = 12;
@@ -217,8 +217,40 @@ export const DAY_SCRIPTS: DayScript[] = [
   {
     goal: 6,
     memo: 'The auditors leave today. Six tickets, and then The Conversation. Truly. I’ve cleared my diary. It was already clear.',
-    metGoal: 'Six! The auditors left smiling. Now: The Conversation. Sit down.',
-    missedGoal: 'The auditors left. The Conversation is still happening. Brace yourself.',
+    metGoal: 'Six! The auditors left smiling. The investors, however, have bought us a second floor. The Conversation can wait one more week. On the new floor. Voucher.',
+    missedGoal: 'The investors have bought us a whole new floor, so The Conversation moves upstairs. Next Friday. It has a view now.',
+  },
+  {
+    goal: 5,
+    memo: 'A NEW FLOOR! Everyone moves up today. Five tickets, and make the internet come too.',
+    rule: 'The budget is back, a bit. Spares are fine. Shops are not.',
+    metGoal: 'Everyone upstairs is online! I can hear Sales from here. Voucher.',
+    missedGoal: 'Half of Sales is upstairs with no internet, shouting at clouds.',
+  },
+  {
+    goal: 5,
+    memo: 'A new starter in Sales: Rowan. Desk by the window. Five tickets.',
+    metGoal: 'Rowan signed in, got Canvass, and got asked for their phone. Seamless. I’ve learnt that word. Voucher.',
+    missedGoal: 'Rowan spent the morning selling things with a pen and paper. Rowan is very good at it, which is worse.',
+  },
+  {
+    goal: 6,
+    memo: 'The investors visit today to see the new floor. Give them Wi-Fi. Six tickets.',
+    rule: 'Visitors get the guest network. Even investors. Especially investors.',
+    metGoal: 'The investors saw the new floor and the slides worked. They want a THIRD floor. Voucher.',
+    missedGoal: 'The investors’ slides didn’t load. They looked at the view instead. They liked the view.',
+  },
+  {
+    goal: 6,
+    memo: 'The new floor works, mostly. Fix the “mostly”. Six tickets.',
+    metGoal: 'Marketing can use the Wi-Fi by the window. Juniper cried. Happy crying. Voucher.',
+    missedGoal: 'Marketing have moved their desks next to the lifts. The lift is now very popular.',
+  },
+  {
+    goal: 6,
+    memo: 'Friday. Party on the new floor at five. And before it, finally, absolutely: The Conversation. Six tickets.',
+    metGoal: 'Six! Come up to the new floor. Bring nothing. Sit down. It’s time for The Conversation.',
+    missedGoal: 'Well. It’s still time for The Conversation. Come up. Sit down. Breathe.',
   },
 ];
 
@@ -235,14 +267,14 @@ export const JOBS: Job[] = [
     title: 'IT Support Technician',
     company: 'Big Ocean Corp',
     blurb: 'Fast-paced team supporting 2,000 staff. Accounts, access and networking experience a must.',
-    needs: { devices: 110, networks: 44, access: 115 },
+    needs: { devices: 132, networks: 70, access: 130 },
   },
   {
     id: 'lighthouse',
     title: 'Junior Security Analyst',
     company: 'Lighthouse Security',
     blurb: 'Help small companies spot phishing, lock down sign-ins and clean up after leavers. You\u2019ll need to know access inside out.',
-    needs: { access: 120 },
+    needs: { access: 135 },
   },
 ];
 
