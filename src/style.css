@@ -1202,3 +1202,62 @@ button.profile-face:hover, button.profile-face:focus-visible { box-shadow: 0 0 0
 
 .okta-switch { display: flex; align-items: center; gap: 8px; cursor: pointer; }
 .okta-warning, .ad-warning { margin: 6px 0; padding: 6px 10px; border-left: 3px solid #c23934; background: #fdecea; color: #8a1c17; font-weight: 600; }
+
+/* Oktopus Workflows: cards in a row with coloured headers, wired output to input, like Okta Workflows. */
+.flow-bar { display: flex; align-items: center; gap: 12px; padding: 6px 0 10px; border-bottom: 1px solid #e1e1e6; margin-bottom: 8px; }
+.flow-title { flex: 1; min-width: 0; font: 600 16px 'Segoe UI', sans-serif; border: 1px solid transparent; border-radius: 4px; padding: 4px 6px; background: none; }
+.flow-title:hover, .flow-title:focus { border-color: #c9c9d2; background: #fff; }
+.flow-toggle { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; color: #1662dd; cursor: pointer; }
+.flow-hint { margin: 0 0 8px; font-size: 12px; color: #5d5d6b; }
+.flow-hint.warn { color: #b3261e; font-weight: 600; }
+.flow-canvas { position: relative; overflow-x: auto; padding: 10px 4px 16px; background: #f4f5f8; border: 1px solid #e1e1e6; border-radius: 6px; margin-bottom: 12px; }
+.flow-wires { position: absolute; left: 0; top: 0; pointer-events: none; overflow: visible; }
+.flow-wires path { fill: none; stroke: #5d5d6b; stroke-width: 1.5; }
+.flow-row { position: relative; display: flex; align-items: flex-start; gap: 0; width: max-content; }
+.flow-card { position: relative; width: 230px; flex: none; background: #fff; border: 1px solid #d9dbe3; border-radius: 6px; box-shadow: 0 1px 3px #0000001a; }
+.flow-card.failed { border-color: #d64545; box-shadow: 0 0 0 2px #d6454555; }
+.flow-card-head { position: relative; display: grid; gap: 2px; padding: 8px 28px 8px 12px; color: #fff; border-radius: 5px 5px 0 0; background: var(--band); }
+.flow-card-group { font-size: 10px; opacity: 0.85; }
+.flow-card-head strong { font: 600 14px 'Segoe UI', sans-serif; }
+.flow-card .g-event, .flow-card.g-event { --band: #4e9a2f; }
+.flow-card.g-object { --band: #3d8fd0; }
+.flow-card.g-function { --band: #8ab33d; }
+.flow-card.g-action { --band: #e07b2a; }
+.flow-card.g-flow-control { --band: #3fae74; }
+.flow-x { position: absolute; top: 6px; right: 6px; border: 0; background: none; color: inherit; font-size: 15px; cursor: pointer; line-height: 1; }
+.flow-inputs, .flow-outputs { display: grid; gap: 6px; padding: 10px 12px; }
+.flow-outputs { background: #f0f1f5; border-top: 1px solid #e6e7ec; }
+.flow-input { display: grid; gap: 3px; }
+.flow-label { font-size: 11px; color: #5d5d6b; }
+.flow-req { color: #b3261e; margin-left: 2px; }
+.flow-slot { position: relative; display: flex; align-items: center; gap: 6px; min-height: 28px; padding: 4px 22px 4px 8px; border: 1px solid #d0d2db; border-radius: 4px; background: #fff; font: 12px 'Segoe UI', sans-serif; text-align: left; cursor: pointer; }
+.flow-slot.empty { color: #8a8a97; border-style: dashed; }
+.flow-slot.empty.ready { color: #1662dd; border-color: #1662dd; background: #eef3fd; }
+.flow-slot.wired { border-left: 3px solid #5d5d6b; }
+.flow-slot.text { cursor: text; }
+.flow-slot .flow-x { top: 5px; color: #8a8a97; }
+.flow-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--band, #4e9a2f); flex: none; }
+.flow-dot.g-event { --band: #4e9a2f; } .flow-dot.g-object { --band: #3d8fd0; } .flow-dot.g-function { --band: #8ab33d; } .flow-dot.g-action { --band: #e07b2a; }
+.flow-pill { display: flex; align-items: center; gap: 6px; padding: 4px 8px; border: 1px solid #d0d2db; border-left: 3px solid var(--band, #3d8fd0); border-radius: 4px; background: #fff; font: 12px 'Segoe UI', sans-serif; text-align: left; cursor: grab; touch-action: none; }
+.flow-pill.picked { border-color: #1662dd; background: #e8effc; box-shadow: 0 0 0 2px #1662dd44; }
+.flow-grip { color: #a7a9b5; letter-spacing: -2px; }
+.flow-step { padding: 8px 12px 10px; border-top: 1px dashed #d9dbe3; font-size: 11px; }
+.flow-error { margin: 0 0 4px; color: #b3261e; font-weight: 600; }
+.flow-values { display: grid; grid-template-columns: auto 1fr; gap: 1px 8px; margin: 0; }
+.flow-values dt { color: #8a8a97; }
+.flow-values dd { margin: 0; word-break: break-word; }
+.flow-plus-wrap { position: relative; align-self: center; padding: 0 10px; }
+.flow-plus { width: 26px; height: 26px; border: 1px solid #c9c9d2; border-radius: 50%; background: #fff; color: #5d5d6b; font-size: 16px; cursor: pointer; }
+.flow-plus:hover { border-color: #1662dd; color: #1662dd; }
+.flow-palette { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)) auto; align-items: start; gap: 10px; margin-bottom: 8px; padding: 10px; background: #fff; border: 1px solid #1662dd; border-radius: 6px; }
+.flow-palette-title { grid-column: 1 / -1; margin: 0; font-weight: 600; }
+.flow-plus.on { border-color: #1662dd; background: #1662dd; color: #fff; }
+.flow-palette-group { margin: 0 0 2px; font-size: 11px; font-weight: 700; color: var(--band); }
+.flow-palette-group.g-object { --band: #3d8fd0; } .flow-palette-group.g-function { --band: #6f9a22; } .flow-palette-group.g-action { --band: #c96a1e; } .flow-palette-group.g-flow-control { --band: #2f9a63; }
+.flow-palette-item { display: block; width: 100%; padding: 4px 6px; border: 0; border-radius: 4px; background: none; font: 12px 'Segoe UI', sans-serif; text-align: left; cursor: pointer; }
+.flow-palette-item:hover { background: #f0f3fa; }
+.flow-history { margin: 0; padding-left: 18px; display: grid; gap: 4px; font-size: 12px; }
+.okta-link { border: 0; background: none; padding: 0; color: #1662dd; font: inherit; font-weight: 600; cursor: pointer; }
+.okta-status { padding: 1px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+.okta-status.on { background: #e3f5e8; color: #2e7d32; }
+.okta-status.off { background: #f0f0f3; color: #6b6b78; }

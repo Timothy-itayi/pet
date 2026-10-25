@@ -5,13 +5,15 @@ import { appsOf, CATALOG, differences, groupsOf, hrOn, needsMfa, type HrRow, typ
 import { OWN_ACCOUNT, SELF, type GameState } from '../game/rules.ts';
 import type { App } from './app.ts';
 import { clockText, h } from './dom.ts';
+import { workflowsPage } from './flows.ts';
+import { FLOWS_DAY } from '../game/flows.ts';
 
 /**
  * The Oktopus Admin Console, laid out like the real thing: Dashboard, Directory (People, Groups, Import from HR),
  * Applications and the System Log down the side, the page on the right.
  */
 
-export type OktaPage = 'dashboard' | 'people' | 'groups' | 'import' | 'apps' | 'security' | 'log';
+export type OktaPage = 'dashboard' | 'people' | 'groups' | 'import' | 'apps' | 'security' | 'flows' | 'log';
 
 /**
  * The Oktopus wordmark: lowercase and clean like the real sign-on brand it nods to, with the "o" drawn as a thick ring
@@ -299,14 +301,14 @@ function securityPage(app: App): HTMLElement {
 
 const PAGES: [OktaPage, string, string][] = [
   ['dashboard', 'Dashboard', '\u{1F3E0}'], ['people', 'People', '\u{1F464}'], ['groups', 'Groups', '\u{1F465}'],
-  ['import', 'Import from HR', '\u{1F4E5}'], ['apps', 'Applications', '\u{1F9E9}'], ['security', 'Security', '\u{1F512}'], ['log', 'System Log', '\u{1F4DC}'],
+  ['import', 'Import from HR', '\u{1F4E5}'], ['apps', 'Applications', '\u{1F9E9}'], ['security', 'Security', '\u{1F512}'], ['flows', 'Workflows', '\u2699'], ['log', 'System Log', '\u{1F4DC}'],
 ];
 
 export function oktopus(app: App): HTMLElement {
   const { ui } = app;
   const page = ui.oktaPage ?? 'dashboard';
-  const go = (to: OktaPage) => () => { ui.oktaPage = to; ui.oktaUser = undefined; ui.oktaApp = undefined; ui.oktaVerify = undefined; ui.oktaSaid = undefined; app.rerender(); };
-  const body = { dashboard, people, groups: groupsPage, import: importPage, apps: appsPage, security: securityPage, log: logPage }[page](app);
+  const go = (to: OktaPage) => () => { ui.oktaPage = to; ui.oktaUser = undefined; ui.oktaApp = undefined; ui.oktaVerify = undefined; ui.oktaSaid = undefined; ui.flowOpen = undefined; ui.flowPick = undefined; app.rerender(); };
+  const body = { dashboard, people, groups: groupsPage, import: importPage, apps: appsPage, security: securityPage, flows: workflowsPage, log: logPage }[page](app);
   return h('div', { class: 'okta', 'data-testid': 'oktopus' },
     h('div', { class: 'ridge-bar' },
       h('span', { class: 'ridge-nav', 'aria-hidden': 'true' }, '← → ↻'),
@@ -317,7 +319,7 @@ export function oktopus(app: App): HTMLElement {
       h('span', { class: 'meta' }, 'intern · Super Administrator')),
     h('div', { class: 'okta-body' },
       h('nav', { class: 'okta-nav', 'aria-label': 'Oktopus admin' },
-        ...PAGES.map(([id, label, glyph]) => h('button', {
+        ...PAGES.filter(([id]) => id !== 'flows' || app.state.day >= FLOWS_DAY).map(([id, label, glyph]) => h('button', {
           class: `okta-nav-item${page === id ? ' on' : ''}`, 'aria-current': page === id ? 'page' : 'false', 'data-testid': `okta-nav-${id}`, onclick: go(id),
         }, h('span', { 'aria-hidden': 'true' }, glyph), label))),
       h('section', { class: 'okta-main' }, body)),

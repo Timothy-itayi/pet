@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { flowProblem, hrEvents, runToday, testFlow, type Card, type Flow } from './flows.ts';
+import { addCard, flowProblem, hrEvents, newFlow, removeCard, runToday, setInput, testFlow, type Card, type Flow } from './flows.ts';
 import { addApp, addGroup, addRule, assignApp, createFromHr } from './identity.ts';
 import { appsOf, hrOn } from './oktopus.ts';
 import { goTo, newGame, type GameState } from './rules.ts';
@@ -90,5 +90,18 @@ describe('flows', () => {
     expect(run.test).toBe(true);
     expect(after.okta.users['sam.sample']).toBeDefined();
     expect(JSON.stringify(s)).toBe(before);
+  });
+
+  it('building: wires only run left to right, and removing a card takes its wires with it', () => {
+    let s = newFlow(financeOn(13), 'hr.joined', 'New starters');
+    s = addCard(addCard(s, 'flow-1', 1, 'concat'), 'flow-1', 2, 'okta-create');
+    const [, concat, create] = s.okta.flows[0]?.cards ?? [];
+    expect([concat?.kind, create?.kind]).toEqual(['concat', 'okta-create']);
+    s = setInput(s, 'flow-1', create?.id ?? '', 'Login', wire(concat?.id ?? '', 'Combined'));
+    expect(setInput(s, 'flow-1', concat?.id ?? '', 'First', wire(create?.id ?? '', 'Login'))).toBe(s); // right to left: refused
+    expect(setInput(s, 'flow-1', create?.id ?? '', 'Login', wire('c1', 'Nonsense'))).toBe(s); // no such output: refused
+    s = removeCard(s, 'flow-1', concat?.id ?? '');
+    expect(s.okta.flows[0]?.cards.find((c) => c.kind === 'okta-create')?.inputs).toEqual({});
+    expect(removeCard(s, 'flow-1', 'c1')).toBe(s); // the event stays
   });
 });

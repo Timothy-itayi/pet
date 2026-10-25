@@ -162,3 +162,70 @@ export function flowProblem(s: GameState, trigger: Trigger): string | undefined 
   }
   return undefined;
 }
+
+// ---- Building flows ------------------------------------------------------------------------------------------
+
+/** Workflows arrives in week 3, when HR changes start coming faster than one intern can keep up with by hand. */
+export const FLOWS_DAY = 11;
+
+/** A change to the flows, on a copy. Building takes thought, not office minutes, so the clock doesn't move. */
+function edit(s: GameState, change: (flows: Flow[], d: GameState) => false | undefined): GameState {
+  const d = structuredClone(s);
+  return change(d.okta.flows, d) === false ? s : d;
+}
+
+const nextId = (ids: string[], prefix: string) => `${prefix}${Math.max(0, ...ids.map((id) => Number(id.slice(prefix.length)) || 0)) + 1}`;
+
+export const newFlow = (s: GameState, trigger: Trigger, name: string) => edit(s, (flows) => {
+  flows.push({ id: nextId(flows.map((f) => f.id), 'flow-'), name: name.trim() || TRIGGERS[trigger], trigger, on: false, cards: [{ id: 'c1', kind: 'event', inputs: {} }] });
+});
+
+export const deleteFlow = (s: GameState, id: string) => edit(s, (flows, d) => {
+  const i = flows.findIndex((f) => f.id === id);
+  if (i < 0) return false;
+  flows.splice(i, 1);
+  d.okta.runs = d.okta.runs.filter((r) => r.flow !== id);
+});
+
+export const renameFlow = (s: GameState, id: string, name: string) => edit(s, (flows) => {
+  const flow = flows.find((f) => f.id === id);
+  if (!flow || !name.trim() || flow.name === name.trim()) return false;
+  flow.name = name.trim();
+});
+
+/** Switch a flow on or off. Only a flow that's on runs when HR changes. Goes in the System Log. */
+export const switchFlow = (s: GameState, id: string, on: boolean) => edit(s, (flows, d) => {
+  const flow = flows.find((f) => f.id === id);
+  if (!flow || flow.on === on) return false;
+  flow.on = on;
+  d.okta.log.push({ at: d.day * MINUTES_A_DAY + d.clock, event: on ? 'workflows.flow.activate' : 'workflows.flow.deactivate', target: flow.name });
+});
+
+/** Add a card at a position. The event always stays first. */
+export const addCard = (s: GameState, id: string, at: number, kind: CardKind) => edit(s, (flows) => {
+  const flow = flows.find((f) => f.id === id);
+  if (!flow || kind === 'event') return false;
+  flow.cards.splice(Math.max(1, Math.min(at, flow.cards.length)), 0, { id: nextId(flow.cards.map((c) => c.id), 'c'), kind, inputs: {} });
+});
+
+/** Remove a card, and any wires that came from it. The event can't be removed. */
+export const removeCard = (s: GameState, id: string, cardId: string) => edit(s, (flows) => {
+  const flow = flows.find((f) => f.id === id);
+  const i = flow?.cards.findIndex((c) => c.id === cardId) ?? -1;
+  if (!flow || i < 1) return false;
+  flow.cards.splice(i, 1);
+  for (const card of flow.cards) card.inputs = Object.fromEntries(Object.entries(card.inputs).filter(([, input]) => !('wire' in input && input.wire.card === cardId)));
+});
+
+/** Wire an input from an earlier card's output, type text into it, or clear it. Wires only run left to right. */
+export const setInput = (s: GameState, id: string, cardId: string, name: string, input: Input | undefined) => edit(s, (flows) => {
+  const flow = flows.find((f) => f.id === id);
+  const at = flow?.cards.findIndex((c) => c.id === cardId) ?? -1;
+  const card = flow?.cards[at];
+  if (!flow || !card || !CARDS[card.kind].inputs.some((i) => i.name === name)) return false;
+  if (input && 'wire' in input) {
+    const from = flow.cards.findIndex((c) => c.id === input.wire.card);
+    if (from < 0 || from >= at || !CARDS[flow.cards[from]?.kind ?? 'return'].outputs.includes(input.wire.field)) return false;
+  }
+  card.inputs = Object.fromEntries([...Object.entries(card.inputs).filter(([k]) => k !== name), ...(input ? [[name, input] as const] : [])]);
+});
