@@ -175,9 +175,11 @@ describe('flows', () => {
     expect(goodFlows('hr.joined')[0]?.cards[1]?.inputs.Login).toEqual(wire('c1', 'Person.Login'));
   });
 
-  it('a group name that\u2019s nearly right is refused, with the name it probably meant', () => {
+  it('the morning gives everyone in HR, leavers too: a report that forgets to filter out leavers names Hazel, who left', () => {
     const s = withGoodFlows(financeOn(23), 'report');
-    const typo = { ...s, okta: { ...s.okta, flows: s.okta.flows.map((f) => ({ ...f, cards: f.cards.map((c) => (c.kind === 'assign' ? { ...c, inputs: { Value: { text: 'app-voyago-user' } } } : c)) })) } };
-    expect(runNow(typo, 'flow-report').okta.runs.at(-1)?.steps.at(-1)?.error).toMatch(/did you mean \u201CAPP-Voyago-Users\u201D/);
+    const noStatus = { ...s, okta: { ...s.okta, runs: [], flows: s.okta.flows.map((f) => (f.id === 'flow-report' ? { ...f, cards: f.cards.map((c) => (c.id === 'c3' ? { ...c, inputs: { ...c.inputs, List: wire('c1', 'People') } } : c)) } : f)) } };
+    expect(flowProblem(runNow(noStatus, 'flow-report'), 'report')).toMatch(/Hazel shouldn\u2019t be on it: they\u2019ve left/);
+    const typo = { ...s, okta: { ...s.okta, flows: s.okta.flows.map((f) => ({ ...f, cards: f.cards.map((c) => (c.id === 'c2' && f.id === 'flow-report' ? { ...c, inputs: { ...c.inputs, Field: { text: 'Stauts' } } } : c)) })) } };
+    expect(runNow(typo, 'flow-report').okta.runs.at(-1)?.steps.at(-1)?.error).toMatch(/no field called \u201CStauts\u201D/);
   });
 });

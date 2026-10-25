@@ -2501,11 +2501,11 @@ export const TICKETS: Ticket[] = [
   {
     id: 't2307', day: 23, at: '15:20', who: 'otis', via: 'tray', priority: 'normal', issue: 'flow-build', mood: 1, flow: 'report',
     title: 'Auditors: who can use Voyago?',
-    message: 'Hoo. Last thing the auditors want: everyone in APP-Voyago-Users (they can book travel), as Name (Title), posted in #general by Oktopus itself. Not typed by you. They want to see a machine did it.',
+    message: 'Hoo. Last thing the auditors want: everyone in Finance who still works here (they’re who can book travel on Voyago), as Name (Title), posted in #general by Oktopus itself. Not typed by you. They want to see a machine did it.',
     details: [
-      { label: 'What', text: 'One message in #general naming everyone in APP-Voyago-Users, each as Name (Title). Posted by Oktopus, not by you.', ask: 'what' },
+      { label: 'What', text: 'One message in #general naming everyone in Finance, each as Name (Title). Only people who still work here. Posted by Oktopus, not by you.', ask: 'what' },
       { label: 'When', text: 'Today. Run it now, don’t wait for the morning.', ask: 'when' },
-      { label: 'Check', text: 'Test it first. If the list comes out empty, check the group name letter by letter.', ask: 'check' },
+      { label: 'Check', text: 'Test it first. The morning hands you everyone HR has ever had, leavers too. If someone who left turns up, the auditors will turn up too.', ask: 'check' },
     ],
     workaround: 'Type the list out by hand for Otis',
   },

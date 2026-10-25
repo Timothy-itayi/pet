@@ -18,7 +18,7 @@ export type FlowTask = 'hr.joined' | 'hr.moved' | 'hr.left' | 'sweep' | 'report'
 export type CardKind =
   | 'event' | 'schedule' | 'helper-input' | 'assign' | 'hr-person' | 'hr-list' | 'okta-read' | 'okta-members' | 'concat' | 'join'
   | 'okta-create' | 'okta-update' | 'okta-update-user' | 'okta-deactivate' | 'ad-disable' | 'chat-post'
-  | 'foreach' | 'map' | 'call' | 'return';
+  | 'filter' | 'foreach' | 'map' | 'call' | 'return';
 export type CardGroup = 'Event' | 'Object' | 'Function' | 'Action' | 'List' | 'Flow control';
 export type FieldType = 'text' | 'person' | 'people' | 'texts';
 
@@ -36,8 +36,9 @@ export interface Flow { id: string; name: string; trigger: Trigger; cards: Card[
 export interface Step { card: string; values: Record<string, string>; error?: string; note?: string; calls?: FlowRun[] }
 export interface FlowRun { flow: string; at: number; subject: string; steps: Step[]; test?: true; result?: string }
 
-/** The fields a person object has: HR's row, or Oktopus's profile. Open the object to wire one of them. */
-export const PERSON = ['Login', 'Employee ID', 'Name', 'Department', 'Title', 'Manager'] as const;
+/** The fields a person object has: HR's row, or Oktopus's profile. Open the object to wire one of them. Status is HR's
+ * active or terminated (Oktopus says active or deactivated). */
+export const PERSON = ['Login', 'Employee ID', 'Name', 'Department', 'Title', 'Manager', 'Status'] as const;
 export type Person = Record<(typeof PERSON)[number], string>;
 type Value = string | Person | Person[] | string[];
 
@@ -63,11 +64,12 @@ const t = (name: string, required?: true): Field => ({ name, type: 'text', ...(r
 /** Every kind of card: where it sits in the palette, what it's called, what it needs and what it gives. */
 export const CARDS: Record<CardKind, Spec> = {
   event: { group: 'Event', title: 'HR event', inputs: [], outputs: [{ name: 'Person', type: 'person' }], hidden: true },
-  schedule: { group: 'Event', title: 'Schedule', inputs: [], outputs: [], hidden: true },
+  // The morning hands over the whole HR file, as it stands today, leavers included: filter it for what you need.
+  schedule: { group: 'Event', title: 'Schedule', inputs: [], outputs: [{ name: 'People', type: 'people' }], hidden: true },
   'helper-input': { group: 'Event', title: 'Helper input', inputs: [], outputs: [{ name: 'User', type: 'person' }], hidden: true },
   assign: { group: 'Flow control', title: 'Assign', inputs: [t('Value', true)], outputs: [{ name: 'Value', type: 'text' }] },
   'hr-person': { group: 'Object', title: 'HR: Get person', inputs: [t('Employee ID', true)], outputs: [{ name: 'Person', type: 'person' }], hidden: true },
-  'hr-list': { group: 'Object', title: 'HR: List people', inputs: [t('Status', true)], outputs: [{ name: 'People', type: 'people' }] },
+  'hr-list': { group: 'Object', title: 'HR: List people', inputs: [t('Status', true)], outputs: [{ name: 'People', type: 'people' }], hidden: true },
   'okta-read': { group: 'Object', title: 'Oktopus: Read user', inputs: [t('Login', true)], outputs: [{ name: 'User', type: 'person' }] },
   'okta-members': { group: 'Object', title: 'Oktopus: List group members', inputs: [t('Group', true)], outputs: [{ name: 'Users', type: 'people' }] },
   concat: { group: 'Function', title: 'Text: Concatenate', inputs: [t('First', true), t('Second'), t('Third'), t('Fourth')], outputs: [{ name: 'Combined', type: 'text' }] },
@@ -82,6 +84,7 @@ export const CARDS: Record<CardKind, Spec> = {
   'okta-deactivate': { group: 'Action', title: 'Oktopus: Deactivate user', inputs: [t('Login', true)], outputs: [{ name: 'Login', type: 'text' }] },
   'ad-disable': { group: 'Action', title: 'Active Directory: Disable account', inputs: [t('Login', true)], outputs: [] },
   'chat-post': { group: 'Action', title: 'Burrow Chat: Post to #general', inputs: [t('Message', true)], outputs: [] },
+  filter: { group: 'List', title: 'List: Filter', inputs: [{ name: 'List', type: 'people', required: true }, t('Field', true), t('Equals', true)], outputs: [{ name: 'People', type: 'people' }] },
   foreach: { group: 'List', title: 'For Each', inputs: [{ name: 'List', type: 'people', required: true }], outputs: [], helper: true },
   map: { group: 'List', title: 'Map', inputs: [{ name: 'List', type: 'people', required: true }], outputs: [{ name: 'Results', type: 'texts' }], helper: true },
   call: { group: 'Flow control', title: 'Call flow', inputs: [{ name: 'User', type: 'person', required: true }], outputs: [{ name: 'Result', type: 'text' }], helper: true },
@@ -100,11 +103,11 @@ export function outputType(kind: CardKind, field: string): FieldType | undefined
 }
 
 const personOf = (row: HrRow): Person => ({
-  Login: row.login, 'Employee ID': row.employeeId, Name: row.name, Department: row.dept, Title: row.title, Manager: row.manager,
+  Login: row.login, 'Employee ID': row.employeeId, Name: row.name, Department: row.dept, Title: row.title, Manager: row.manager, Status: row.status,
 });
 const personInOkta = (d: GameState, login: string): Person | undefined => {
   const u = d.okta.users[login];
-  return u && { Login: login, 'Employee ID': u.employeeId, Name: u.name, Department: u.dept, Title: u.title, Manager: u.manager };
+  return u && { Login: login, 'Employee ID': u.employeeId, Name: u.name, Department: u.dept, Title: u.title, Manager: u.manager, Status: u.status };
 };
 
 /** How a value reads under a card: a person by their login, a list by its length and contents. */
@@ -152,7 +155,7 @@ export function runIn(d: GameState, flow: Flow, person: Person | undefined, hr: 
     const text = (name: string) => (typeof got[name] === 'string' ? got[name] : '');
     const give = (outputs: Record<string, Value>) => {
       out[card.id] = outputs;
-      for (const [k, v] of Object.entries(outputs)) values[`→ ${card.kind === 'assign' ? card.label ?? k : k}`] = show(v);
+      for (const [k, v] of Object.entries(outputs)) if (v !== '') values[`→ ${card.kind === 'assign' ? card.label ?? k : k}`] = show(v);
     };
     const login = text('Login');
     const callHelper = (who: Person): FlowRun | string => {
@@ -164,7 +167,7 @@ export function runIn(d: GameState, flow: Flow, person: Person | undefined, hr: 
     switch (card.kind) {
       case 'event': if (person) give({ Person: person }); break;
       case 'helper-input': if (person) give({ User: person }); break;
-      case 'schedule': break;
+      case 'schedule': give({ People: hr.map(personOf) }); break;
       case 'assign': give({ Value: text('Value') }); break;
       case 'hr-person': {
         const found = hr.find((r) => r.employeeId === text('Employee ID'));
@@ -191,6 +194,13 @@ export function runIn(d: GameState, flow: Flow, person: Person | undefined, hr: 
           step.error = `There’s no group called “${group}” in Oktopus. Group names have to match exactly${near ? `: did you mean “${near}”?` : '.'}`;
         }
         else give({ Users: Object.keys(d.okta.users).filter((l) => d.okta.users[l]?.status === 'active' && groupsOf(d.okta, l).includes(group)).flatMap((l) => personInOkta(d, l) ?? []) });
+        break;
+      }
+      case 'filter': {
+        const field = PERSON.find((f) => f.toLowerCase() === text('Field').trim().toLowerCase());
+        const want = text('Equals').trim().toLowerCase();
+        if (!field) step.error = `People have ${PERSON.join(', ')}. There\u2019s no field called \u201C${text('Field')}\u201D.`;
+        else give({ People: (got.List as Person[]).filter((x) => x[field].toLowerCase() === want) });
         break;
       }
       case 'concat': give({ Combined: ['First', 'Second', 'Third', 'Fourth'].map(text).join('') }); break;
@@ -357,19 +367,21 @@ export function flowProblem(s: GameState, task: FlowTask, everywhere = false): s
   return undefined;
 }
 
-/** The Voyago report Otis wants: posted today, by a flow, naming everyone in the Voyago group as Name (Title). */
-export const REPORT_GROUP = 'APP-Voyago-Users';
+/** The report Otis wants: posted today, by a flow, naming everyone in Finance who still works here as Name (Title). */
+export const REPORT_DEPT = 'Finance';
 function reportProblem(s: GameState): string | undefined {
   const today = s.day * MINUTES_A_DAY;
   const posted = s.okta.runs.filter((r) => !r.test && r.at >= today)
     .flatMap((r) => r.steps.filter((x) => !x.error && s.okta.flows.find((f) => f.id === r.flow)?.cards.find((c) => c.id === x.card)?.kind === 'chat-post'))
     .at(-1)?.values.Message;
   if (posted === undefined) return 'Otis hasn’t seen anything from a flow in #general today. Build the flow, then press Run now.';
-  const expected = Object.entries(s.okta.users).filter(([l, u]) => u.status === 'active' && groupsOf(s.okta, l).includes(REPORT_GROUP)).map(([, u]) => `${u.name} (${u.title})`);
+  const hr = hrOn(s.day);
+  const expected = hr.filter((r) => r.status === 'active' && r.dept === REPORT_DEPT).map((r) => `${r.name} (${r.title})`);
   const missing = expected.find((e) => !posted.includes(e));
-  if (missing) return `The flow posted “${posted}”. Otis wanted everyone in ${REPORT_GROUP} as Name (Title), and ${missing} isn’t there.`;
-  const extra = Object.values(s.okta.users).find((u) => posted.includes(u.name) && !expected.includes(`${u.name} (${u.title})`));
-  return extra ? `The flow posted “${posted}”, but ${extra.name} doesn’t have Voyago.` : undefined;
+  if (missing) return `The flow posted “${posted}”. Otis wanted everyone in ${REPORT_DEPT} as Name (Title), and ${missing} isn’t there.`;
+  const extra = hr.find((r) => posted.includes(`${r.name} (`) && !expected.includes(`${r.name} (${r.title})`));
+  if (!extra) return undefined;
+  return `The flow posted “${posted}”, but ${extra.name} shouldn’t be on it: ${extra.status === 'terminated' ? 'they’ve left' : `they’re in ${extra.dept}`}.`;
 }
 
 // ---- Building flows ------------------------------------------------------------------------------------------
@@ -519,7 +531,7 @@ export function goodFlows(task: FlowTask, everywhere = false): Flow[] {
   switch (task) {
     case 'hr.joined': return [flowOf('flow-hr.joined', 'New starters', 'hr.joined', [
       { id: 'c1', kind: 'event', inputs: {} },
-      { id: 'c2', kind: 'okta-create', inputs: Object.fromEntries(PERSON.map((f) => [f, person(f)])) },
+      { id: 'c2', kind: 'okta-create', inputs: Object.fromEntries(PERSON.filter((f) => f !== 'Status').map((f) => [f, person(f)])) },
     ])];
     case 'hr.moved': return [flowOf('flow-hr.moved', 'Movers', 'hr.moved', [
       { id: 'c1', kind: 'event', inputs: {} },
@@ -531,7 +543,7 @@ export function goodFlows(task: FlowTask, everywhere = false): Flow[] {
     ])];
     case 'sweep': return [...goodFlows('hr.left', true), flowOf('flow-sweep', 'Leaver sweep', 'schedule', [
       { id: 'c1', kind: 'schedule', inputs: {} },
-      { id: 'c2', kind: 'hr-list', inputs: { Status: { text: 'terminated' } } },
+      { id: 'c2', kind: 'filter', inputs: { List: w('c1', 'People'), Field: { text: 'Status' }, Equals: { text: 'terminated' } } },
       { id: 'c3', kind: 'foreach', helper: DEPROVISION, inputs: { List: w('c2', 'People') } },
     ])];
     case 'report': return [
@@ -542,9 +554,9 @@ export function goodFlows(task: FlowTask, everywhere = false): Flow[] {
       ]),
       { ...flowOf('flow-report', 'Voyago report', 'schedule', [
         { id: 'c1', kind: 'schedule', inputs: {} },
-        { id: 'c2', kind: 'assign', label: 'Group', inputs: { Value: { text: REPORT_GROUP } } },
-        { id: 'c3', kind: 'okta-members', inputs: { Group: w('c2', 'Value') } },
-        { id: 'c4', kind: 'map', helper: 'flow-name', inputs: { List: w('c3', 'Users') } },
+        { id: 'c2', kind: 'filter', inputs: { List: w('c1', 'People'), Field: { text: 'Status' }, Equals: { text: 'active' } } },
+        { id: 'c3', kind: 'filter', inputs: { List: w('c2', 'People'), Field: { text: 'Department' }, Equals: { text: REPORT_DEPT } } },
+        { id: 'c4', kind: 'map', helper: 'flow-name', inputs: { List: w('c3', 'People') } },
         { id: 'c5', kind: 'join', inputs: { List: w('c4', 'Results'), Separator: { text: ', ' } } },
         { id: 'c6', kind: 'chat-post', inputs: { Message: w('c5', 'Text') } },
       ]), on: false },
