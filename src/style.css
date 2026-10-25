@@ -1199,6 +1199,7 @@ button.profile-face:hover, button.profile-face:focus-visible { box-shadow: 0 0 0
 .okta-catalog-name { display: inline-flex; align-items: center; gap: 8px; }
 .okta-app-title { display: flex; align-items: center; gap: 10px; }
 .painted-glyph { width: 1.6em; height: 1.6em; border-radius: 22%; vertical-align: middle; }
+.win-glyph .painted-glyph, .task .painted-glyph { width: 1.25em; height: 1.25em; margin-right: 2px; }
 
 .okta-switch { display: flex; align-items: center; gap: 8px; cursor: pointer; }
 .okta-warning, .ad-warning { margin: 6px 0; padding: 6px 10px; border-left: 3px solid #c23934; background: #fdecea; color: #8a1c17; font-weight: 600; }
