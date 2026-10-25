@@ -173,13 +173,13 @@ export const DAY_SCRIPTS: DayScript[] = [
     goal: 6,
     memo: 'A new starter in Finance, and the designers want their toys. Six tickets.',
     metGoal: 'Hazel says Burrow is “very organised”. She hasn’t seen my desk. Voucher.',
-    missedGoal: 'Hazel spent the morning with a calculator and no login. She was very polite about it.',
+    missedGoal: 'Not many tickets closed today. Hazel asked if IT is always this quiet. I said yes.',
   },
   {
     goal: 6,
     memo: 'Pip is moving to Finance. Do the IT thing. Six tickets.',
     metGoal: 'Pip counted all of Finance’s staplers before lunch. Voucher.',
-    missedGoal: 'Pip still thinks they work in Operations. So does Oktopus.',
+    missedGoal: 'Pip moved teams and counted every stapler in Finance. Pip closed more today than you did.',
   },
   {
     goal: 6,

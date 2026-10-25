@@ -35,7 +35,7 @@ export const CARDS: Record<CardKind, { group: CardGroup; title: string; inputs: 
   concat: { group: 'Function', title: 'Text: Concatenate', inputs: [{ name: 'First', required: true }, { name: 'Separator' }, { name: 'Second', required: true }], outputs: ['Combined'] },
   'okta-create': {
     group: 'Action', title: 'Oktopus: Create user',
-    inputs: [{ name: 'Login', required: true }, { name: 'Name', required: true }, { name: 'Department', required: true }, { name: 'Title' }, { name: 'Manager' }, { name: 'Employee ID' }],
+    inputs: [{ name: 'Login', required: true }, { name: 'Employee ID' }, { name: 'Name', required: true }, { name: 'Department', required: true }, { name: 'Title' }, { name: 'Manager' }],
     outputs: ['Login'],
   },
   'okta-update': { group: 'Action', title: 'Oktopus: Update profile from HR', inputs: [{ name: 'Login', required: true }], outputs: ['Login'] },

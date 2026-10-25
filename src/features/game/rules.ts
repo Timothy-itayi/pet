@@ -527,7 +527,8 @@ export function fill(t: Ticket, text: string): string {
   return text
     .replaceAll('{who}', nameList(t.subjects ?? (t.subject ? [t.subject] : issueOf(t).console === 'disable' ? ['sam'] : [])) || 'them')
     .replaceAll('{app}', CATALOG.find((c) => c.id === (t.app ?? 'hootsweet'))?.name ?? t.app ?? '')
-    .replaceAll('{team}', team.length >= 5 ? 'everyone' : teamWords(team));
+    .replaceAll('{team}', team.length >= 5 ? 'everyone' : teamWords(team))
+    .replaceAll('{flow}', t.flow ? TRIGGERS[t.flow] : '');
 }
 
 /** The suggestion that really fixes this ticket: usually the issue's fix, unless this one's cause is different. */

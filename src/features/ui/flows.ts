@@ -52,13 +52,13 @@ function palette(app: App, flow: Flow, at: number): HTMLElement {
   const kinds = (g: CardGroup) => (Object.entries(CARDS) as [CardKind, (typeof CARDS)[CardKind]][]).filter(([, c]) => c.group === g);
   const after = flow.cards[at - 1];
   return h('div', { class: 'flow-palette', role: 'dialog', 'aria-label': 'Add a card', 'data-testid': 'flow-palette' },
-    h('p', { class: 'flow-palette-title' }, `Add a card after \u201C${after ? titleOf(flow, after) : 'the start'}\u201D`),
-    ...groups.map((g) => h('div', {}, h('p', { class: `flow-palette-group ${groupClass(g)}` }, g),
-      ...kinds(g).map(([kind, c]) => h('button', {
-        class: 'flow-palette-item', 'data-testid': `flow-add-${kind}`,
+    h('p', { class: 'flow-palette-title' }, `Add a card after \u201C${after ? titleOf(flow, after) : 'the start'}\u201D`,
+      h('button', { class: 'okta-btn small', onclick: () => { app.ui.flowAdd = undefined; app.rerender(); } }, 'Cancel')),
+    ...groups.map((g, gi) => h('div', {}, h('p', { class: `flow-palette-group ${groupClass(g)}` }, g),
+      ...kinds(g).map(([kind, c], i) => h('button', {
+        class: 'flow-palette-item', 'data-testid': `flow-add-${kind}`, 'data-autofocus': gi === 0 && i === 0,
         onclick: () => { app.ui.flowAdd = undefined; app.set(addCard(app.state, flow.id, at, kind)); },
-      }, c.title)))),
-    h('button', { class: 'okta-btn small', 'data-autofocus': true, onclick: () => { app.ui.flowAdd = undefined; app.rerender(); } }, 'Cancel'));
+      }, c.title)))));
 }
 
 /** One card: its header, its input slots, its output pills, and (after a test) what it saw. */
@@ -185,7 +185,8 @@ function editor(app: App, flow: Flow): HTMLElement {
   const runs = state.okta.runs.filter((r) => r.flow === flow.id && !r.test).slice(-5).reverse();
   const nameBox = h('input', {
     class: 'flow-title', value: flow.name, 'aria-label': 'Flow name', autocomplete: 'off',
-    onchange: (e) => app.set(renameFlow(state, flow.id, (e.target as HTMLInputElement).value)),
+    // Rename after the click that blurred the box has landed, so it doesn't swallow a click on Test.
+    onchange: (e) => { const name = (e.target as HTMLInputElement).value; setTimeout(() => app.set(renameFlow(app.state, flow.id, name)), 150); },
   });
   return h('div', { class: 'okta-page flow-editor', 'data-testid': 'flow-editor' },
     h('div', { class: 'flow-bar' },
@@ -207,9 +208,15 @@ function editor(app: App, flow: Flow): HTMLElement {
     h('section', { class: 'okta-card' },
       h('h2', {}, 'History'),
       runs.length === 0 ? h('p', { class: 'meta' }, 'It hasn’t run yet. Switched on, it runs first thing in the morning when HR changes.')
-        : h('ul', { class: 'flow-history' }, ...runs.map((r) => h('li', {},
-          h('strong', {}, `${stamp(r.at)}: ${r.subject}`),
-          ` ${r.steps.find((x) => x.error)?.error ?? r.steps.map((x) => titleOf(flow, flow.cards.find((c) => c.id === x.card) ?? { id: '', kind: 'return', inputs: {} })).join(' → ')}`)))));
+        : h('ul', { class: 'flow-history' }, ...runs.map((r) => h('li', {}, h('details', {},
+          h('summary', {}, h('strong', {}, `${stamp(r.at)}: ${r.subject}`), r.steps.some((x) => x.error) ? ': stopped at a card' : ': every card ran'),
+          ...r.steps.map((x) => {
+            const card = flow.cards.find((c) => c.id === x.card);
+            return h('div', { class: `flow-history-step${x.error ? ' failed' : ''}` },
+              h('strong', {}, card ? titleOf(flow, card) : 'A card since removed'),
+              x.error ? h('p', { class: 'flow-error' }, x.error) : x.note && h('p', { class: 'meta' }, x.note),
+              Object.keys(x.values).length > 0 && h('dl', { class: 'flow-values' }, ...Object.entries(x.values).flatMap(([k, v]) => [h('dt', {}, k), h('dd', {}, v)])));
+          })))))));
 }
 
 export function workflowsPage(app: App): HTMLElement {

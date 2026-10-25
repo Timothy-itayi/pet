@@ -1261,3 +1261,6 @@ button.profile-face:hover, button.profile-face:focus-visible { box-shadow: 0 0 0
 .okta-status { padding: 1px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
 .okta-status.on { background: #e3f5e8; color: #2e7d32; }
 .okta-status.off { background: #f0f0f3; color: #6b6b78; }
+.flow-history-step { margin: 6px 0 0 12px; padding-left: 8px; border-left: 2px solid #d9dbe3; font-size: 12px; }
+.flow-history-step.failed { border-color: #d64545; }
+.flow-palette-title { display: flex; justify-content: space-between; align-items: center; }

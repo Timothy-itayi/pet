@@ -869,7 +869,7 @@ export const ISSUES: Issue[] = [
       example: 'Automate JML in Oktopus Workflows: an HR event card, then the action card, with every field wired from the event. Test it on Sam Sample, then switch it on.',
       keys: ['flow', 'workflow', 'wire', 'wired', 'event', 'automat', 'test'],
     },
-    why: 'A flow does the same job every time, at 9 in the morning, without anyone remembering. The work is in the wiring: each field has to come from the right place, because a flow never asks if you meant it. That\u2019s why you test it on someone made up before it runs on someone real.',
+    why: 'Now Oktopus handles \u201C{flow}\u201D by itself, at 9 in the morning, the same way every time, without anyone remembering. The work is in the wiring: each field has to come from the right place, because a flow never asks if you meant it. That\u2019s why you test it on someone made up before it runs on someone real.',
   },
 ];
 
@@ -2454,7 +2454,7 @@ export const TICKETS: Ticket[] = [
     workaround: 'Use someone else’s laptop for the intranet',
   },
   {
-    id: 't1207', day: 12, at: '14:30', who: 'dot', via: 'tray', priority: 'normal', issue: 'flow-build', mood: 1, flow: 'hr.joined',
+    id: 't1207', day: 12, at: '10:40', who: 'dot', via: 'tray', priority: 'normal', issue: 'flow-build', mood: 1, flow: 'hr.joined',
     title: 'Automate new starters, please',
     message: 'HR says Finance has a new starter tomorrow. And more after that, apparently. Can Oktopus set new people up by itself, so it\u2019s done before they arrive?',
     details: [
@@ -2466,7 +2466,7 @@ export const TICKETS: Ticket[] = [
     workaround: 'Promise to set Hazel up by hand in the morning',
   },
   {
-    id: 't1308', day: 13, at: '14:00', who: 'marlo', via: 'tray', priority: 'normal', issue: 'flow-build', mood: 1, flow: 'hr.moved',
+    id: 't1308', day: 13, at: '10:50', who: 'marlo', via: 'tray', priority: 'normal', issue: 'flow-build', mood: 1, flow: 'hr.moved',
     title: 'People moving teams: automate it',
     message: 'HR has Pip moving to Finance tomorrow. Basil took you half a morning last time. Make Oktopus do it the moment HR does.',
     details: [
@@ -2477,7 +2477,7 @@ export const TICKETS: Ticket[] = [
     workaround: 'Say you\u2019ll update Pip by hand tomorrow',
   },
   {
-    id: 't1408', day: 14, at: '15:00', who: 'otis', via: 'tray', priority: 'normal', issue: 'flow-build', mood: 1, flow: 'hr.left',
+    id: 't1408', day: 14, at: '10:15', who: 'otis', via: 'tray', priority: 'normal', issue: 'flow-build', mood: 1, flow: 'hr.left',
     title: 'Leavers, automatically',
     message: 'Hoo. Hazel leaves us tomorrow, after two days. When HR marks someone as gone, they should lose their sign-in that same morning. Not when someone remembers.',
     details: [
