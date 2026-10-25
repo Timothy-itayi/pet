@@ -453,6 +453,16 @@ describe('Oktopus', () => {
     return goTo(s, 'desk');
   }
 
+  it('week 2 plays through: setup, Hootsweet, a joiner, a mover, a leaver and a lost phone, each resolved', () => {
+    let s = morningOf(6);
+    while (s.day <= DAYS) s = workDay(s);
+    for (const id of ['t601', 't602', 't701', 't801', 't901', 't1002']) expect(ticketState(s, id).status, id).toBe('resolved');
+    expect(appsOf(s.okta, 'fern')).toEqual(['hootsweet']); // the joiner got Marketing's app from the rules
+    expect(s.okta.users.basil).toMatchObject({ dept: 'Sales', status: 'active' }); // the mover kept his account
+    expect(appsOf(s.okta, 'basil')).toEqual([]); // and lost Marketing's app
+    expect(s.okta.users.wren?.status).toBe('deactivated'); // the leaver can't sign in
+  });
+
   it('gives an app to everyone a rule puts in its group, and to nobody else', () => {
     const s = giveMarketingHootsweet(morningOf(6));
     expect(groupsOf(s.okta, 'juniper')).toEqual(['Everyone', 'DEPT-Marketing', 'APP-Hootsweet-Users']);

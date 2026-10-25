@@ -115,5 +115,17 @@
   "face-it": {
     "image": true,
     "large": true
+  },
+  "icon-hootsweet": {
+    "image": true
+  },
+  "icon-voyago": {
+    "image": true
+  },
+  "icon-canvass": {
+    "image": true
+  },
+  "icon-oktopus": {
+    "image": true
   }
 }

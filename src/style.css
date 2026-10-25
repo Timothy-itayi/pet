@@ -1198,3 +1198,9 @@ button.profile-face:hover, button.profile-face:focus-visible { box-shadow: 0 0 0
   display: flex; align-items: center; gap: 12px; padding: 8px 12px; background: #fff8c4; border: 1px solid #b59f2a; box-shadow: 2px 2px 0 #0003;
 }
 .crt-screen .closing-bar p { margin: 0; flex: 1; font-size: 13px; }
+
+/* Painted app icons: Oktopus's apps, and Oktopus itself on the desktop. */
+.okta-app-icon { border-radius: 22%; vertical-align: middle; flex: none; }
+.okta-catalog-name { display: inline-flex; align-items: center; gap: 8px; }
+.okta-app-title { display: flex; align-items: center; gap: 10px; }
+.painted-glyph { width: 1.6em; height: 1.6em; border-radius: 22%; vertical-align: middle; }
