@@ -6,6 +6,7 @@ import {
   accountProblem, acceptOffer, apply, ask, askForTicket, clockOut, clockTime, fixFor, goHome, goTo, issueOf, newGame, next, noteProblem, noteTarget, parseSave,
   pushBack, relation, reply, resetPassword, resolve, setEnabled, suggest, tick, ticketById, ticketState, unlockAccount, workaround, writeNote, type GameState,
 } from './rules.ts';
+import { dayMood } from './people.ts';
 
 type Act = (s: GameState, id: string) => GameState;
 const atDesk = () => goTo(newGame(), 'desk');
@@ -307,10 +308,22 @@ describe('friends and nemeses', () => {
     expect(relation(s, 'dot')).toBe('friend');
     s = playDay(s);
     s = serveUntil(goTo(s, 'desk'), '11:20', 't205'); // Dot's mouse on day 2; usually Annoyed, normal priority
-    expect(ticketState(s, 't205').mood).toBe(0);
+    // A step calmer as a friend, but a step crosser for the day: rain and a fire drill, both of which she hates.
+    expect(dayMood('dot', 2).mood).toBe('low');
+    expect(ticketState(s, 't205').mood).toBe(1);
     s = tryIt(s, 't205', 'driver');
     expect(s.notice?.text).toMatch(/encouraging smile/);
-    expect(ticketState(s, 't205').mood).toBe(0);
+    expect(ticketState(s, 't205').mood).toBe(1);
+  });
+});
+
+describe('people away from their desk', () => {
+  it('a question asked while they are at lunch is answered once they are back, and they say so', () => {
+    let s = until(dotsTicket(), '12:05'); // Dot lunches 12:00 to 12:40
+    s = ask(s, 't101', 'screen');
+    expect(ticketState(s, 't101').messages.at(-1)?.text).toBe('At lunch till 12:40. I’ll look then.');
+    const c = ticketState(s, 't101').caller;
+    expect(c && 'until' in c && c.until).toBeGreaterThanOrEqual(clockTime('12:42'));
   });
 });
 

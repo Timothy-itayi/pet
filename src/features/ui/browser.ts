@@ -1,11 +1,13 @@
 import { COMPANY, DAYS, POLICY } from '../game/data.ts';
-import { artFor, BANNER, feedArt, newsArt } from '../game/art.ts';
+import { artFor, BANNER, faceId, feedArt, newsArt } from '../game/art.ts';
 import { NEWS, newsFor, type NewsPost } from '../game/news.ts';
 import { HISTORY, socialFor, type SocialPost } from '../game/social.ts';
 import { hrOn, OKTOPUS_DAY } from '../game/oktopus.ts';
+import { BRRW, CANTEEN, TODAY, WEATHER } from '../game/office.ts';
+import { moodWords, PEOPLE, sayNow, statusText } from '../game/people.ts';
 import { weekday, weekOf } from '../game/rules.ts';
 import {
-  ArrowDownRight, ArrowUpRight, Building2, CalendarDays, CircleHelp, Clock, createElement, FolderTree, History, House, KeyRound, LayoutGrid,
+  ArrowDownRight, ArrowUpRight, Building2, CalendarDays, CircleHelp, Clock, CloudSun, createElement, IdCard, User, X, FolderTree, History, House, KeyRound, LayoutGrid,
   LifeBuoy, Mail, Megaphone, MessageCircle, MessagesSquare, Newspaper, Search, ShieldCheck, ThumbsUp, Ticket, TrendingUp, Users, type IconNode,
 } from 'lucide';
 import type { App, AppId } from './app.ts';
@@ -20,23 +22,6 @@ import { portrait } from './portrait.ts';
 
 const HOST = 'intranet.burrow.local';
 export const HOME = `http://${HOST}/`;
-
-/** Burrow & Co.'s share price at the end of each day. It jumps on the first Friday, when the investment is announced. */
-const BRRW = [4.12, 4.05, 3.98, 4.21, 5.37, 5.52, 5.61, 5.48, 5.44, 5.83];
-const WEATHER = ['Drizzle, 13°', 'Showers, 12°', 'Cloudy, 14°', 'Sunny spells, 16°', 'Sunny, 18°', 'Windy, 15°', 'Rain, 11°', 'Fog, 12°', 'Cloudy, 14°', 'Sunny, 19°'];
-const TODAY = [
-  ['9:30 Welcome coffee for the new intern (there is no coffee)', '15:00 Sam’s leaving card, kitchen'],
-  ['10:00 Budget meeting (cancelled: no budget)', '16:00 Fire drill (probably)'],
-  ['11:00 Marketing stand-up', 'Biscuit’s birthday: cake in the kitchen'],
-  ['10:30 Client visit, meeting room', '14:00 Printer appreciation hour'],
-  ['12:00 All-hands: an announcement', '17:00 Drinks?'],
-  ['9:00 Oktopus kick-off (it’s just you)', '15:00 Marketing try out Hootsweet'],
-  ['9:30 Fern’s first day', '12:30 Welcome lunch, kitchen'],
-  ['10:00 Basil’s first Sales meeting', '16:00 Hand-over: Marketing to Sales'],
-  ['All day: auditors in the meeting room', '15:00 Wren’s leaving card (late)'],
-  ['11:00 Juniper’s client workshop', '17:00 The Conversation'],
-] as const;
-const CANTEEN = ['Soup of the day (yesterday’s)', 'Cheese toastie', 'Carrot cake (Biscuit made it)', 'Mystery stew', 'Fish & chips Friday'];
 
 const svg = (tag: string, attrs: Record<string, string>) => {
   const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
@@ -103,6 +88,7 @@ const urlOf = (t: Tab) => t.history[t.at] ?? HOME;
 
 /** Go to an address in this tab, dropping anything you'd gone "back" from. */
 function go(app: App, url: string): void {
+  app.ui.viewing = undefined;
   const t = tab(app);
   t.history = [...t.history.slice(0, t.at + 1), url];
   t.at = t.history.length - 1;
@@ -263,7 +249,7 @@ function feedPost(app: App, p: SocialPost): HTMLElement {
   const key = `${p.day}:${p.from}:${p.text.slice(0, 20)}`;
   const liked = (ui.liked ?? []).includes(key);
   const head = h('header', { class: 'post-head' });
-  head.append(portrait(p.from, 40), h('div', {}, h('strong', {}, p.from), h('span', { class: 'meta' }, role(p.from, app.state.day)), h('span', { class: 'meta' }, when(p.day))));
+  head.append(personLink(app, p.from, 40, false), h('div', {}, personLink(app, p.from), h('span', { class: 'meta' }, role(p.from, app.state.day)), h('span', { class: 'meta' }, when(p.day))));
   const comments = h('ul', { class: 'post-comments' }, ...p.comments.map(([who, said]) => {
     const li = h('li', {});
     li.append(portrait(who, 24), h('span', {}, h('strong', {}, who), ` ${said}`));
@@ -292,7 +278,7 @@ function feed(app: App, link: Link): HTMLElement {
   company.append(logo(40), h('strong', {}, COMPANY), h('span', { class: 'meta' }, `Office supplies · ${staff.length} people`));
   const team = h('ul', { class: 'feed-team' }, ...staff.filter((r) => r.login !== 'intern').slice(0, 8).map((r) => {
     const li = h('li', {});
-    li.append(portrait(r.name, 28), h('span', {}, h('strong', {}, r.name), h('span', { class: 'meta' }, r.title)));
+    li.append(personLink(app, r.name, 28, false), h('span', {}, personLink(app, r.name), h('span', { class: 'meta' }, r.title)));
     return li;
   }));
   return portal(app, SECTIONS.feed,
@@ -305,18 +291,98 @@ function feed(app: App, link: Link): HTMLElement {
 
 /** People: everyone at Burrow from HR, as a list you'd sort and filter. */
 function people(app: App): HTMLElement {
-  const rows = hrOn(Math.min(app.state.day, DAYS)).filter((r) => r.status === 'active').sort((a, b) => a.dept.localeCompare(b.dept) || a.name.localeCompare(b.name));
-  const cell = (r: (typeof rows)[number]) => {
-    const name = h('span', { class: 'lt-name' });
-    name.append(portrait(r.name, 24), r.name);
-    return h('td', {}, name);
-  };
+  const { state } = app;
+  const day = Math.min(state.day, DAYS);
+  const rows = hrOn(day).filter((r) => r.status === 'active').sort((a, b) => a.dept.localeCompare(b.dept) || a.name.localeCompare(b.name));
+  const cell = (r: (typeof rows)[number]) => h('td', {}, personLink(app, r.name, 24));
   return portal(app, SECTIONS.people,
     pageHead(SECTIONS.people, 'People', 'All staff', `${rows.length} people · Sorted by department · Straight from HR. If you’re not on here, talk to Otis.`),
     h('div', { class: 'lc lt-wrap' },
       h('table', { class: 'lt' },
-        h('thead', {}, h('tr', {}, ...['Name', 'Title', 'Department', 'Phone'].map((c) => h('th', { scope: 'col' }, c)))),
-        h('tbody', {}, ...rows.map((r, i) => h('tr', {}, cell(r), h('td', {}, r.title), h('td', {}, h('span', { class: 'pill' }, r.dept)), h('td', {}, `ext. ${201 + i}`)))))));
+        h('thead', {}, h('tr', {}, ...['Name', 'Title', 'Department', 'Right now', 'Phone'].map((c) => h('th', { scope: 'col' }, c)))),
+        h('tbody', {}, ...rows.map((r) => h('tr', {}, cell(r), h('td', {}, r.title), h('td', {}, h('span', { class: 'pill' }, r.dept)),
+          r.login === 'intern' ? h('td', { class: 'lt-now' }, 'At Sam’s old desk') : h('td', { class: 'lt-now', 'data-now': r.login }, statusText(r.login, day, state.clock)), h('td', {}, extension(r.employeeId))))))));
+}
+
+/** Everyone who's ever been on the HR file, by name: the login their profile lives under. "IT" posts are you. */
+function loginOf(name: string): string | undefined {
+  if (name === 'IT') return 'intern';
+  return hrOn(DAYS).find((r) => r.name === name)?.login;
+}
+
+const extension = (employeeId: string) => `ext. ${200 + Number(employeeId.slice(-2))}`;
+
+/**
+ * A link to someone's profile: their name, or their small portrait when `size` is given (with `named` false, just the
+ * portrait). Anyone without a profile is plain text.
+ */
+function personLink(app: App, name: string, size?: number, named = true): HTMLElement {
+  const login = loginOf(name);
+  const face = size ? portrait(name, size) : undefined;
+  const label = named ? (face ? [face, name] : [name]) : face ? [face] : [];
+  if (!login) return h('span', { class: 'person' }, ...label);
+  return h('button', {
+    class: 'person-link', 'aria-label': named ? undefined : `${name}’s profile`, onclick: () => go(app, `http://${HOST}/people/${login}`),
+  }, ...label);
+}
+
+/** Someone's profile: who they are, where they are right now, how today's treating them, and what they've posted. */
+function profile(login: string): Page {
+  const row = hrOn(DAYS).find((r) => r.login === login);
+  if (!row) return missing(`/people/${login}`);
+  return {
+    title: `${row.name} - Burrow Hub`,
+    body: (app) => {
+      const { state, ui } = app;
+      const day = Math.min(state.day, DAYS);
+      const now = hrOn(day).find((r) => r.login === login) ?? row;
+      const here = now.status === 'active';
+      const person = PEOPLE[login];
+      const you = login === 'intern';
+      const manager = hrOn(day).find((r) => r.employeeId === now.manager)?.name ?? '—';
+      const painted = artFor(faceId(row.name));
+      const face = portrait(row.name, 112);
+      // Only here, on their own profile, can you open their photo and see it properly.
+      const big = painted ? h('button', { class: 'profile-face', 'aria-label': `See ${row.name}’s photo full size`, onclick: () => { ui.viewing = login; app.rerender(); } }, face) : h('span', { class: 'profile-face' }, face);
+      const posts = socialFor(state.day).filter((p) => loginOf(p.from) === login).slice(0, 3);
+      const detail = (k: string, v: string) => [h('dt', {}, k), h('dd', {}, v)];
+      return portal(app, SECTIONS.people,
+        h('section', { class: 'ph profile-head' }, big,
+          h('div', { class: 'ph-text' }, h('p', { class: 'ph-eyebrow' }, 'People'), h('h1', {}, row.name), h('p', { class: 'ph-sub' }, `${now.title} · ${now.dept}`)),
+          h('span', { class: `presence${here ? '' : ' gone'}`, 'data-now': you ? undefined : login }, you ? 'That’s you' : statusText(login, day, state.clock))),
+        h('div', { class: 'cols' },
+          h('div', { class: 'col-main' },
+            !you && card('Right now', Clock, '#0d9dda',
+              h('p', { class: 'now', 'data-now': login }, statusText(login, day, state.clock)),
+              h('p', { class: 'quote', 'data-say': login }, `“${sayNow(login, state)}”`)),
+            card('About', User, SECTIONS.people.colour, h('p', {}, you ? 'The new IT intern. Unpaid, keen, and sitting at Sam’s old desk. Fixing printers, writing the runbook Sam never did, and looking for a way out.' : person?.about ?? '')),
+            posts.length > 0 && card(`Recent posts by ${row.name}`, MessagesSquare, SECTIONS.feed.colour,
+              h('ul', { class: 'lc-list' }, ...posts.map((p) => h('li', {}, h('strong', {}, when(p.day)), h('span', {}, p.text)))))),
+          h('aside', { class: 'col-side' },
+            !you && here && card('Today', CloudSun, '#eb7092', h('p', {}, moodWords(login, day))),
+            card('Details', IdCard, '#3a49da', h('dl', { class: 'details' },
+              ...detail('Title', now.title), ...detail('Department', now.dept), ...detail('Manager', manager),
+              ...detail('Phone', extension(now.employeeId)), ...detail('Employee ID', now.employeeId), ...(here ? [] : detail('Status', 'Left the company')))),
+            person && person.routine.length > 0 && card('A usual day', CalendarDays, '#7f56d9',
+              h('ul', { class: 'lc-list routine' }, ...person.routine.map((r) => h('li', {}, h('strong', {}, r.at), h('span', {}, r.where))))))));
+    },
+  };
+}
+
+/** Someone's photo full size, over the page. Esc, the close button or a click outside the photo puts it away. */
+function viewer(app: App, login: string): HTMLElement | undefined {
+  const row = hrOn(DAYS).find((r) => r.login === login);
+  const painted = row && artFor(faceId(row.name));
+  if (!row || !painted) return undefined;
+  const close = () => { app.ui.viewing = undefined; app.rerender(); };
+  return h('div', {
+    class: 'viewer', role: 'dialog', 'aria-modal': 'true', 'aria-label': `${row.name}’s photo`,
+    onclick: (e) => { if (e.target === e.currentTarget) close(); },
+    // Esc puts the photo away, and only the photo: the window would close on it too.
+    onkeydown: (e) => { if ((e as KeyboardEvent).key === 'Escape') { e.stopPropagation(); close(); } },
+  },
+    h('figure', {}, h('img', { src: import.meta.env.BASE_URL + (painted.large ?? painted.image), alt: row.name }), h('figcaption', {}, h('strong', {}, row.name), ` · ${row.title}`)),
+    h('button', { class: 'viewer-close', 'aria-label': 'Close', 'data-autofocus': true, onclick: close }, icon(X, 18)));
 }
 
 function itHelp(app: App): HTMLElement {
@@ -365,13 +431,19 @@ const PAGES: Record<string, Page> = {
   '/about': { title: 'About - Burrow Hub', body: about },
 };
 
+const missing = (path: string): Page => ({
+  title: 'Can’t reach this page',
+  body: () => h('div', { class: 'ridge-error' }, h('p', { class: 'glyph' }, '\u{1F615}'), h('h1', {}, 'Hmm… can’t reach this page'), h('p', {}, `${HOST}${path} doesn’t exist on the intranet.`)),
+});
+
 function pageAt(url: string): Page {
   if (url.startsWith('ridge://search?q=')) return search(decodeURIComponent(url.slice('ridge://search?q='.length)));
   const match = /^[a-z]+:\/\/([^/]+)(\/[^?#]*)?/i.exec(url);
   const host = match?.[1]?.toLowerCase() ?? '';
   const path = (match?.[2] ?? '/').replace(/\/+$/, '') || '/';
   if (host === HOST) {
-    return PAGES[path] ?? { title: 'Can’t reach this page', body: () => h('div', { class: 'ridge-error' }, h('p', { class: 'glyph' }, '\u{1F615}'), h('h1', {}, 'Hmm… can’t reach this page'), h('p', {}, `${HOST}${path} doesn’t exist on the intranet.`)) };
+    const person = /^\/people\/([a-z]+)$/.exec(path)?.[1];
+    return PAGES[path] ?? (person ? profile(person) : missing(path));
   }
   return {
     title: 'Blocked',
@@ -406,6 +478,8 @@ export function browser(app: App): HTMLElement {
       h('button', { type: 'button', class: 'ridge-nav', 'aria-label': 'Forward', disabled: current.at >= current.history.length - 1, 'data-testid': 'ridge-forward', onclick: travel(1) }, '→'),
       h('button', { type: 'button', class: 'ridge-nav', 'aria-label': 'Refresh', onclick: () => app.rerender() }, '↻'),
       address),
-    h('div', { class: 'ridge-page' }, pageAt(url).body(app, link)),
+    // A different page in this tab starts at the top; the same page keeps its place when the screen redraws.
+    h('div', { class: 'ridge-page', 'data-scroll-key': `${ui.tab}:${url}` }, pageAt(url).body(app, link)),
+    ui.viewing && url.endsWith(`/people/${ui.viewing}`) && viewer(app, ui.viewing),
   );
 }

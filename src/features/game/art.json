@@ -67,5 +67,53 @@
   },
   "feed-9-juniper": {
     "image": true
+  },
+  "face-mr-grisby": {
+    "image": true,
+    "large": true
+  },
+  "face-dot": {
+    "image": true,
+    "large": true
+  },
+  "face-otis": {
+    "image": true,
+    "large": true
+  },
+  "face-juniper": {
+    "image": true,
+    "large": true
+  },
+  "face-wren": {
+    "image": true,
+    "large": true
+  },
+  "face-basil": {
+    "image": true,
+    "large": true
+  },
+  "face-marlo": {
+    "image": true,
+    "large": true
+  },
+  "face-biscuit": {
+    "image": true,
+    "large": true
+  },
+  "face-pip": {
+    "image": true,
+    "large": true
+  },
+  "face-fern": {
+    "image": true,
+    "large": true
+  },
+  "face-sam": {
+    "image": true,
+    "large": true
+  },
+  "face-it": {
+    "image": true,
+    "large": true
   }
 }

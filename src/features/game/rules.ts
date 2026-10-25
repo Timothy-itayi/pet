@@ -4,6 +4,7 @@ import {
   WORKAROUND_RETURNS_AFTER, XP, type VillagerId,
 } from './data.ts';
 import { MINUTES_A_DAY, newAccounts, type Account } from './directory.ts';
+import { awayLine, backAt, dayMood } from './people.ts';
 import { appsOf, groupsOf, hrOn, newOkta, type Okta } from './oktopus.ts';
 import { MOODS, type ConsoleFix, type Fix, type Issue, type Note, type Job, type Mood, type PageStatus, type Relation, type Skill, type Ticket, type Tool } from './types.ts';
 
@@ -190,12 +191,14 @@ function arrive(d: GameState, id: string, at: number): void {
   const v = VILLAGERS[t.who];
   const before = d.tickets[id];
   const r = relation(d, t.who);
-  // First visit: their usual mood, a step calmer for friends or angrier for nemeses.
+  // First visit: their usual mood, a step calmer for friends or angrier for nemeses, and a step either way for how
+  // the day has left them (sunshine and cake, or rain and auditors).
   // Waiting is normal in IT, so coming back doesn't make anyone crosser, unless you said it was sorted and it
   // broke again (a workaround wearing off). Never already Furious.
   const asked = before?.asked && before.status === 'pending' && byChat(t);
   const brokeAgain = before?.status === 'resolved';
-  const base = before ? before.mood + (brokeAgain ? 1 : 0) : t.mood + (r === 'nemesis' ? 1 : r === 'friend' ? -1 : 0);
+  const today = { bright: -1, usual: 0, low: 1 }[dayMood(t.who, d.day).mood];
+  const base = before ? before.mood + (brokeAgain ? 1 : 0) : t.mood + (r === 'nemesis' ? 1 : r === 'friend' ? -1 : 0) + today;
   const mood = Math.max(0, Math.min(base, 2)) as Mood;
   const greeting = r === 'friend' ? `${v.fond} ` : r === 'nemesis' ? `${v.grudge} ` : '';
   // Only friends message you directly. Everyone else submits a ticket, as they should.
@@ -486,6 +489,17 @@ function callerMinutes(d: GameState, t: Ticket, [lo, hi]: readonly [number, numb
   return lo + (n % (hi - lo + 1));
 }
 
+/**
+ * When the caller will get back to you, `minutes` after they start: straight away if they're at their desk, or once
+ * they're back from a meeting, lunch or wherever they are, which they tell you.
+ */
+function replyAt(d: GameState, t: Ticket, minutes: number): number {
+  const away = backAt(t.who, d.day, d.clock);
+  if (!away) return d.clock + minutes;
+  ticketState(d, t.id).messages.push({ from: 'them', text: awayLine(away), at: d.clock });
+  return away.until + minutes;
+}
+
 /** It's your move on this ticket: it's in your queue and the caller isn't busy with something you asked. */
 function yourMove(s: GameState, id: string): Ticket | undefined {
   const t = workable(s, id);
@@ -501,7 +515,7 @@ export function ask(s: GameState, id: string, askId: string): GameState {
     const st = ticketState(d, id);
     st.status = 'open';
     st.messages.push({ from: 'you', text: q.text, at: d.clock });
-    st.caller = { doing: 'answer', id: askId, until: d.clock + callerMinutes(d, t, CALLER[t.priority].answer) };
+    st.caller = { doing: 'answer', id: askId, until: replyAt(d, t, callerMinutes(d, t, CALLER[t.priority].answer)) };
     advance(d, COST.ask);
   });
 }
@@ -517,7 +531,7 @@ export function suggest(s: GameState, id: string, fixId: string): GameState {
     st.status = 'open';
     const text = fixId === 'console' ? 'I\u2019ve made the change on my side. Could you check it\u2019s working now?' : `Suggested: ${f.label}.`;
     st.messages.push({ from: 'you', text, at: d.clock });
-    st.caller = { doing: 'try', id: fixId, until: d.clock + callerMinutes(d, t, CALLER[t.priority][fixId === 'tool' ? 'tool' : 'tryIt']) };
+    st.caller = { doing: 'try', id: fixId, until: replyAt(d, t, callerMinutes(d, t, CALLER[t.priority][fixId === 'tool' ? 'tool' : 'tryIt'])) };
     advance(d, COST.suggest);
   });
 }

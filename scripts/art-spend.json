@@ -184,5 +184,149 @@
     "kind": "image",
     "usd": 0.036,
     "at": "2026-10-25T12:24:37.245Z"
+  },
+  {
+    "id": "face-mr-grisby",
+    "kind": "image",
+    "usd": 0.036,
+    "at": "2026-10-25T12:32:09.027Z"
+  },
+  {
+    "id": "face-dot",
+    "kind": "image",
+    "usd": 0.036,
+    "at": "2026-10-25T12:33:33.822Z"
+  },
+  {
+    "id": "face-otis",
+    "kind": "image",
+    "usd": 0.036,
+    "at": "2026-10-25T12:34:52.308Z"
+  },
+  {
+    "id": "face-juniper",
+    "kind": "image",
+    "usd": 0.036,
+    "at": "2026-10-25T12:36:17.449Z"
+  },
+  {
+    "id": "face-wren",
+    "kind": "image",
+    "usd": 0.036,
+    "at": "2026-10-25T12:37:37.815Z"
+  },
+  {
+    "id": "face-basil",
+    "kind": "image",
+    "usd": 0.036,
+    "at": "2026-10-25T12:38:47.475Z"
+  },
+  {
+    "id": "face-marlo",
+    "kind": "image",
+    "usd": 0.036,
+    "at": "2026-10-25T12:40:05.302Z"
+  },
+  {
+    "id": "face-biscuit",
+    "kind": "image",
+    "usd": 0.036,
+    "at": "2026-10-25T12:41:18.526Z"
+  },
+  {
+    "id": "face-pip",
+    "kind": "image",
+    "usd": 0.036,
+    "at": "2026-10-25T12:42:24.784Z"
+  },
+  {
+    "id": "face-fern",
+    "kind": "image",
+    "usd": 0.036,
+    "at": "2026-10-25T12:43:34.264Z"
+  },
+  {
+    "id": "face-sam",
+    "kind": "image",
+    "usd": 0.036,
+    "at": "2026-10-25T12:44:47.061Z"
+  },
+  {
+    "id": "face-it",
+    "kind": "image",
+    "usd": 0.036,
+    "at": "2026-10-25T12:46:01.331Z"
+  },
+  {
+    "id": "face-dot",
+    "kind": "upscale",
+    "usd": 0.01,
+    "at": "2026-10-25T12:58:22.636Z"
+  },
+  {
+    "id": "face-mr-grisby",
+    "kind": "upscale",
+    "usd": 0.01,
+    "at": "2026-10-25T12:58:34.762Z"
+  },
+  {
+    "id": "face-otis",
+    "kind": "upscale",
+    "usd": 0.01,
+    "at": "2026-10-25T12:58:38.530Z"
+  },
+  {
+    "id": "face-juniper",
+    "kind": "upscale",
+    "usd": 0.01,
+    "at": "2026-10-25T12:58:44.011Z"
+  },
+  {
+    "id": "face-wren",
+    "kind": "upscale",
+    "usd": 0.01,
+    "at": "2026-10-25T12:58:46.793Z"
+  },
+  {
+    "id": "face-basil",
+    "kind": "upscale",
+    "usd": 0.01,
+    "at": "2026-10-25T12:58:49.559Z"
+  },
+  {
+    "id": "face-marlo",
+    "kind": "upscale",
+    "usd": 0.01,
+    "at": "2026-10-25T12:58:52.287Z"
+  },
+  {
+    "id": "face-biscuit",
+    "kind": "upscale",
+    "usd": 0.01,
+    "at": "2026-10-25T12:58:54.987Z"
+  },
+  {
+    "id": "face-pip",
+    "kind": "upscale",
+    "usd": 0.01,
+    "at": "2026-10-25T12:58:57.803Z"
+  },
+  {
+    "id": "face-fern",
+    "kind": "upscale",
+    "usd": 0.01,
+    "at": "2026-10-25T12:59:00.539Z"
+  },
+  {
+    "id": "face-sam",
+    "kind": "upscale",
+    "usd": 0.01,
+    "at": "2026-10-25T12:59:03.268Z"
+  },
+  {
+    "id": "face-it",
+    "kind": "upscale",
+    "usd": 0.01,
+    "at": "2026-10-25T12:59:05.973Z"
   }
 ]
