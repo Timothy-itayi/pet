@@ -11,7 +11,7 @@ import { powerAway } from './features/ui/power.ts';
 import { desktopScreen, notify, tickRealClock } from './features/ui/desktop.ts';
 import { dayEndScreen, endingScreen } from './features/ui/endings.ts';
 import { announce, computerHud, pickInRoom, roomHud, roomKeys } from './features/ui/roomHud.ts';
-import { chime } from './features/ui/sound.ts';
+import { ambience, chime, click, wake } from './features/ui/sound.ts';
 
 const page = document.querySelector<HTMLDivElement>('#app');
 if (!page) throw new Error('Missing #app');
@@ -79,6 +79,8 @@ const app: App = {
     showRoom(phase !== 'ending');
     document.body.classList.toggle('day-over', fullPage);
     setAtComputer(atComputer && !ui.flying);
+    // The room is heard from the desk, and fades out once you sit down at the computer.
+    ambience(!atComputer && phase !== 'ending');
     void goTo(atComputer ? 'computer' : ui.shot);
     setScreen(p === 'off' ? 'off' : p === 'asleep' ? 'asleep' : 'on');
     setTools(app.state.tools);
@@ -137,6 +139,8 @@ setInterval(() => {
 }, 1000);
 
 addEventListener('keydown', (e) => roomKeys(app, e));
+addEventListener('keydown', wake);
+addEventListener('pointerdown', () => { wake(); if (app.ui.view === 'computer') click(); });
 // The taskbar clock is your real one: keep it ticking.
 setInterval(tickRealClock, 5000);
 
