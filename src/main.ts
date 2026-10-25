@@ -11,7 +11,7 @@ import { powerAway } from './features/ui/power.ts';
 import { desktopScreen, notify, tickRealClock } from './features/ui/desktop.ts';
 import { dayEndScreen, endingScreen } from './features/ui/endings.ts';
 import { announce, computerHud, pickInRoom, roomHud, roomKeys } from './features/ui/roomHud.ts';
-import { ambience, chime, click, wake } from './features/ui/sound.ts';
+import { ambience, chime, click, keystroke, wake } from './features/ui/sound.ts';
 
 const page = document.querySelector<HTMLDivElement>('#app');
 if (!page) throw new Error('Missing #app');
@@ -153,6 +153,11 @@ setInterval(() => {
 addEventListener('keydown', (e) => roomKeys(app, e));
 addEventListener('keydown', wake);
 addEventListener('pointerdown', () => { wake(); if (app.ui.view === 'computer') click(); });
+// Typing at the computer: every key you press in a text box, notes included, clacks on the old keyboard.
+addEventListener('keydown', (e) => {
+  const typing = e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLInputElement;
+  if (app.ui.view === 'computer' && typing && !e.repeat && (e.key.length === 1 || ['Backspace', 'Enter', 'Delete'].includes(e.key))) keystroke(e.key === ' ' || e.key === 'Enter');
+});
 // The taskbar clock is your real one: keep it ticking.
 setInterval(tickRealClock, 5000);
 
