@@ -555,6 +555,6 @@ export function goodFlows(task: FlowTask, everywhere = false): Flow[] {
 /** Put a ticket's right-answer flows in, replacing any with the same ids; the report is also run, as Otis asked. */
 export function withGoodFlows(s: GameState, task: FlowTask, everywhere = false): GameState {
   const good = goodFlows(task, everywhere);
-  const next = { ...s, okta: { ...s.okta, flows: [...s.okta.flows.filter((f) => !good.some((g) => g.id === f.id || (g.trigger !== 'helper' && g.trigger === f.trigger && f.on))), ...good] } };
+  const next = { ...s, okta: { ...s.okta, flows: [...s.okta.flows.filter((f) => !good.some((g) => g.id === f.id || (g.trigger.startsWith('hr.') && g.trigger === f.trigger && f.on))), ...good] } };
   return task === 'report' ? runNow(next, 'flow-report') : next;
 }

@@ -490,8 +490,9 @@ describe('Oktopus', () => {
     expect(Object.keys(s.okta.users)).toHaveLength(13); // everyone who's been on the HR file since Oktopus arrived
     // From week 3 the flows did the joiners, movers and leavers, first thing in the morning, not you.
     expect(s.okta.runs.filter((r) => !r.test && r.subject).map((r) => r.subject)).toEqual(['hazel', 'pip', 'hazel', 'rowan']);
-    // From day 17 the sweep ran every working morning (7), and the Voyago report was run on day 23.
-    expect(s.okta.runs.filter((r) => r.flow === 'flow-sweep')).toHaveLength(7);
+    // From day 17 the sweep ran every morning (days 17 to 25), and the Voyago report was run on day 23.
+    expect(s.okta.runs.filter((r) => r.flow === 'flow-sweep')).toHaveLength(9);
+    expect(s.okta.flows.map((f) => f.id)).toContain('flow-sweep'); // the report doesn't replace the sweep
     expect(s.okta.runs.find((r) => r.flow === 'flow-report')?.steps.at(-1)?.values.Message).toMatch(/Dot \(Accounts Clerk\)/);
     expect(s.accounts.wren?.enabled).toBe(false);
     expect(s.okta.runs.every((r) => r.steps.every((x) => !x.error))).toBe(true);
