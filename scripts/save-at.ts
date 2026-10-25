@@ -58,7 +58,7 @@ function solve(s: GameState, id: string): GameState {
 }
 
 const day = Number(process.argv[2]);
-if (!Number.isInteger(day) || day < 1 || day > DAYS) throw new Error(`Give a day from 1 to ${DAYS}.`);
+if (!Number.isInteger(day) || day < 1 || day > DAYS + 1) throw new Error(`Give a day from 1 to ${DAYS + 1} (the Saturday after the last week).`);
 let s = newGame(12345);
 while (s.day < day) {
   s = goTo(s, 'desk');

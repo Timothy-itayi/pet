@@ -509,6 +509,16 @@ describe('Oktopus', () => {
     expect(s.okta.log.at(-1)).toMatchObject({ event: 'user.lifecycle.deactivate', target: 'fern' });
   });
 
+  it('undoing the console work after they say it works reopens the ticket instead of resolving it', () => {
+    let s = serveUntil(morningOf(9), '9:11', 't901');
+    s = tryIt(setActive(s, 'wren', false), 't901', 'console');
+    expect(ticketState(s, 't901').caller?.doing).toBe('confirmed');
+    s = resolve(setActive(s, 'wren', true), 't901');
+    expect(ticketState(s, 't901').status).not.toBe('resolved');
+    expect(s.notice?.text).toMatch(/Not fixed any more: Wren can still sign in/);
+    expect(s.xp.access).toBe(serveUntil(morningOf(9), '9:11', 't901').xp.access);
+  });
+
   it('what a ticket says about Oktopus is what Oktopus shows now, not when the ticket came in', () => {
     let s = serveUntil(morningOf(7), '9:16', 't701');
     expect(liveFact(s, ticketById('t701'), 'Oktopus')).toBe('No user called Fern.');

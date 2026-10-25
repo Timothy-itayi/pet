@@ -1,4 +1,6 @@
+import { DAYS } from '../game/data.ts';
 import { DEPARTMENTS, type Account, type Department } from '../game/directory.ts';
+import { hrOn } from '../game/oktopus.ts';
 import { resetPassword, setEnabled, unlockAccount } from '../game/rules.ts';
 import type { App } from './app.ts';
 import { h } from './dom.ts';
@@ -17,7 +19,9 @@ function resetBox(app: App, login: string, a: Account, opts: { mustChange: boole
     ui.dirSaid = `The password for ${a.name} has been changed.`;
     app.set(resetPassword(state, login, opts));
   };
+  const leaver = hrOn(Math.min(state.day, DAYS)).find((r) => r.login === login)?.status === 'terminated';
   return h('section', { class: 'ad-dialog', role: 'dialog', 'aria-labelledby': 'ad-reset-title', 'data-testid': 'ad-reset-box' },
+    leaver && h('p', { class: 'ad-warning', role: 'alert' }, `HR says ${a.name} has left. A leaver\u2019s account gets disabled, not a new password.`),
     h('h3', { id: 'ad-reset-title', class: 'ad-dialog-title' }, 'Reset Password'),
     h('label', {}, 'New password', h('input', { type: 'password', value: 'Temp-4821!', readonly: true })),
     h('label', {}, 'Confirm password', h('input', { type: 'password', value: 'Temp-4821!', readonly: true })),

@@ -97,6 +97,7 @@ function person(app: App, login: string): HTMLElement {
     verifying && row && h('section', { class: 'okta-card warn', role: 'dialog', 'aria-label': 'Check it’s really them', 'data-testid': 'okta-verify' },
       h('h2', {}, 'Check it’s really them'),
       h('p', {}, 'Before you reset anything, check the request against what HR has. Not against what the request says.'),
+      row.status === 'terminated' && h('p', { class: 'okta-warning', role: 'alert' }, `HR says ${row.name} has left the company. A leaver doesn\u2019t get a reset: deactivate them instead.`),
       h('dl', { class: 'okta-dl' }, ...[['Employee ID', row.employeeId], ['Department', row.dept], ['Title', row.title], ['Manager', row.manager]]
         .flatMap(([k, v]) => [h('dt', {}, k ?? ''), h('dd', {}, v ?? '')])),
       h('div', { class: 'okta-actions' },
@@ -283,7 +284,7 @@ function securityPage(app: App): HTMLElement {
         const on = okta.mfa.includes(g);
         return h('li', {}, h('label', { class: 'okta-switch' },
           h('input', { type: 'checkbox', checked: on, 'data-testid': `okta-mfa-${g}`, onchange: () => app.set(requireMfa(state, g, !on)) }),
-          h('strong', {}, g), h('span', { class: 'meta' }, ` ${Object.keys(okta.users).filter((l) => groupsOf(okta, l).includes(g)).length} people`)));
+          h('strong', {}, g), h('span', { class: 'meta' }, ` ${active.filter((l) => groupsOf(okta, l).includes(g)).length} active people`)));
       }))),
     h('section', { class: 'okta-card' },
       h('h2', {}, `Password only (${loose.length} of ${active.length})`),

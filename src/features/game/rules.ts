@@ -629,7 +629,7 @@ function hear(d: GameState, t: Ticket, c: { doing: 'answer' | 'try'; id: string;
     return;
   }
   d.today.wrongFixes += 1;
-  said('It\u2019s still not working.');
+  said('Hmm. That didn\u2019t sort it.');
   d.notice = { ticketId: t.id, text: problem ?? f?.fail ?? 'That didn\u2019t work.' };
   if (relation(d, t.who) === 'friend') d.notice.text += ` ${VILLAGERS[t.who].name} gives you an encouraging smile anyway.`;
   else slip(d, t);
@@ -642,6 +642,16 @@ export function resolve(s: GameState, id: string): GameState {
   const t = workable(s, id);
   const c = t && ticketState(s, id).caller;
   if (!t || c?.doing !== 'confirmed') return s;
+  // Console work can be undone after they've said it works: check it's still right before closing.
+  const undone = issueOf(t).console ? accountProblem(s, t) : undefined;
+  if (undone) {
+    return act(s, (d) => {
+      const st = ticketState(d, id);
+      st.caller = undefined;
+      st.messages.push({ from: 'them', text: 'Wait. It\u2019s stopped working again.', at: d.clock });
+      d.notice = { ticketId: id, text: `Not fixed any more: ${undone}` };
+    });
+  }
   return act(s, (d) => {
     close(d, t, 'fix', XP.fix);
     const card = d.outcomes.at(-1);

@@ -1,7 +1,7 @@
 import { COMPANY, DAYS } from '../game/data.ts';
 import { goTo, isWeekOver, newGame, weekday, weekOf } from '../game/rules.ts';
 import type { App } from './app.ts';
-import { morningNotes } from './desktop.ts';
+import { morningNotes, openApp } from './desktop.ts';
 import { h } from './dom.ts';
 
 
@@ -80,6 +80,8 @@ export function computerScreen(app: App): HTMLElement {
     const s = starting ? goTo(next, isWeekOver(next) ? 'desktop' : 'desk') : next;
     if (starting) morningNotes(app, s);
     app.set(s);
+    // The last Saturday: Mr. Grisby's email about The Conversation is waiting, open, so nobody misses the ending.
+    if (isWeekOver(s) && s.phase === 'desktop') openApp(app, 'mail');
   };
   login.addEventListener('submit', (e) => { e.preventDefault(); enter(); });
 

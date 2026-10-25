@@ -284,16 +284,16 @@ export function outcomeCard(app: App, o: Outcome): HTMLElement {
   const v = VILLAGERS[t.who];
   const issue = issueOf(t);
   const headline = {
-    fix: 'Resolved!', workaround: 'Resolved with a work around', push: 'On Hold', complaint: `${v.name} goes to ${MANAGER}`,
+    fix: 'Resolved!', workaround: 'Resolved with a work around', push: 'On Hold', complaint: v.name === MANAGER ? `${MANAGER} is not pleased` : `${v.name} goes to ${MANAGER}`,
     asked: 'Please log a ticket',
   }[o.kind];
   const body = {
     fix: fill(ticketById(o.ticketId), issue.why),
     workaround: `${v.name} is happy for now. It’ll probably come back in ${WORKAROUND_RETURNS_AFTER} days. Fix it properly to learn what was really wrong.`,
     push: `On hold until tomorrow. ${v.name} understands: these things take time.`,
-    asked: `${v.name} sighs, and goes off to fill one in. It\u2019ll land in your queue soon, a bit grumpier, and this time Mr. Grisby will count it.`,
+    asked: `${v.name} sighs, and goes off to fill one in. It\u2019ll land in your queue soon, a bit grumpier, and this time it counts.`,
     complaint: o.grave
-      ? `That one was serious enough that ${v.name} went straight to ${MANAGER}. It\u2019s on your day report. It still needs fixing properly, and it\u2019s still in your queue.`
+      ? `${v.name === MANAGER ? `That one was serious, and ${MANAGER} noticed personally` : `That one was serious enough that ${v.name} went straight to ${MANAGER}`}. It\u2019s on your day report. It still needs fixing properly, and it\u2019s still in your queue.`
       : `${v.name} has had enough of waiting and complains to ${MANAGER}. They still need it fixed, so it\u2019s still in your queue. Send updates so people know you haven\u2019t forgotten them.`,
   }[o.kind];
   const target = noteTarget(state, o);

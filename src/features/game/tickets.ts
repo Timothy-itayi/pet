@@ -109,16 +109,16 @@ export const ISSUES: Issue[] = [
     ],
     fixes: [
       { id: 'offon', label: 'Turn it off and on again', ruledOut: 'Restarted. The CD still doesn’t fit anywhere.' },
-      { id: 'download', label: 'Download the current driver from the printer maker’s website' },
+      { id: 'download', label: 'Install the current driver from the Company Portal' },
       { id: 'cd', label: 'Find a laptop with a CD drive', fail: 'The oldest laptop in the building has no CD drive either.' },
       { id: 'usb', label: 'Run a long USB cable to the printer', fail: 'Facilities has asked you to stop.' },
     ],
     correctFix: 'download',
     note: {
-      example: 'New laptops have no CD drive. Get drivers from the maker’s website.',
-      keys: ['website', 'download', 'online', 'maker', 'manufacturer', 'no cd', 'no disc'],
+      example: 'New laptops have no CD drive. Install the current driver from the Company Portal, not the CD.',
+      keys: ['portal', 'website', 'download', 'online', 'maker', 'manufacturer', 'no cd', 'no disc'],
     },
-    why: 'Runbooks go out of date. Get drivers from the maker’s website so they’re current and safe.',
+    why: 'Runbooks and CDs go out of date. The Company Portal has the current driver, checked and safe, the same as any other software: install from there.',
   },
   {
     id: 'guest-wifi',
@@ -260,7 +260,7 @@ export const ISSUES: Issue[] = [
       example: 'Password expired. Owner changes it themselves; IT never learns it.',
       keys: ['expired', 'expiry', 'expire'],
     },
-    why: 'Nothing was broken: the password had expired. People change their own passwords, so only they know them. The old runbook page had it backwards.',
+    why: 'Nothing was broken: the password had expired. People change their own passwords, so only they know them. The old runbook page had it backwards. This one was real: the message came up on their own computer, from the system itself. A “password expired” message that arrives by email with a link is phishing.',
   },
   {
     id: 'mouse-battery',
@@ -608,7 +608,7 @@ export const ISSUES: Issue[] = [
       { id: 'others', text: 'Did anyone else get it?', none: 'I don’t know. Probably?' },
     ],
     fixes: [
-      { id: 'report', label: 'Thank them, report it as phishing and block the sender for everyone', works: 'Reported and blocked. Thank you for not clicking. Honestly, thank you.' },
+      { id: 'report', label: 'Thank them, report it as phishing and block the sender for everyone', works: 'Oh good, it\u2019s gone from everyone\u2019s inbox. I\u2019ll tell the others not to click it.' },
       { id: 'open', grave: true, label: 'Open the link yourself to see what it is', fail: 'The page asks for your Oktopus password. It already has your browser’s attention. Never open a link to check it.' },
       { id: 'delete', label: 'Tell them to just delete it', fail: 'They delete it. Three other people get the same email an hour later, and one of them clicks.' },
     ],
@@ -654,7 +654,7 @@ export const ISSUES: Issue[] = [
       { id: 'plugged', text: 'Have you plugged it in anywhere?', none: 'Not yet. I wanted to ask first.' },
     ],
     fixes: [
-      { id: 'handin', label: 'Thank them, take it, and don’t plug it in anywhere: it goes in the bin for destroying' },
+      { id: 'handin', label: 'Thank them, take it, and don’t plug it in anywhere: it goes in the bin for destroying', works: 'You’re taking it? Without even looking? Okay. That’s probably right.' },
       { id: 'look', grave: true, label: 'Plug it into your computer to see whose it is', fail: 'Your computer opens a file nobody clicked. It was never a lost stick: it was bait. Never plug in a stick you found.' },
       { id: 'spare', label: 'Plug it into the old spare laptop instead, to be safe', fail: 'The spare laptop is on the network too. It’s now telling someone outside about it.' },
     ],
@@ -1997,10 +1997,10 @@ export const TICKETS: Ticket[] = [
   {
     id: 't1901', day: 19, at: '9:30', who: 'dot', via: 'walkup', where: 'Finance corner', priority: 'high', issue: 'ceo-fraud', mood: 1,
     title: 'Mr. Grisby wants a payment. Quietly.',
-    message: 'An email from Mr. Grisby. He wants me to pay a new supplier £9,400 today and not to mention it to anyone. He has never once been quiet about money.',
+    message: 'An email from Mr. Grisby. He wants me to pay a new supplier $9,400 today and not to mention it to anyone. He has never once been quiet about money.',
     details: [
       { label: 'Address', text: 'm.grisby.md@gmall.com. His real one is grisby@burrow.co.', ask: 'from' },
-      { label: 'Request', text: 'Pay £9,400 to a new supplier before noon. “Don’t mention it to anyone.”', ask: 'asked' },
+      { label: 'Request', text: 'Pay $9,400 to a new supplier before noon. “Don’t mention it to anyone.”', ask: 'asked' },
       { label: 'Checked', text: 'No. The email says he’s in meetings all day.', ask: 'check' },
     ],
     workaround: 'Tell her to wait until Monday',
@@ -2071,7 +2071,7 @@ export const TICKETS: Ticket[] = [
   {
     id: 't2002', day: 20, at: '10:10', who: 'juniper', via: 'tray', priority: 'normal', issue: 'phish', mood: 1,
     title: '“Win a voucher” from HR?',
-    message: 'HR sent a survey and you can win a £50 voucher!! But it asks for my Oktopus password at the end. HR wouldn’t ask that. Would they?',
+    message: 'HR sent a survey and you can win a $50 voucher!! But it asks for my Oktopus password at the end. HR wouldn’t ask that. Would they?',
     details: [
       { label: 'Sender', text: 'hr-rewards@burrow-co-hr.net. HR’s real address is hr@burrow.co.', ask: 'from' },
       { label: 'Clicked', text: 'She opened the survey but stopped at the password box.', ask: 'clicked' },
@@ -2269,7 +2269,7 @@ export const TICKETS: Ticket[] = [
   },
   {
     id: 't2303', day: 23, at: '11:40', who: 'marlo', via: 'tray', priority: 'normal', issue: 'slow-laptop', mood: 1,
-    title: 'Laptop slow as a Monday',
+    title: 'Laptop slower than Rowan',
     message: 'My laptop is slower than Rowan finding the toilets. Which took forty minutes.',
     details: [
       { label: 'Uptime', text: 'Last restarted 27 days ago. 8 updates waiting.', ask: 'uptime' },
@@ -2342,7 +2342,7 @@ export const TICKETS: Ticket[] = [
   {
     id: 't2404', day: 24, at: '13:10', who: 'marlo', via: 'tray', priority: 'high', issue: 'phish', mood: 1,
     title: '“Rowan” wants gift cards',
-    message: 'Got an email from Rowan asking me to buy £500 of gift cards for a client, urgently. Rowan has been here two days. Rowan doesn’t know any clients.',
+    message: 'Got an email from Rowan asking me to buy $500 of gift cards for a client, urgently. Rowan has been here two days. Rowan doesn’t know any clients.',
     details: [
       { label: 'Sender', text: 'rowan.sales.burrow@gmall.com. Rowan’s real address is rowan@burrow.co.', ask: 'from' },
       { label: 'Clicked', text: 'Didn’t click, didn’t buy. Did laugh.', ask: 'clicked' },
@@ -2371,13 +2371,13 @@ export const TICKETS: Ticket[] = [
     workaround: 'Email him the files',
   },
   {
-    id: 't2501', day: 25, at: '9:10', who: 'grisby', via: 'tray', priority: 'normal', issue: 'dhcp-full', mood: 1, fixedBy: 'pool',
-    title: 'The new meeting room has no network',
-    message: 'The new meeting room’s screens, phones and the coffee machine have no network. The coffee machine is the priority.',
+    id: 't2501', day: 25, at: '9:10', who: 'grisby', via: 'tray', priority: 'normal', issue: 'ip-conflict', mood: 1,
+    title: 'The meeting room screen keeps vanishing',
+    message: 'The new meeting room’s big screen keeps dropping off the network. So does the coffee machine. The coffee machine is the priority.',
     details: [
-      { label: 'Connection', text: 'Every device in the room: address 169.254-something.', ask: 'address' },
-      { label: 'Others', text: 'Everywhere else is fine, until the meeting room was switched on.', ask: 'others' },
-      { label: 'Started', text: 'This morning, when the meeting room went live.', ask: 'when' },
+      { label: 'Screen', text: 'IP address conflict detected: 192.168.1.60', ask: 'message' },
+      { label: 'When', text: 'Every so often, usually when someone switches the coffee machine on.', ask: 'when' },
+      { label: 'How set', text: 'The fitters typed the same fixed address into the screen and the coffee machine.', ask: 'set' },
     ],
     workaround: 'Hold the meeting downstairs',
   },
@@ -2424,7 +2424,7 @@ export const TICKETS: Ticket[] = [
   },
   {
     id: 't2506', day: 25, at: '15:30', who: 'pip', via: 'tray', priority: 'normal', issue: 'dns', mood: 1,
-    title: 'Oktopus can’t be found from the new floor',
+    title: 'Burrow Hub can’t be found from the new floor',
     message: 'Outside websites work. Oktopus works. Burrow Hub doesn’t. Someone helped me “speed up the internet”. Ribbit.',
     details: [
       { label: 'Browser', text: 'Can’t reach this page. The server’s address couldn’t be found.', ask: 'error' },

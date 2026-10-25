@@ -108,7 +108,7 @@ export const NEWS: NewsPost[] = [
     day: 15, title: 'A short goodbye', from: 'Dot', scene: '\u{1F44B}\u{1F9EE}', tone: '#7c2d12',
     shows: 'An empty finance desk with a single calculator-shaped gap in the dust, a thank-you card propped against the monitor',
     moves: 'Static camera. The card tips over very slowly and lies flat.',
-    body: 'Hazel has decided Finance isn\u2019t for her. She was with us three days, and she was lovely. If you have seen a calculator, please return it to Finance.',
+    body: 'Hazel has decided Finance isn\u2019t for her. She was with us two days, and she was lovely. If you have seen a calculator, please return it to Finance.',
   },
   {
     day: 16, title: 'The auditors\u2019 findings', from: 'Otis', scene: '\u{1F50E}\u{1F4CB}', tone: '#334155',
