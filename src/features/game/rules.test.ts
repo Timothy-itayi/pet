@@ -449,6 +449,16 @@ describe('Active Directory', () => {
     expect(accountProblem(setEnabled(s, 'biscuit', false), ticketById('t206'))).toMatch(/disabled/);
   });
 
+  it('won\u2019t let you switch off your own account, in either console: nobody else could switch it back on', () => {
+    const s = atDesk();
+    expect(setEnabled(s, 'intern', false)).toBe(s);
+    expect(setEnabled(s, 'dot', false).accounts.dot?.enabled).toBe(false);
+    const w = createFromHr(createFromHr(s, 'intern'), 'dot');
+    expect(w.okta.users.intern?.status).toBe('active');
+    expect(setActive(w, 'intern', false)).toBe(w);
+    expect(setActive(w, 'dot', false).okta.users.dot?.status).toBe('deactivated');
+  });
+
   it('starts with Sam\u2019s old account still switched on', () => {
     expect(newGame().accounts.sam).toMatchObject({ enabled: true, title: 'IT Administrator' });
   });

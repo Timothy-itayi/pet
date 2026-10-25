@@ -2,7 +2,7 @@ import { artFor, iconId } from '../game/art.ts';
 import { DEPARTMENTS, MINUTES_A_DAY, type Department } from '../game/directory.ts';
 import { addApp, addGroup, addRule, assignApp, createFromHr, removeRule, requireMfa, resetMfa, setActive, unassignApp, updateFromHr } from '../game/identity.ts';
 import { appsOf, CATALOG, differences, groupsOf, hrOn, needsMfa, type HrRow, type Okta } from '../game/oktopus.ts';
-import type { GameState } from '../game/rules.ts';
+import { OWN_ACCOUNT, SELF, type GameState } from '../game/rules.ts';
 import type { App } from './app.ts';
 import { clockText, h } from './dom.ts';
 
@@ -91,8 +91,10 @@ function person(app: App, login: string): HTMLElement {
     h('h1', {}, user.name, h('span', { class: `okta-pill ${user.status}` }, user.status === 'active' ? 'Active' : 'Deactivated')),
     h('div', { class: 'okta-actions' },
       diffs.length > 0 && h('button', { class: 'okta-btn primary', 'data-testid': 'okta-update', onclick: () => app.set(updateFromHr(state, login)) }, 'Update profile from HR'),
-      h('button', { class: 'okta-btn', 'data-testid': 'okta-activate', onclick: () => app.set(setActive(state, login, user.status !== 'active')) },
-        user.status === 'active' ? 'Deactivate' : 'Activate'),
+      login === SELF && user.status === 'active'
+        ? h('p', { class: 'meta', 'data-testid': 'okta-own-account' }, OWN_ACCOUNT)
+        : h('button', { class: 'okta-btn', 'data-testid': 'okta-activate', onclick: () => app.set(setActive(state, login, user.status !== 'active')) },
+          user.status === 'active' ? 'Deactivate' : 'Activate'),
       user.status === 'active' && h('button', { class: 'okta-btn', 'data-testid': 'okta-reset-mfa', onclick: () => { ui.oktaVerify = login; app.rerender(); } }, 'Reset Authenticators')),
     verifying && row && h('section', { class: 'okta-card warn', role: 'dialog', 'aria-label': 'Check it’s really them', 'data-testid': 'okta-verify' },
       h('h2', {}, 'Check it’s really them'),
@@ -164,7 +166,7 @@ function importPage(app: App): HTMLElement {
           h('td', { class: 'okta-row-actions' },
             !user && r.status === 'active' && h('button', { class: 'okta-btn small primary', 'data-testid': `okta-create-${r.login}`, onclick: () => app.set(createFromHr(state, r.login)) }, 'Create'),
             user && status !== 'In sync' && differences(user, r).length > 0 && h('button', { class: 'okta-btn small', 'data-testid': `okta-sync-${r.login}`, onclick: () => app.set(updateFromHr(state, r.login)) }, 'Update profile'),
-            user?.status === 'active' && status !== 'In sync' && h('button', { class: 'okta-btn small', 'data-testid': `okta-deactivate-${r.login}`, onclick: () => app.set(setActive(state, r.login, false)) }, 'Deactivate')));
+            user?.status === 'active' && status !== 'In sync' && r.login !== SELF && h('button', { class: 'okta-btn small', 'data-testid': `okta-deactivate-${r.login}`, onclick: () => app.set(setActive(state, r.login, false)) }, 'Deactivate')));
       }))),
   );
 }

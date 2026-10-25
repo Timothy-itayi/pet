@@ -1,7 +1,7 @@
 import { DAYS } from '../game/data.ts';
 import { DEPARTMENTS, type Account, type Department } from '../game/directory.ts';
 import { hrOn } from '../game/oktopus.ts';
-import { resetPassword, setEnabled, unlockAccount } from '../game/rules.ts';
+import { OWN_ACCOUNT, resetPassword, SELF, setEnabled, unlockAccount } from '../game/rules.ts';
 import type { App } from './app.ts';
 import { h } from './dom.ts';
 
@@ -68,7 +68,7 @@ export function directoryConsole(app: App): HTMLElement {
         onclick: () => { if (login && picked) doing(`${whose(login, picked)} account has been unlocked.`, unlockAccount(state, login)); },
       }, 'Unlock Account'),
       h('button', {
-        class: 'btn', 'data-testid': 'ad-enable', disabled: !picked,
+        class: 'btn', 'data-testid': 'ad-enable', disabled: !picked || (login === SELF && picked.enabled), title: login === SELF ? OWN_ACCOUNT : undefined,
         onclick: () => { if (login && picked) doing(`${whose(login, picked)} account has been ${picked.enabled ? 'disabled' : 'enabled'}.`, setEnabled(state, login, !picked.enabled)); },
       }, picked && !picked.enabled ? 'Enable Account' : 'Disable Account')),
     h('div', { class: 'ad-panes' },
@@ -85,6 +85,6 @@ export function directoryConsole(app: App): HTMLElement {
           h('td', { class: a.locked || !a.enabled ? 'warn' : '' }, standing(a))))))),
     login && picked && ui.dirReset && resetBox(app, login, picked, ui.dirReset),
     h('p', { class: 'ad-status', role: 'status', 'data-testid': 'ad-status' },
-      ui.dirSaid ?? `${shown.length} objects${state.phase === 'desk' ? '. Each change takes a few minutes of the office clock.' : ''}`),
+      ui.dirSaid ?? (login === SELF ? OWN_ACCOUNT : undefined) ?? `${shown.length} objects${state.phase === 'desk' ? '. Each change takes a few minutes of the office clock.' : ''}`),
   );
 }

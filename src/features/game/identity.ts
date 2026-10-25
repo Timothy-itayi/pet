@@ -1,7 +1,7 @@
 import { COST } from './data.ts';
 import { MINUTES_A_DAY } from './directory.ts';
 import { CATALOG, hrOn, type GroupRule, type Okta } from './oktopus.ts';
-import { officeWork, type GameState } from './rules.ts';
+import { officeWork, SELF, type GameState } from './rules.ts';
 
 /**
  * Work in the Oktopus admin console. Each change takes a few minutes and goes in the System Log,
@@ -38,7 +38,8 @@ export const updateFromHr = (s: GameState, login: string) => oktaWork(s, 'user.a
 export const setActive = (s: GameState, login: string, active: boolean) =>
   oktaWork(s, active ? 'user.lifecycle.activate' : 'user.lifecycle.deactivate', login, (okta) => {
     const user = okta.users[login];
-    if (!user || (user.status === 'active') === active) return false;
+    // The only IT admin can't lock themselves out.
+    if (!user || (user.status === 'active') === active || (login === SELF && !active)) return false;
     user.status = active ? 'active' : 'deactivated';
   });
 

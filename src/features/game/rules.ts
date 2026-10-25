@@ -682,7 +682,12 @@ function administer(s: GameState, login: string, minutes: number, change: (a: Ac
 
 export const unlockAccount = (s: GameState, login: string) => administer(s, login, COST.unlock, (a) => { a.locked = false; });
 
-export const setEnabled = (s: GameState, login: string, enabled: boolean) => administer(s, login, COST.unlock, (a) => { a.enabled = enabled; });
+/** You're the only one in IT: switch your own account off and nobody is left who could switch it back on. */
+export const SELF = 'intern';
+export const OWN_ACCOUNT = 'You can\u2019t switch off your own account. You\u2019re the only one in IT: nobody could switch it back on.';
+
+export const setEnabled = (s: GameState, login: string, enabled: boolean) =>
+  login === SELF && !enabled ? s : administer(s, login, COST.unlock, (a) => { a.enabled = enabled; });
 
 /** Reset someone's password to a temporary one, as the Reset Password box does. */
 export const resetPassword = (s: GameState, login: string, { mustChange, unlock }: { mustChange: boolean; unlock: boolean }) =>
@@ -860,6 +865,10 @@ export function parseSave(raw: string | null): GameState | undefined {
     for (const st of Object.values(s.tickets ?? {})) st.heard ??= [];
     // Saves from before you typed your notes: the pages you wrote show the example text.
     s.written ??= {};
+    // Saves from before you couldn't switch your own account off: switched back on.
+    if (s.accounts?.[SELF]) s.accounts[SELF].enabled = true;
+    const you = s.okta?.users[SELF];
+    if (you) you.status = 'active';
     // Saves from before Oktopus had sign-on policies: none set yet.
     if (s.okta) s.okta.mfa ??= [];
     // Saves from before you could stay late: no overtime yet.
