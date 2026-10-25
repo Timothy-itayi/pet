@@ -38,7 +38,7 @@ function glyph(id: AppId): Node | string {
   return painted ? h('img', { class: 'painted-glyph', src: import.meta.env.BASE_URL + painted.image, alt: '' }) : APPS[id].glyph;
 }
 
-const onDesktop = (s: GameState): AppId[] => ['desk', 'chat', 'directory', ...(hasOktopus(s) ? ['okta' as const] : []), 'browser', 'trash'];
+const onDesktop = (s: GameState): AppId[] => ['desk', 'chat', 'directory', ...(hasOktopus(s) ? ['okta' as const] : []), 'browser', ...(isWeekOver(s) ? ['mail' as const] : []), 'trash'];
 const programs = (s: GameState): AppId[] => ['desk', 'chat', 'directory', ...(hasOktopus(s) ? ['okta' as const] : []), 'browser', 'mail'];
 const DOCUMENTS: AppId[] = ['policy', 'runbook', 'resume', 'jobs'];
 

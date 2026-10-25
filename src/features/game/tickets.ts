@@ -608,7 +608,7 @@ export const ISSUES: Issue[] = [
       { id: 'others', text: 'Did anyone else get it?', none: 'I don’t know. Probably?' },
     ],
     fixes: [
-      { id: 'report', label: 'Thank them, report it as phishing and block the sender for everyone', works: 'Reported and blocked. Thank you for not clicking. Honestly, thank you.' },
+      { id: 'report', label: 'Thank them, report it as phishing and block the sender for everyone', works: 'Oh good, it\u2019s gone from everyone\u2019s inbox. I\u2019ll tell the others not to click it.' },
       { id: 'open', grave: true, label: 'Open the link yourself to see what it is', fail: 'The page asks for your Oktopus password. It already has your browser’s attention. Never open a link to check it.' },
       { id: 'delete', label: 'Tell them to just delete it', fail: 'They delete it. Three other people get the same email an hour later, and one of them clicks.' },
     ],
@@ -2269,7 +2269,7 @@ export const TICKETS: Ticket[] = [
   },
   {
     id: 't2303', day: 23, at: '11:40', who: 'marlo', via: 'tray', priority: 'normal', issue: 'slow-laptop', mood: 1,
-    title: 'Laptop slow as a Monday',
+    title: 'Laptop slower than Rowan',
     message: 'My laptop is slower than Rowan finding the toilets. Which took forty minutes.',
     details: [
       { label: 'Uptime', text: 'Last restarted 27 days ago. 8 updates waiting.', ask: 'uptime' },
@@ -2371,13 +2371,13 @@ export const TICKETS: Ticket[] = [
     workaround: 'Email him the files',
   },
   {
-    id: 't2501', day: 25, at: '9:10', who: 'grisby', via: 'tray', priority: 'normal', issue: 'dhcp-full', mood: 1, fixedBy: 'pool',
-    title: 'The new meeting room has no network',
-    message: 'The new meeting room’s screens, phones and the coffee machine have no network. The coffee machine is the priority.',
+    id: 't2501', day: 25, at: '9:10', who: 'grisby', via: 'tray', priority: 'normal', issue: 'ip-conflict', mood: 1,
+    title: 'The meeting room screen keeps vanishing',
+    message: 'The new meeting room’s big screen keeps dropping off the network. So does the coffee machine. The coffee machine is the priority.',
     details: [
-      { label: 'Connection', text: 'Every device in the room: address 169.254-something.', ask: 'address' },
-      { label: 'Others', text: 'Everywhere else is fine, until the meeting room was switched on.', ask: 'others' },
-      { label: 'Started', text: 'This morning, when the meeting room went live.', ask: 'when' },
+      { label: 'Screen', text: 'IP address conflict detected: 192.168.1.60', ask: 'message' },
+      { label: 'When', text: 'Every so often, usually when someone switches the coffee machine on.', ask: 'when' },
+      { label: 'How set', text: 'The fitters typed the same fixed address into the screen and the coffee machine.', ask: 'set' },
     ],
     workaround: 'Hold the meeting downstairs',
   },
@@ -2424,7 +2424,7 @@ export const TICKETS: Ticket[] = [
   },
   {
     id: 't2506', day: 25, at: '15:30', who: 'pip', via: 'tray', priority: 'normal', issue: 'dns', mood: 1,
-    title: 'Oktopus can’t be found from the new floor',
+    title: 'Burrow Hub can’t be found from the new floor',
     message: 'Outside websites work. Oktopus works. Burrow Hub doesn’t. Someone helped me “speed up the internet”. Ribbit.',
     details: [
       { label: 'Browser', text: 'Can’t reach this page. The server’s address couldn’t be found.', ask: 'error' },
