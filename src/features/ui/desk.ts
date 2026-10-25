@@ -2,7 +2,7 @@ import { DAYS, ISSUES, MANAGER, MAX_PUSHES, POLICY, REPLIES, TICKETS, VILLAGERS,
 import { OKTOPUS_DAY } from '../game/oktopus.ts';
 import { sayNow, statusText } from '../game/people.ts';
 import {
-  ask, canPush, canWorkaround, fixFor, isKnown, issueOf, liveFact, moodName, next, noteTarget, pushBack, relation, reply, resolve,
+  ask, askText, canPush, canWorkaround, fixFor, isKnown, issueOf, liveFact, moodName, next, noteTarget, pushBack, relation, reply, resolve,
   scriptFor, suggest, suggestions, ticketById, ticketState, workaround, writeNote, type GameState, type Outcome, type Status, type TicketState,
 } from '../game/rules.ts';
 import type { ConsoleFix, Ticket } from '../game/types.ts';
@@ -162,7 +162,7 @@ function troubleshoot(app: App, t: Ticket): HTMLElement {
     st.caller?.doing !== 'confirmed' && h('div', { class: 'sn-chips' },
       asks.length > 0 && h('div', { role: 'group', 'aria-label': 'Ask' },
         h('p', { class: 'sn-chip-title' }, 'Ask'),
-        ...asks.map((a) => chip(a.text, `ask-${a.id}`, () => app.set(ask(state, t.id, a.id))))),
+        ...asks.map((a) => chip(askText(t, a.text), `ask-${a.id}`, () => app.set(ask(state, t.id, a.id))))),
       h('div', { role: 'group', 'aria-label': 'Suggest' },
         h('p', { class: 'sn-chip-title' }, 'Suggest'),
         issue.console && h('button', { class: 'sn-btn', 'data-testid': 'open-registry', onclick: () => consoleFor(issue.console ?? 'unlock').open(app, t) },

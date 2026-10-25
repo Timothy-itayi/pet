@@ -2,9 +2,9 @@ import type { DayScript, Job, Villager } from './types.ts';
 
 export const COMPANY = 'Burrow & Co.';
 export const MANAGER = 'Mr. Grisby';
-/** Two working weeks: Sam's old system in week 1, Oktopus for Marketing in week 2. */
-export const DAYS = 10;
-/** Enough for two weeks of bus fare and food, if most days go well. */
+/** Working weeks so far: Sam's old system, Oktopus for Marketing, then Oktopus for everyone. */
+export const DAYS = 15;
+/** Enough for a few weeks of bus fare and food, if most days go well: meeting the goal pays for the day. */
 export const START_SAVINGS = 80;
 export const DAILY_COST = 12;
 /** A met goal's lunch voucher covers the day's bus fare and food; a missed one costs you. */
@@ -152,8 +152,40 @@ export const DAY_SCRIPTS: DayScript[] = [
   {
     goal: 6,
     memo: 'Friday! 6 tickets, and then: The Conversation. I mean it this time.',
-    metGoal: 'Six! Come see me after. About The Conversation.',
-    missedGoal: 'Well. We’ll still have The Conversation. It’s shorter now.',
+    metGoal: 'Six! About The Conversation: the investors want everyone on Oktopus first. Next Friday. Definitely. Voucher.',
+    missedGoal: 'The Conversation is postponed. The investors want everyone on Oktopus first. Next Friday. Probably.',
+  },
+  {
+    goal: 5,
+    memo: 'Week 3! The investors want EVERYONE on Oktopus. Today. Five tickets, and the whole company.',
+    rule: 'Every department gets its own group. Apps go to departments, never to people.',
+    metGoal: 'The whole company on one sign-in! I told the board I did it. Voucher.',
+    missedGoal: 'Half the company still has seventeen passwords. One of them is mine.',
+  },
+  {
+    goal: 5,
+    memo: 'Finance want Voyago. I want something too, but I’ll tell you in person. Five tickets.',
+    rule: 'Least privilege applies to everyone. Even me. Apparently.',
+    metGoal: 'Finance are expensing things already. Too many things. Voucher.',
+    missedGoal: 'Finance are doing expenses on paper. The paper is also an expense.',
+  },
+  {
+    goal: 6,
+    memo: 'A new starter in Finance, and the designers want their toys. Six tickets.',
+    metGoal: 'Hazel says Burrow is “very organised”. She hasn’t seen my desk. Voucher.',
+    missedGoal: 'Hazel spent the morning with a calculator and no login. She was very polite about it.',
+  },
+  {
+    goal: 6,
+    memo: 'Pip is moving to Finance. Do the IT thing. Six tickets.',
+    metGoal: 'Pip counted all of Finance’s staplers before lunch. Voucher.',
+    missedGoal: 'Pip still thinks they work in Operations. So does Oktopus.',
+  },
+  {
+    goal: 6,
+    memo: 'Friday. Hazel has left us already. Six tickets, and then: The Conversation. In my office. I have biscuits.',
+    metGoal: 'Six! Come in. Sit down. Let’s have The Conversation.',
+    missedGoal: 'We can still have The Conversation. It will be brief. Like Hazel.',
   },
 ];
 
@@ -170,7 +202,7 @@ export const JOBS: Job[] = [
     title: 'IT Support Technician',
     company: 'Big Ocean Corp',
     blurb: 'Fast-paced team supporting 2,000 staff. Accounts, access and networking experience a must.',
-    needs: { devices: 60, networks: 24, access: 56 },
+    needs: { devices: 84, networks: 36, access: 90 },
   },
 ];
 

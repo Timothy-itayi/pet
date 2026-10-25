@@ -80,6 +80,36 @@ export const NEWS: NewsPost[] = [
     moves: 'Static camera. The strings sway slightly and the desk lamp flickers.',
     body: 'Marketing love Oktopus. The auditors love Oktopus. Next month: everyone gets it, and Finance get Voyago for travel. IT will be busy. IT is one intern. Hmm.',
   },
+  {
+    day: 11, title: 'One sign-in for everyone', from: 'Mr. Grisby', scene: '\u{1F419}\u{1F465}', tone: '#1d4ed8',
+    shows: 'A long row of identical office keys hanging on hooks, all on one big key ring in the middle, under a desk lamp',
+    moves: 'Static camera. The key ring sways very slightly and the lamp flickers.',
+    body: 'From today, everyone at Burrow signs in once, with Oktopus, and gets their team\u2019s apps. The intern is doing all of it today. Please be patient. Please be in the HR file.',
+  },
+  {
+    day: 12, title: 'Expenses go digital', from: 'Dot', scene: '\u2708\u{1F9FE}', tone: '#0f766e',
+    shows: 'A tidy stack of paper receipts on a finance desk, slowly being tucked into a small leather travel wallet, an old calculator beside them',
+    moves: 'Static camera. The top receipt lifts in the air-conditioning and settles again.',
+    body: 'Finance will use Voyago for travel and expenses from today. Paper receipts will be accepted until Friday, and resented forever.',
+  },
+  {
+    day: 13, title: 'Welcome, Hazel!', from: 'Dot', scene: '\u{1F33F}\u{1F9EE}', tone: '#4d7c0f',
+    shows: 'A neat new desk in a finance office with a brand-new calculator, a pot plant and a fresh notebook, a nameplate with no name on it yet',
+    moves: 'Static camera. The plant’s leaves move slightly; a pen rolls a little and stops.',
+    body: 'Please welcome Hazel, our new Accounts Assistant. She likes spreadsheets, quiet and tea with no sugar. We are going to get on very well.',
+  },
+  {
+    day: 14, title: 'Pip joins Finance', from: 'Otis', scene: '\u{1F4CA}\u{1F438}', tone: '#065f46',
+    shows: 'A cardboard box of desk things being carried from a cluttered supply cupboard towards a tidy finance office, a stapler on top',
+    moves: 'Static camera. The supply cupboard door swings gently shut.',
+    body: 'Pip moves from Operations to Finance today. Operations will miss Pip\u2019s encyclopaedic knowledge of cables. Finance will gain it. Hoo.',
+  },
+  {
+    day: 15, title: 'A short goodbye', from: 'Dot', scene: '\u{1F44B}\u{1F9EE}', tone: '#7c2d12',
+    shows: 'An empty finance desk with a single calculator-shaped gap in the dust, a thank-you card propped against the monitor',
+    moves: 'Static camera. The card tips over very slowly and lies flat.',
+    body: 'Hazel has decided Finance isn\u2019t for her. She was with us three days, and she was lovely. If you have seen a calculator, please return it to Finance.',
+  },
 ];
 
 /** Every post up to today, newest first. */

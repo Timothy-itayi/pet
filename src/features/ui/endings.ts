@@ -51,7 +51,7 @@ export function endingScreen(app: App): HTMLElement {
   const ending = {
     hired: {
       title: 'You’re hired!',
-      text: `${job?.company ?? 'They'} called back. ${job?.title ?? 'A real job'}. In the interview you talked about printers that were just jammed, a runbook that was years out of date, rolling out single sign-on for Marketing, joiners, movers and leavers, and why you didn’t give anyone admin rights. They loved it.${refs}${grudges} Your last day at Burrow & Co. is Friday. ${MANAGER} asks if you can still “pop in on weekends”. You cannot.`,
+      text: `${job?.company ?? 'They'} called back. ${job?.title ?? 'A real job'}. In the interview you talked about printers that were just jammed, a runbook that was years out of date, rolling out single sign-on to a whole company, joiners, movers and leavers, and why you didn’t give anyone admin rights. They loved it.${refs}${grudges} Your last day at Burrow & Co. is Friday. ${MANAGER} asks if you can still “pop in on weekends”. You cannot.`,
     },
     burnout: {
       title: 'Burnt out',

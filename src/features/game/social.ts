@@ -32,6 +32,11 @@ export const SOCIAL: SocialPost[] = [
   { day: 8, from: 'Marlo', text: 'Welcome to Sales, Basil. Your desk is the one with the good chair. You’re welcome.', likes: 15, comments: [['Basil', 'It squeaks.']] },
   { day: 9, from: 'Juniper', text: 'Wren’s leaving card is in the kitchen. Also her mug. Also she took our good mug. Wren, we know.', scene: '\u{1F48C}☕', shows: 'An office kitchen counter with a leaving card, and a row of mug hooks with one hook empty', likes: 26, comments: [['Otis', 'The mug was company property. Hoo.']] },
   { day: 10, from: 'Pip', text: 'Found: blue stapler. It was in my drawer. It was always in my drawer. ribbit.', likes: 24, comments: [['Otis', 'Case closed.']] },
+  { day: 11, from: 'Biscuit', text: 'Oktopus day!! I have ONE password now!! I wrote it down!! (Joke!! Don’t tell IT!!)', likes: 33, comments: [['IT', 'We know.'], ['Otis', 'Hoo.']] },
+  { day: 12, from: 'Marlo', text: 'Finance got a travel app. Sales got told “no”. The space marked MARLO remains unaffected.', scene: '\u2708\u{1F6AB}', shows: 'A sign on a car park space reading only a stern arrow, a single shiny car parked neatly in it at dusk', likes: 21, comments: [['Dot', 'Expenses are for business travel.'], ['Marlo', 'Every journey is a business journey.']] },
+  { day: 13, from: 'Basil', text: 'We have Canvass. Gloria and I are very happy. Please do not make posters in Comic Sans.', likes: 27, comments: [['Juniper', 'Too late.']] },
+  { day: 14, from: 'Pip', text: 'First day in Finance. Counted the staplers. Finance has nine. The blue one is not among them. Ribbit.', scene: '\u{1F4CE}\u{1F50D}', shows: 'Nine staplers lined up neatly on a finance desk in a row, with a gap at the end where a tenth should be', likes: 19, comments: [['Dot', 'There are ten. Check again.'], ['Pip', 'Ribbit.']] },
+  { day: 15, from: 'Juniper', text: 'Hazel’s leaving card is in the kitchen. She was only here three days but she was SO nice. Also: who has the calculator?', likes: 24, comments: [['Biscuit', 'I signed it twice!!']] },
 ];
 
 /** Everyday posts up to today, newest first. */

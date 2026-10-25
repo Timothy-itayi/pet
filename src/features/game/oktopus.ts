@@ -33,11 +33,14 @@ const BASE: HrRow[] = [
   { employeeId: 'EMP-1010', login: 'intern', name: 'Intern (you)', dept: 'IT', title: 'IT Intern', manager: 'EMP-1001', status: 'active' },
 ];
 
-/** What changes in HR during week 2: a joiner, a mover and a leaver. */
+/** What changes in HR, in order: week 2's joiner, mover and leaver, then week 3's. */
 const CHANGES: { day: number; row: HrRow }[] = [
   { day: 7, row: { employeeId: 'EMP-1011', login: 'fern', name: 'Fern', dept: 'Marketing', title: 'Social Media Assistant', manager: 'EMP-1004', status: 'active' } },
   { day: 8, row: { employeeId: 'EMP-1006', login: 'basil', name: 'Basil', dept: 'Sales', title: 'Sales Designer', manager: 'EMP-1007', status: 'active' } },
   { day: 9, row: { employeeId: 'EMP-1005', login: 'wren', name: 'Wren', dept: 'Marketing', title: 'Content Writer', manager: 'EMP-1004', status: 'terminated' } },
+  { day: 13, row: { employeeId: 'EMP-1012', login: 'hazel', name: 'Hazel', dept: 'Finance', title: 'Accounts Assistant', manager: 'EMP-1002', status: 'active' } },
+  { day: 14, row: { employeeId: 'EMP-1009', login: 'pip', name: 'Pip', dept: 'Finance', title: 'Finance Assistant', manager: 'EMP-1002', status: 'active' } },
+  { day: 15, row: { employeeId: 'EMP-1012', login: 'hazel', name: 'Hazel', dept: 'Finance', title: 'Accounts Assistant', manager: 'EMP-1002', status: 'terminated' } },
 ];
 
 /** The HR file on a given day. */

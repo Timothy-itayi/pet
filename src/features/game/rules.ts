@@ -468,7 +468,7 @@ function oktaProblem(s: GameState, t: Ticket, fixBy: Exclude<NonNullable<Issue['
       return user?.status === 'active' ? `${name} can still sign in to Oktopus and everything in it. Deactivate them.` : undefined;
     case 'mfa': {
       const reset = okta.users[t.who]?.mfaResetAt ?? -1;
-      return reset >= t.day * MINUTES_A_DAY + clockTime(t.at) ? undefined : 'Her old phone is still the only way in. Reset her sign-in methods in Oktopus, once you\u2019ve checked it\u2019s really her.';
+      return reset >= t.day * MINUTES_A_DAY + clockTime(t.at) ? undefined : 'Their old phone is still the only way in. Reset their sign-in methods in Oktopus, once you\u2019ve checked it\u2019s really them.';
     }
   }
 }
@@ -496,6 +496,9 @@ export function liveFact(s: GameState, t: Ticket, label: string): string | undef
   const people = Object.keys(okta.users).length;
   return people ? `${people} ${people === 1 ? 'person' : 'people'} in Oktopus, ${okta.groups.length} groups, ${Object.keys(okta.apps).length} apps.` : 'A brand-new org. Nobody in it yet.';
 }
+
+/** A question as you'd ask it on this ticket: "{who}" is whoever the ticket is about. */
+export const askText = (t: Ticket, text: string) => text.replaceAll('{who}', t.subject ? hrOn(DAYS).find((r) => r.login === t.subject)?.name ?? t.subject : '');
 
 /** The suggestion that really fixes this ticket: usually the issue's fix, unless this one's cause is different. */
 export const fixFor = (t: Ticket) => t.fixedBy ?? issueOf(t).correctFix;
@@ -555,7 +558,7 @@ export function ask(s: GameState, id: string, askId: string): GameState {
   return act(s, (d) => {
     const st = ticketState(d, id);
     st.status = 'open';
-    st.messages.push({ from: 'you', text: q.text, at: d.clock });
+    st.messages.push({ from: 'you', text: askText(t, q.text), at: d.clock });
     st.caller = { doing: 'answer', id: askId, until: replyAt(d, t, callerMinutes(d, t, CALLER[t.priority].answer)) };
     advance(d, COST.ask);
   });

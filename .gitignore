@@ -25,3 +25,6 @@ dist-ssr
 
 # API keys
 .env
+
+# Test saves made by scripts/save-at.ts
+scripts/saves/

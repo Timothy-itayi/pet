@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { CLOSE, DAILY_COST, LOCKUP, DAYS, GOAL_VOUCHER, ISSUES, REPLIES, START_SAVINGS, THANKS, TICKETS, TOOLS, VILLAGERS } from './data.ts';
 import { addApp, addGroup, addRule, assignApp, createFromHr, resetMfa, setActive, updateFromHr } from './identity.ts';
-import { appsOf, groupsOf, newOkta } from './oktopus.ts';
+import type { Department } from './directory.ts';
+import { appsOf, groupsOf, hrOn, newOkta } from './oktopus.ts';
 import {
   accountProblem, acceptOffer, apply, ask, liveFact, askForTicket, clockOut, clockTime, fixFor, goHome, goTo, issueOf, newGame, next, noteProblem, noteTarget, parseSave,
   pushBack, relation, reply, resetPassword, resolve, setEnabled, suggest, tick, ticketById, ticketState, unlockAccount, workaround, writeNote, type GameState,
@@ -22,18 +23,23 @@ function waitForCaller(s: GameState, id: string): GameState {
 const tryIt = (s: GameState, id: string, fixId: string) => waitForCaller(suggest(s, id, fixId), id);
 /** Suggest something and, if they say it worked, resolve it. */
 const fix = (s: GameState, id: string, fixId: string) => resolve(tryIt(s, id, fixId), id);
-/** Marketing on Oktopus the right way: people from HR, a department group filled by a rule. */
-function setUpMarketing(s: GameState): GameState {
-  for (const login of ['juniper', 'wren', 'basil']) s = createFromHr(s, login);
-  s = addGroup(s, 'DEPT-Marketing');
-  return s.okta.rules.length ? s : addRule(s, { group: 'DEPT-Marketing', dept: 'Marketing' });
+/** Departments onto Oktopus the right way: everyone from HR, and a DEPT- group per department filled by a rule. */
+function setUpTeams(s: GameState, team: readonly string[] = ['Marketing']): GameState {
+  for (const r of hrOn(s.day).filter((x) => team.includes(x.dept) && x.status === 'active')) s = createFromHr(s, r.login);
+  for (const dept of team) {
+    s = addGroup(s, `DEPT-${dept}`);
+    if (!s.okta.rules.some((r) => 'dept' in r && r.dept === dept)) s = addRule(s, { group: `DEPT-${dept}`, dept: dept as Department });
+  }
+  return s;
 }
-/** Hootsweet the right way: its own APP- group, filled from Marketing's group, and the app assigned to that. */
-function giveMarketingHootsweet(s: GameState): GameState {
-  s = addGroup(addApp(setUpMarketing(s), 'hootsweet'), 'APP-Hootsweet-Users');
-  if (!s.okta.rules.some((r) => r.group === 'APP-Hootsweet-Users')) s = addRule(s, { group: 'APP-Hootsweet-Users', memberOf: 'DEPT-Marketing' });
-  return assignApp(s, 'hootsweet', 'APP-Hootsweet-Users');
+/** An app the right way: its own APP- group, filled from each team's group, and the app assigned to that. */
+function giveApp(s: GameState, app = 'hootsweet', team: readonly string[] = ['Marketing']): GameState {
+  const group = `APP-${app[0]?.toUpperCase()}${app.slice(1)}-Users`;
+  s = addGroup(addApp(setUpTeams(s, team), app), group);
+  for (const dept of team) if (!s.okta.rules.some((r) => r.group === group && 'memberOf' in r && r.memberOf === `DEPT-${dept}`)) s = addRule(s, { group, memberOf: `DEPT-${dept}` });
+  return assignApp(s, app, group);
 }
+const giveMarketingHootsweet = (s: GameState) => giveApp(s);
 /** For tickets fixed in an admin console, do the work there first, the right way. */
 function admin(s: GameState, id: string): GameState {
   const t = ticketById(id);
@@ -41,11 +47,11 @@ function admin(s: GameState, id: string): GameState {
     case 'unlock': return unlockAccount(s, t.who);
     case 'reset': return resetPassword(s, t.who, { mustChange: true, unlock: true });
     case 'disable': return setEnabled(s, 'sam', false);
-    case 'okta-setup': return setUpMarketing(s);
-    case 'okta-app': return giveMarketingHootsweet(s);
-    case 'joiner': return createFromHr(giveMarketingHootsweet(s), 'fern');
-    case 'mover': return updateFromHr(s, 'basil');
-    case 'leaver': return setActive(s, 'wren', false);
+    case 'okta-setup': return setUpTeams(s, t.team);
+    case 'okta-app': return giveApp(s, t.app, t.team);
+    case 'joiner': return createFromHr(s, t.subject ?? '');
+    case 'mover': return updateFromHr(s, t.subject ?? '');
+    case 'leaver': return setActive(s, t.subject ?? '', false);
     case 'mfa': return resetMfa(s, t.who);
     case undefined: return s;
   }
@@ -398,7 +404,7 @@ describe('money and endings', () => {
     expect(playDay({ ...newGame(), savings: DAILY_COST }, lazy).ending).toBe('burnout');
   });
 
-  it('two good weeks get you hired by the library; Big Ocean also wants you to have written up what you learned', () => {
+  it('fixing everything gets you hired by the library; Big Ocean also wants you to have written up what you learned', () => {
     const play = (each: Act) => { let s = newGame(); while (s.day <= DAYS) s = playDay(s, each); return s; };
     const fixesOnly = play((x, id) => handle(x, id, (y, i) => fix(admin(y, i), i, correct(i))));
     expect(apply(fixesOnly, 'ocean')).toBe(fixesOnly);
@@ -453,14 +459,18 @@ describe('Oktopus', () => {
     return goTo(s, 'desk');
   }
 
-  it('week 2 plays through: setup, Hootsweet, a joiner, a mover, a leaver and a lost phone, each resolved', () => {
+  it('weeks 2 and 3 play through: every Oktopus ticket resolved, and everyone ends up with the right apps', () => {
     let s = morningOf(6);
     while (s.day <= DAYS) s = workDay(s);
-    for (const id of ['t601', 't602', 't701', 't801', 't901', 't1002']) expect(ticketState(s, id).status, id).toBe('resolved');
-    expect(appsOf(s.okta, 'fern')).toEqual(['hootsweet']); // the joiner got Marketing's app from the rules
-    expect(s.okta.users.basil).toMatchObject({ dept: 'Sales', status: 'active' }); // the mover kept his account
-    expect(appsOf(s.okta, 'basil')).toEqual([]); // and lost Marketing's app
-    expect(s.okta.users.wren?.status).toBe('deactivated'); // the leaver can't sign in
+    for (const t of TICKETS.filter((x) => x.day >= 6 && issueOf(x).console)) expect(ticketState(s, t.id).status, t.id).toBe('resolved');
+    expect(appsOf(s.okta, 'fern')).toEqual(['hootsweet', 'canvass']); // joiner: Marketing's apps, from the rules
+    expect(s.okta.users.basil).toMatchObject({ dept: 'Sales', status: 'active' }); // mover: kept his account
+    expect(appsOf(s.okta, 'basil')).toEqual(['canvass']); // and has Sales' app, not Marketing's Hootsweet
+    expect(appsOf(s.okta, 'pip')).toEqual(['voyago']); // moved to Finance, so Finance's app
+    expect(appsOf(s.okta, 'marlo')).toEqual(['canvass']); // Sales: Canvass, never Voyago
+    expect(s.okta.users.wren?.status).toBe('deactivated'); // leavers can't sign in
+    expect(s.okta.users.hazel?.status).toBe('deactivated');
+    expect(Object.keys(s.okta.users)).toHaveLength(12); // everyone who's been on the HR file since Oktopus arrived
   });
 
   it('gives an app to everyone a rule puts in its group, and to nobody else', () => {

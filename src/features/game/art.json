@@ -127,5 +127,35 @@
   },
   "icon-oktopus": {
     "image": true
+  },
+  "news-one-sign-in-for-everyone": {
+    "image": true,
+    "loop": true
+  },
+  "news-expenses-go-digital": {
+    "image": true,
+    "loop": true
+  },
+  "news-welcome-hazel": {
+    "image": true,
+    "loop": true
+  },
+  "news-pip-joins-finance": {
+    "image": true,
+    "loop": true
+  },
+  "news-a-short-goodbye": {
+    "image": true,
+    "loop": true
+  },
+  "feed-12-marlo": {
+    "image": true
+  },
+  "feed-14-pip": {
+    "image": true
+  },
+  "face-hazel": {
+    "image": true,
+    "large": true
   }
 }
