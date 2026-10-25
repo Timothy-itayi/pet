@@ -81,9 +81,13 @@ export interface Okta {
   /** Workflows: automations you've built, and every time they ran. */
   flows: Flow[];
   runs: FlowRun[];
+  /** Oktopus Verify: the company phone each person signs in with, by login. */
+  verify: Record<string, string>;
+  /** People can set up Oktopus Verify on their own phone, without IT doing it for them. */
+  selfEnroll: boolean;
 }
 
-export const newOkta = (): Okta => ({ users: {}, groups: ['Everyone'], rules: [], apps: {}, log: [], mfa: [], flows: [], runs: [] });
+export const newOkta = (): Okta => ({ users: {}, groups: ['Everyone'], rules: [], apps: {}, log: [], mfa: [], flows: [], runs: [], verify: {}, selfEnroll: false });
 
 /** Whether someone has to use their phone to sign in: they're in a group the sign-on policy covers. */
 export const needsMfa = (okta: Okta, login: string) => groupsOf(okta, login).some((g) => okta.mfa.includes(g));

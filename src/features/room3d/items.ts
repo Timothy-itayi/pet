@@ -33,7 +33,7 @@ export const ROOM_ITEMS: RoomItem[] = [
   { id: 'mug', label: 'Sam’s mug', kind: 'sip', says: () => 'WELL, SHIT.' },
   { id: 'tray', label: 'Ticket tray', kind: 'look', says: () => 'The ticket tray. Empty for now. It won’t stay that way.' },
   { id: 'plant', label: 'Plant', kind: 'sway', says: () => 'The leaves bob about. Mostly alive. Sam watered it on Fridays.' },
-  { id: 'phone', label: 'Where the phone was', kind: 'look', says: () => 'A clean rectangle in the dust where a phone used to be. Budget cuts.' },
+  { id: 'phone', label: 'Where the phone was', kind: 'look', says: (day) => (day >= 16 ? 'A clean rectangle in the dust where a phone used to be. The new ones are in the top drawer.' : 'A clean rectangle in the dust where a phone used to be. Budget cuts.') },
   { id: 'binders', label: 'Sam’s old binders', kind: 'look', says: () => 'Sam’s binders: \u201CPrinters 2016\u201D, \u201CPrinters 2017\u201D, \u201CPrinters (other)\u201D.' },
   { id: 'chair', label: 'Sam’s chair', kind: 'spin', says: () => 'It squeaks round. It still leans slightly to the left.' },
 ];

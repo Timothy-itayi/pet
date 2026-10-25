@@ -111,6 +111,12 @@ export const NEWS: NewsPost[] = [
     body: 'Hazel has decided Finance isn\u2019t for her. She was with us two days, and she was lovely. If you have seen a calculator, please return it to Finance.',
   },
   {
+    day: 16, title: 'Budget\u2019s up: phones for Burrow', from: 'Mr. Grisby', scene: '\u{1F4E6}\u{1F4F1}', tone: '#14532d',
+    shows: 'An open cardboard box of six identical black smartphones in their trays on an old wooden desk, a sticky note on the lid saying IT',
+    moves: 'Static camera. One phone screen lights up briefly with a white tick, then fades.',
+    body: 'Good news. After the auditors, the board found some budget. I have spent it on phones. Six. IT is setting them up, starting with IT. Do not ask me what Oktopus Verify is. Ask IT.',
+  },
+  {
     day: 16, title: 'The auditors\u2019 findings', from: 'Otis', scene: '\u{1F50E}\u{1F4CB}', tone: '#334155',
     shows: 'A thick report on a meeting room table with coloured flags sticking out of it, a red pen beside it, blinds half drawn',
     moves: 'Static camera. The report\u2019s flags flutter slightly in the air-conditioning and the light through the blinds shifts.',
@@ -120,7 +126,7 @@ export const NEWS: NewsPost[] = [
     day: 17, title: 'Sign in with your phone', from: 'Mr. Grisby', scene: '\u{1F4F1}\u{1F510}', tone: '#1e3a8a',
     shows: 'An old desk phone and a small modern mobile phone side by side on a desk, a padlock between them, lit by a monitor',
     moves: 'Static camera. The mobile phone\u2019s screen lights up softly, then dims.',
-    body: 'From today Oktopus will ask for your phone as well as your password. This is called MFA, apparently. If you don\u2019t have a phone, Biscuit has a drawer of them.',
+    body: 'From today Oktopus will ask for your phone as well as your password. This is called MFA, apparently. IT is setting up company phones for Finance. Everyone else: Oktopus will walk you through it.',
   },
   {
     day: 18, title: 'Please stop plugging things in', from: 'IT', scene: '\u{1F50C}\u{1F6AB}', tone: '#7f1d1d',

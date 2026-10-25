@@ -274,7 +274,7 @@ export const JOBS: Job[] = [
     title: 'Junior Security Analyst',
     company: 'Lighthouse Security',
     blurb: 'Help small companies spot phishing, lock down sign-ins and clean up after leavers. You\u2019ll need to know access inside out.',
-    needs: { access: 135 },
+    needs: { access: 145 },
   },
 ];
 
