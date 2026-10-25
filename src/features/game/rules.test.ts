@@ -3,7 +3,7 @@ import { CLOSE, DAILY_COST, LOCKUP, DAYS, GOAL_VOUCHER, ISSUES, REPLIES, START_S
 import { addApp, addGroup, addRule, assignApp, createFromHr, resetMfa, setActive, updateFromHr } from './identity.ts';
 import { appsOf, groupsOf, newOkta } from './oktopus.ts';
 import {
-  accountProblem, acceptOffer, apply, ask, askForTicket, clockOut, clockTime, fixFor, goHome, goTo, issueOf, newGame, next, noteProblem, noteTarget, parseSave,
+  accountProblem, acceptOffer, apply, ask, liveFact, askForTicket, clockOut, clockTime, fixFor, goHome, goTo, issueOf, newGame, next, noteProblem, noteTarget, parseSave,
   pushBack, relation, reply, resetPassword, resolve, setEnabled, suggest, tick, ticketById, ticketState, unlockAccount, workaround, writeNote, type GameState,
 } from './rules.ts';
 import { dayMood } from './people.ts';
@@ -476,7 +476,7 @@ describe('Oktopus', () => {
   it('a mover keeps their account, and the rules take their old team\u2019s app away', () => {
     let s = serveUntil(morningOf(8), '9:31', 't801');
     expect(accountProblem(s, ticketById('t801'))).toMatch(/still thinks Basil is in Marketing/);
-    expect(accountProblem(setActive(s, 'basil', false), ticketById('t801'))).toMatch(/he didn\u2019t leave/);
+    expect(accountProblem(setActive(s, 'basil', false), ticketById('t801'))).toMatch(/they didn\u2019t leave/);
     s = updateFromHr(s, 'basil');
     expect(s.okta.users.basil).toMatchObject({ dept: 'Sales', status: 'active' });
     expect(appsOf(s.okta, 'basil')).toEqual([]);
@@ -492,6 +492,14 @@ describe('Oktopus', () => {
     s = setActive(s, 'fern', false);
     expect(appsOf(s.okta, 'fern')).toEqual([]);
     expect(s.okta.log.at(-1)).toMatchObject({ event: 'user.lifecycle.deactivate', target: 'fern' });
+  });
+
+  it('what a ticket says about Oktopus is what Oktopus shows now, not when the ticket came in', () => {
+    let s = serveUntil(morningOf(7), '9:16', 't701');
+    expect(liveFact(s, ticketById('t701'), 'Oktopus')).toBe('No user called Fern.');
+    s = createFromHr(s, 'fern');
+    expect(liveFact(s, ticketById('t701'), 'Oktopus')).toBe('Fern: active, Marketing. Apps: Hootsweet.');
+    expect(liveFact(s, ticketById('t701'), 'HR file')).toBeUndefined();
   });
 
   it('refuses groups with no name or the same name twice', () => {

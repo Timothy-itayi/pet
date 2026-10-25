@@ -2,7 +2,7 @@ import { DAYS, ISSUES, MANAGER, MAX_PUSHES, POLICY, REPLIES, TICKETS, VILLAGERS,
 import { OKTOPUS_DAY } from '../game/oktopus.ts';
 import { sayNow, statusText } from '../game/people.ts';
 import {
-  ask, canPush, canWorkaround, fixFor, isKnown, issueOf, moodName, next, noteTarget, pushBack, relation, reply, resolve,
+  ask, canPush, canWorkaround, fixFor, isKnown, issueOf, liveFact, moodName, next, noteTarget, pushBack, relation, reply, resolve,
   scriptFor, suggest, suggestions, ticketById, ticketState, workaround, writeNote, type GameState, type Outcome, type Status, type TicketState,
 } from '../game/rules.ts';
 import type { ConsoleFix, Ticket } from '../game/types.ts';
@@ -171,11 +171,11 @@ function troubleshoot(app: App, t: Ticket): HTMLElement {
 }
 
 /** What you know so far: what IT can see for itself, and what the caller has told you. */
-function whatYouKnow(t: Ticket, st: TicketState): HTMLElement | false {
+function whatYouKnow(s: GameState, t: Ticket, st: TicketState): HTMLElement | false {
   const facts = t.details.filter((d) => !d.ask || st.heard.includes(d.ask));
   return facts.length > 0 && h('div', { class: 'sn-investigation', 'data-testid': 'details' },
     h('p', { class: 'sn-panel-title' }, 'What you know'),
-    h('dl', {}, ...facts.flatMap((d) => [h('dt', {}, d.label), h('dd', {}, d.text)])));
+    h('dl', {}, ...facts.flatMap((d) => [h('dt', {}, d.label), h('dd', {}, liveFact(s, t, d.label) ?? d.text)])));
 }
 
 /** The Notes tab: troubleshooting with the caller, what you know, and everything said so far. */
@@ -186,7 +186,7 @@ function notesTab(app: App, t: Ticket): HTMLElement {
   const reply1 = st.status === 'new' ? REPLIES.first : REPLIES.update;
   return h('div', { class: 'sn-tab-body' },
     troubleshoot(app, t),
-    whatYouKnow(t, st),
+    whatYouKnow(state, t, st),
     h('div', { class: 'sn-compose' },
       h('label', { for: 'sn-comment' }, 'Additional comments (Customer visible)'),
       h('textarea', { id: 'sn-comment', rows: 1, readonly: true }, reply1),

@@ -5,7 +5,7 @@ import {
 } from './data.ts';
 import { MINUTES_A_DAY, newAccounts, type Account } from './directory.ts';
 import { awayLine, backAt, dayMood } from './people.ts';
-import { appsOf, groupsOf, hrOn, newOkta, type Okta } from './oktopus.ts';
+import { appsOf, CATALOG, hrOn, newOkta, type Okta } from './oktopus.ts';
 import { MOODS, type ConsoleFix, type Fix, type Issue, type Note, type Job, type Mood, type PageStatus, type Relation, type Skill, type Ticket, type Tool } from './types.ts';
 
 export type Phase = 'boot' | 'desktop' | 'desk' | 'dayEnd' | 'ending';
@@ -415,45 +415,86 @@ export function accountProblem(s: GameState, t: Ticket): string | undefined {
   return undefined;
 }
 
-/** Marketing, as HR has them today. */
-const marketing = (s: GameState) => hrOn(s.day).filter((r) => r.dept === 'Marketing' && r.status === 'active');
+/** Everyone in some departments, as HR has them today. */
+const staffIn = (s: GameState, team: readonly string[]) => hrOn(s.day).filter((r) => team.includes(r.dept) && r.status === 'active');
 const named = (s: GameState, logins: string[]) => logins.map((l) => hrOn(s.day).find((r) => r.login === l)?.name ?? l).join(', ');
+const isAre = (n: number) => (n > 1 ? 'aren\u2019t' : 'isn\u2019t');
+const teamWords = (team: readonly string[]) => new Intl.ListFormat('en', { type: 'conjunction' }).format(team);
 
 /** What's still wrong in Oktopus for a ticket, in a sentence; undefined once it's right. */
 function oktaProblem(s: GameState, t: Ticket, fixBy: Exclude<NonNullable<Issue['console']>, 'unlock' | 'reset' | 'disable'>): string | undefined {
   const { okta } = s;
   const has = (login: string, app: string) => appsOf(okta, login).includes(app);
+  const who = t.subject ?? t.who;
+  const name = named(s, [who]);
+  const user = okta.users[who];
+  const row = hrOn(s.day).find((r) => r.login === who);
+  /** Apps someone else on the same team gets: what a joiner or mover should end up with too. */
+  const teamApps = (dept: string) => Object.keys(okta.apps).filter((app) =>
+    Object.keys(okta.users).some((l) => l !== who && okta.users[l]?.dept === dept && has(l, app)));
   switch (fixBy) {
     case 'okta-setup': {
-      const missing = marketing(s).filter((r) => !okta.users[r.login]).map((r) => r.login);
-      if (missing.length) return `${named(s, missing)} ${missing.length > 1 ? 'aren\u2019t' : 'isn\u2019t'} in Oktopus yet. Import Marketing from the HR file.`;
-      const grouped = marketing(s).every((r) => okta.rules.some((rule) => 'dept' in rule && rule.dept === 'Marketing' && groupsOf(okta, r.login).includes(rule.group)));
-      return grouped ? undefined : 'Marketing need a group of their own, filled by a rule: everyone whose department is Marketing.';
+      const team = t.team ?? ['Marketing'];
+      const missing = staffIn(s, team).filter((r) => !okta.users[r.login]).map((r) => r.login);
+      if (missing.length) return `${named(s, missing)} ${isAre(missing.length)} in Oktopus yet. Import them from the HR file.`;
+      const loose = team.filter((dept) => !okta.rules.some((rule) => 'dept' in rule && rule.dept === dept));
+      return loose.length ? `${teamWords(loose)} need${loose.length > 1 ? '' : 's'} a group of ${loose.length > 1 ? 'their' : 'its'} own, filled by a rule on department.` : undefined;
     }
     case 'okta-app': {
-      if (!okta.apps.hootsweet) return 'Hootsweet isn\u2019t in Oktopus. Add it from the App Catalog.';
-      const without = marketing(s).filter((r) => !has(r.login, 'hootsweet')).map((r) => r.login);
-      if (without.length) return `${named(s, without)} still can\u2019t see Hootsweet. Assign it to a group that\u2019s filled with Marketing.`;
-      const extra = Object.keys(okta.users).filter((l) => has(l, 'hootsweet') && !marketing(s).some((r) => r.login === l));
-      return extra.length ? `${named(s, extra)} can see Hootsweet too, and ${extra.length > 1 ? 'they\u2019re' : 'they\u2019re'} not in Marketing. Only Marketing should have it.` : undefined;
+      const app = t.app ?? 'hootsweet';
+      const team = t.team ?? ['Marketing'];
+      const appName = CATALOG.find((c) => c.id === app)?.name ?? app;
+      if (!okta.apps[app]) return `${appName} isn\u2019t in Oktopus. Add it from the App Catalog.`;
+      const without = staffIn(s, team).filter((r) => !has(r.login, app)).map((r) => r.login);
+      if (without.length) return `${named(s, without)} still can\u2019t see ${appName}. Assign it to a group that\u2019s filled with ${teamWords(team)}.`;
+      const extra = Object.keys(okta.users).filter((l) => has(l, app) && !staffIn(s, team).some((r) => r.login === l));
+      return extra.length ? `${named(s, extra)} can see ${appName} too, and ${extra.length > 1 ? 'they\u2019re' : 'they\u2019re'} not in ${teamWords(team)}. Only ${teamWords(team)} should have it.` : undefined;
     }
-    case 'joiner':
-      if (!okta.users.fern) return 'Fern isn\u2019t in Oktopus. HR added her this morning: create her from the HR file.';
-      return has('fern', 'hootsweet') ? undefined : 'Fern is in Oktopus but has no Hootsweet. Her group rules should give it to her: is her department right?';
+    case 'joiner': {
+      if (!user) return `${name} isn\u2019t in Oktopus. HR added them this morning: create them from the HR file.`;
+      const missing = teamApps(user.dept).filter((app) => !has(who, app));
+      return missing.length ? `${name} is in Oktopus but can\u2019t see what the rest of ${user.dept} can. Their group rules should do that: is their department right?` : undefined;
+    }
     case 'mover': {
-      const basil = okta.users.basil;
-      if (!basil) return 'Basil isn\u2019t in Oktopus at all.';
-      if (basil.status !== 'active') return 'Basil can\u2019t sign in at all now. He moved to Sales; he didn\u2019t leave. Activate him again.';
-      if (basil.dept !== 'Sales') return 'Oktopus still thinks Basil is in Marketing. Update his profile from the HR file.';
-      return has('basil', 'hootsweet') ? 'Basil is in Sales now but still has Hootsweet. Marketing\u2019s app should come from Marketing\u2019s rule, not be given to him by hand.' : undefined;
+      if (!user) return `${name} isn\u2019t in Oktopus at all.`;
+      if (user.status !== 'active') return `${name} can\u2019t sign in at all now. They moved; they didn\u2019t leave. Activate them again.`;
+      if (row && user.dept !== row.dept) return `Oktopus still thinks ${name} is in ${user.dept}. Update their profile from the HR file.`;
+      const kept = appsOf(okta, who).filter((app) => !teamApps(user.dept).includes(app));
+      if (kept.length) return `${name} is in ${user.dept} now but can still see ${named(s, kept)}, which the rest of ${user.dept} can\u2019t. Old access should go with the old team.`;
+      const missing = teamApps(user.dept).filter((app) => !has(who, app));
+      return missing.length ? `${name} can\u2019t see what the rest of ${user.dept} can yet.` : undefined;
     }
     case 'leaver':
-      return okta.users.wren?.status === 'active' ? 'Wren can still sign in to Oktopus and everything in it. Deactivate her.' : undefined;
+      return user?.status === 'active' ? `${name} can still sign in to Oktopus and everything in it. Deactivate them.` : undefined;
     case 'mfa': {
       const reset = okta.users[t.who]?.mfaResetAt ?? -1;
       return reset >= t.day * MINUTES_A_DAY + clockTime(t.at) ? undefined : 'Her old phone is still the only way in. Reset her sign-in methods in Oktopus, once you\u2019ve checked it\u2019s really her.';
     }
   }
+}
+
+/**
+ * What a console shows right now, for a fact on a ticket that comes from one: so "No user called Fern" doesn't stay
+ * true after you've created her. Undefined for anything the caller told you, which doesn't change.
+ */
+export function liveFact(s: GameState, t: Ticket, label: string): string | undefined {
+  if (label === 'Active Directory') {
+    const login = issueOf(t).console === 'disable' ? 'sam' : t.who;
+    const a = s.accounts[login];
+    return a && `Account: ${login}. ${a.enabled ? '' : 'Disabled. '}${a.locked ? 'Locked out.' : 'Not locked out.'}`;
+  }
+  if (label !== 'Oktopus') return undefined;
+  const { okta } = s;
+  const who = t.subject;
+  if (who) {
+    const user = okta.users[who];
+    const name = named(s, [who]);
+    if (!user) return `No user called ${name}.`;
+    const apps = appsOf(okta, who).map((a) => CATALOG.find((c) => c.id === a)?.name ?? a);
+    return `${name}: ${user.status}, ${user.dept}. Apps: ${apps.length ? apps.join(', ') : 'none'}.`;
+  }
+  const people = Object.keys(okta.users).length;
+  return people ? `${people} ${people === 1 ? 'person' : 'people'} in Oktopus, ${okta.groups.length} groups, ${Object.keys(okta.apps).length} apps.` : 'A brand-new org. Nobody in it yet.';
 }
 
 /** The suggestion that really fixes this ticket: usually the issue's fix, unless this one's cause is different. */

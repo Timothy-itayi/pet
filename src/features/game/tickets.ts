@@ -870,7 +870,7 @@ export const TICKETS: Ticket[] = [
   },
   // Week 2: Oktopus for Marketing, a joiner, a mover, leavers and a lost phone, around the usual problems.
   {
-    id: 't601', day: 6, at: '9:20', who: 'grisby', via: 'tray', priority: 'high', issue: 'okta-setup', mood: 1,
+    id: 't601', day: 6, at: '9:20', who: 'grisby', via: 'tray', priority: 'high', issue: 'okta-setup', mood: 1, team: ['Marketing'],
     title: 'Get Marketing onto Oktopus',
     message: 'Oktopus is paid for. Marketing go first. Get them in it. The investors are watching. Honk.',
     details: [
@@ -880,7 +880,7 @@ export const TICKETS: Ticket[] = [
     workaround: 'Tell him it\u2019ll be ready tomorrow',
   },
   {
-    id: 't602', day: 6, at: '13:10', who: 'juniper', via: 'tray', priority: 'normal', issue: 'okta-app', mood: 1,
+    id: 't602', day: 6, at: '13:10', who: 'juniper', via: 'tray', priority: 'normal', issue: 'okta-app', mood: 1, app: 'hootsweet', team: ['Marketing'],
     title: 'Where’s Hootsweet?',
     message: 'I signed in to Oktopus! It’s very pretty. But there’s nothing in it. Where’s Hootsweet? We have posts going out at 4.',
     details: [
@@ -911,7 +911,7 @@ export const TICKETS: Ticket[] = [
     workaround: 'Let him use the hot-desk PC',
   },
   {
-    id: 't701', day: 7, at: '9:15', who: 'juniper', via: 'tray', priority: 'high', issue: 'joiner', mood: 1,
+    id: 't701', day: 7, at: '9:15', who: 'juniper', via: 'tray', priority: 'high', issue: 'joiner', mood: 1, subject: 'fern',
     title: 'Fern starts today!',
     message: 'Fern is HERE and she can’t get into anything! She needs Hootsweet before our 11 o’clock. HR set her up yesterday.',
     details: [
@@ -955,7 +955,7 @@ export const TICKETS: Ticket[] = [
     workaround: 'Ask Finance to bring them down',
   },
   {
-    id: 't801', day: 8, at: '9:30', who: 'marlo', via: 'tray', priority: 'normal', issue: 'mover', mood: 1,
+    id: 't801', day: 8, at: '9:30', who: 'marlo', via: 'tray', priority: 'normal', issue: 'mover', mood: 1, subject: 'basil',
     title: 'Basil’s on my team now',
     message: 'Basil’s in Sales as of today. He’s still getting Marketing’s Hootsweet and not much else. Sort him out, would you?',
     details: [
@@ -1003,7 +1003,7 @@ export const TICKETS: Ticket[] = [
     workaround: 'Lend him your charger',
   },
   {
-    id: 't901', day: 9, at: '9:10', who: 'otis', via: 'tray', priority: 'high', issue: 'leaver', mood: 1,
+    id: 't901', day: 9, at: '9:10', who: 'otis', via: 'tray', priority: 'high', issue: 'leaver', mood: 1, subject: 'wren',
     title: 'Wren has left: please remove access',
     message: 'Wren’s last day was yesterday. HR have done their part. Please make sure she can’t get into anything now. The auditors are asking. Hoo.',
     details: [

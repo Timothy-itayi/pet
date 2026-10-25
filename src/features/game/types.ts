@@ -1,4 +1,5 @@
 import type { VillagerId } from './data.ts';
+import type { Department } from './directory.ts';
 
 export type Skill = 'devices' | 'networks' | 'access';
 export const SKILLS: readonly Skill[] = ['devices', 'networks', 'access'];
@@ -112,6 +113,12 @@ export interface Ticket {
   mood: Mood;
   /** When this one's cause isn't the usual one: the suggestion that actually fixes it. */
   fixedBy?: string;
+  /** Oktopus tickets: who's joining, moving or leaving (by login). */
+  subject?: string;
+  /** Oktopus tickets: the departments to set up, or that should have the app. */
+  team?: Department[];
+  /** Oktopus tickets: the app from the catalog. */
+  app?: string;
 }
 
 export interface Job {
