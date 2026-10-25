@@ -1,5 +1,6 @@
-import { ISSUES, MANAGER, MAX_PUSHES, POLICY, REPLIES, TICKETS, VILLAGERS, WORKAROUND_RETURNS_AFTER } from '../game/data.ts';
+import { DAYS, ISSUES, MANAGER, MAX_PUSHES, POLICY, REPLIES, TICKETS, VILLAGERS, WORKAROUND_RETURNS_AFTER } from '../game/data.ts';
 import { OKTOPUS_DAY } from '../game/oktopus.ts';
+import { sayNow, statusText } from '../game/people.ts';
 import {
   ask, canPush, canWorkaround, fixFor, isKnown, issueOf, moodName, next, noteTarget, pushBack, relation, reply, resolve,
   scriptFor, suggest, suggestions, ticketById, ticketState, workaround, writeNote, type GameState, type Outcome, type Status, type TicketState,
@@ -31,6 +32,10 @@ const articleNumber = (issueId: string) => `KB${String(10 + ISSUES.findIndex((i)
 /** Keeps the office clock moving between full redraws. */
 export function refreshTimes(root: HTMLElement, s: GameState): void {
   root.querySelectorAll<HTMLElement>('[data-clock]').forEach((el) => { el.textContent = clockText(s.clock); });
+  // Where people are and what they're saying move on with the clock, without redrawing the page.
+  const day = Math.min(s.day, DAYS);
+  root.querySelectorAll<HTMLElement>('[data-now]').forEach((el) => { el.textContent = statusText(el.dataset.now ?? '', day, s.clock); });
+  root.querySelectorAll<HTMLElement>('[data-say]').forEach((el) => { el.textContent = `\u201C${sayNow(el.dataset.say ?? '', s)}\u201D`; });
 }
 
 /** The ServiceSoon wordmark: lowercase, with a green dot for the last "o". */

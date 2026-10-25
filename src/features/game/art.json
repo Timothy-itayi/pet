@@ -1,0 +1,119 @@
+{
+  "banner": {
+    "image": true,
+    "loop": true
+  },
+  "news-welcome-our-new-it-intern": {
+    "image": true,
+    "loop": true
+  },
+  "news-farewell-sam": {
+    "image": true,
+    "loop": true
+  },
+  "news-budget-freeze": {
+    "image": true,
+    "loop": true
+  },
+  "news-password-reminder-from-it": {
+    "image": true,
+    "loop": true
+  },
+  "news-marketing-smashes-it": {
+    "image": true,
+    "loop": true
+  },
+  "news-big-news-we-re-growing": {
+    "image": true,
+    "loop": true
+  },
+  "news-oktopus-is-here": {
+    "image": true,
+    "loop": true
+  },
+  "news-welcome-fern": {
+    "image": true,
+    "loop": true
+  },
+  "news-basil-joins-sales": {
+    "image": true,
+    "loop": true
+  },
+  "news-goodbye-wren": {
+    "image": true,
+    "loop": true
+  },
+  "news-oktopus-what-s-next": {
+    "image": true,
+    "loop": true
+  },
+  "feed--6-biscuit": {
+    "image": true
+  },
+  "feed--1-dot": {
+    "image": true
+  },
+  "feed-2-otis": {
+    "image": true
+  },
+  "feed-3-biscuit": {
+    "image": true
+  },
+  "feed-4-wren": {
+    "image": true
+  },
+  "feed-6-basil": {
+    "image": true
+  },
+  "feed-9-juniper": {
+    "image": true
+  },
+  "face-mr-grisby": {
+    "image": true,
+    "large": true
+  },
+  "face-dot": {
+    "image": true,
+    "large": true
+  },
+  "face-otis": {
+    "image": true,
+    "large": true
+  },
+  "face-juniper": {
+    "image": true,
+    "large": true
+  },
+  "face-wren": {
+    "image": true,
+    "large": true
+  },
+  "face-basil": {
+    "image": true,
+    "large": true
+  },
+  "face-marlo": {
+    "image": true,
+    "large": true
+  },
+  "face-biscuit": {
+    "image": true,
+    "large": true
+  },
+  "face-pip": {
+    "image": true,
+    "large": true
+  },
+  "face-fern": {
+    "image": true,
+    "large": true
+  },
+  "face-sam": {
+    "image": true,
+    "large": true
+  },
+  "face-it": {
+    "image": true,
+    "large": true
+  }
+}

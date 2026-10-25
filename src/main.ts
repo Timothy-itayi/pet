@@ -20,10 +20,22 @@ const state = saved ?? newGame();
 /** What's on the monitor while it isn't logged in, kept between redraws so a boot doesn't restart. */
 let shown: { key: string; el: HTMLElement } | undefined;
 
-/** Put a screen in a container, keeping focus on the same control if it's still there. */
+/** A scrolled area, recognised again after a redraw: by its window, its class, and what it's showing. */
+const scrollKey = (el: Element) =>
+  `${/window-\w+/.exec(el.closest('.win')?.className ?? '')?.[0] ?? ''}|${el.className}|${(el as HTMLElement).dataset.scrollKey ?? ''}`;
+
+/** Put a screen in a container, keeping focus on the same control, and every scrolled area where it was. */
 function mount(into: HTMLElement, screen: HTMLElement, focus: boolean): void {
   const was = (document.activeElement as HTMLElement | null)?.dataset.testid;
-  if (into.firstElementChild !== screen) into.replaceChildren(screen);
+  if (into.firstElementChild !== screen) {
+    const scrolled = new Map<string, [number, number]>();
+    for (const el of into.querySelectorAll('*')) if (el.scrollTop || el.scrollLeft) scrolled.set(scrollKey(el), [el.scrollTop, el.scrollLeft]);
+    into.replaceChildren(screen);
+    if (scrolled.size) for (const el of screen.querySelectorAll('*')) {
+      const at = scrolled.get(scrollKey(el));
+      if (at) [el.scrollTop, el.scrollLeft] = at;
+    }
+  }
   if (!focus) return;
   const same = was ? screen.querySelector<HTMLElement>(`[data-testid="${was}"]:not(:disabled)`) : null;
   const dialog = screen.querySelector<HTMLElement>('[role="dialog"] [data-autofocus]');

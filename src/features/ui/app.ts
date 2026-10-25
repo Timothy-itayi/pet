@@ -88,6 +88,8 @@ export interface Ui {
   tabs?: { history: string[]; at: number }[];
   tab?: number;
   liked?: string[];
+  /** Burrow Hub: whose photo is open full size, over their profile. */
+  viewing?: string;
   /** You emptied the Recycle Bin. Sam's files are gone for good. */
   trashEmptied?: boolean;
 }

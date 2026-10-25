@@ -1,7 +1,9 @@
 /**
- * Staff portraits for the intranet: illustrated faces of the men and women who work at Burrow, drawn in code
- * (so nobody real is pictured). Each person has their own skin tone, hair and look.
+ * Staff portraits for the intranet: painted faces of the men and women who work at Burrow (made by scripts/art.ts,
+ * so nobody real is pictured). Until someone's painting exists, they get a face drawn in code with the same skin
+ * tone, hair and look.
  */
+import { artFor, faceId } from '../game/art.ts';
 
 type Hair = 'short' | 'long' | 'bun' | 'curly' | 'bald' | 'bob';
 
@@ -37,8 +39,18 @@ function shape(tag: string, attrs: Record<string, string>): SVGElement {
   return el;
 }
 
-/** A round portrait of someone, by name. Anyone without a look gets a neutral one. */
-export function portrait(name: string, size = 40): SVGSVGElement {
+/** A round portrait of someone, by name: their painting, or their drawn face. Anyone without a look is the intern. */
+export function portrait(name: string, size = 40): Element {
+  const painted = artFor(faceId(name));
+  if (painted) {
+    const img = document.createElement('img');
+    Object.assign(img, { src: import.meta.env.BASE_URL + painted.image, alt: name, width: size, height: size, className: 'portrait painted' });
+    return img;
+  }
+  return drawn(name, size);
+}
+
+function drawn(name: string, size: number): SVGSVGElement {
   const look = LOOKS[name] ?? LOOKS.IT ?? { skin: '#e9bf98', hair: 'short', hairColour: '#3a2a1e', shirt: '#3a6ea5' };
   const svg = shape('svg', { viewBox: '0 0 64 64', width: String(size), height: String(size), class: 'portrait', role: 'img', 'aria-label': name }) as SVGSVGElement;
   const clip = `clip-${name.replace(/\W/g, '')}`;

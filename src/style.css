@@ -802,28 +802,6 @@ body:has(.book) .inspect-canvas { visibility: hidden; }
 .ridge-nav { color: #666; letter-spacing: 6px; }
 .ridge-address { flex: 1; padding: 3px 12px; border-radius: 14px; background: #eef0f2; color: #444; }
 .ridge-page { flex: 1; overflow: auto; padding: 14px 18px; background: linear-gradient(#cfe1f3, #f3f3f3 240px); }
-.ridge-hello { margin: 0 0 8px; text-align: center; font-size: 15px; color: #2b3a55; }
-.ridge-search { margin: 0 auto 12px; max-width: 460px; padding: 8px 16px; border-radius: 20px; background: #fff; color: #888; box-shadow: 0 1px 4px #0002; }
-.ridge-tiles { display: flex; justify-content: center; gap: 10px; margin-bottom: 14px; }
-.ridge-tile { display: flex; flex-direction: column; align-items: center; gap: 2px; width: 96px; padding: 8px 4px; border: 0; border-radius: 8px; background: #ffffffcc; font: 12px 'Segoe UI', var(--read); cursor: pointer; }
-.ridge-tile .glyph { font-size: 22px; }
-.ridge-tile.off { opacity: 0.65; cursor: default; }
-.ridge-tile .meta { font-size: 10px; text-align: center; }
-.ridge-feed { display: grid; grid-template-columns: 1fr 240px; gap: 12px; }
-.ridge-main, .ridge-side { display: grid; gap: 10px; align-content: start; }
-.ridge-card { background: #fff; border-radius: 8px; padding: 10px 14px; box-shadow: 0 1px 3px #0002; }
-.ridge-card h2, .ridge-card h3 { margin: 2px 0 4px; font-family: 'Segoe UI', var(--read); }
-.ridge-card p { margin: 0; }
-.ridge-card.hero { background: linear-gradient(135deg, #1d3f6e, #3a6ea5); color: #fff; }
-.ridge-card.hero .meta { color: #cfe1f3; }
-.stock-line { display: flex; justify-content: space-between; gap: 6px; }
-.stock-line.small { font-size: 11px; color: #555; }
-.up { color: #107c10; }
-.down { color: #a4262c; }
-.spark { width: 100%; height: 48px; }
-.spark polyline { fill: none; stroke: #0078d4; stroke-width: 2.5; }
-.weather { font-size: 18px; }
-.ridge-list { margin: 4px 0 0; padding-left: 16px; }
 
 /* Burrow Mail: the list on the left, the message on the right. */
 .mail { display: grid; grid-template-columns: 170px 1fr; font: 13px var(--read); }
@@ -936,99 +914,195 @@ input.ridge-address { border: 1px solid transparent; font: inherit; outline: non
 input.ridge-address:focus { border-color: #0078d4; background: #fff; }
 .ridge-page { background: #f3f2ef; padding: 0; }
 
-/* The Burrow Intranet site. */
-.site { display: flex; flex-direction: column; min-height: 100%; }
-.site-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 8px 18px; background: #fff; border-bottom: 1px solid #e0dfdc; }
-.site-brand { display: flex; align-items: center; gap: 10px; }
-.site-brand strong { display: block; font: bold 19px Georgia, serif; color: #3b2a1a; }
-.site-brand span { font-size: 11px; color: #7a6a58; }
-.site-nav { display: flex; gap: 2px; }
-.site-link { border: 0; background: none; font: 13px 'Segoe UI', var(--read); color: #3b3b3b; padding: 6px 10px; border-radius: 4px; cursor: pointer; }
-.site-link:hover { background: #f0efec; }
-.site-link.on { color: #4e6b28; font-weight: 600; box-shadow: inset 0 -2px #6f9a3a; border-radius: 0; }
-.site-link.more { align-self: flex-start; color: #4e6b28; }
-.site-title { margin: 16px 18px 8px; font: 600 20px 'Segoe UI', var(--read); }
-.site-column { margin: 0 18px 16px; display: grid; gap: 10px; max-width: 640px; }
-.site-foot { margin-top: auto; padding: 10px 18px; font-size: 11px; color: #8a8a8a; text-align: center; }
-.site-people { list-style: none; margin: 0 18px 16px; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; }
-.site-people li { display: flex; gap: 10px; align-items: center; background: #fff; border-radius: 8px; padding: 8px 10px; box-shadow: 0 1px 2px #0002; }
-.site-people li div { display: flex; flex-direction: column; font-size: 12px; }
-.site-avatar { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; background: #c98d52; color: #fff; font-weight: bold; }
-.glance { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; margin: 4px 0 0; font-size: 12px; }
-.glance dt { color: #777; }
-.glance dd { margin: 0; }
-.ridge-error { margin: auto; padding: 60px 20px; text-align: center; color: #444; }
-.ridge-error .glyph { font-size: 40px; margin: 0; }
-
-/* The home page: the company's own feed, like a work social network. */
-.feed { display: grid; grid-template-columns: 180px minmax(0, 1fr) 210px; gap: 12px; padding: 12px 16px; align-items: start; }
-.feed-left, .feed-right, .feed-main { display: grid; gap: 10px; }
-.feed-me, .feed-company { display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; }
-.feed-me p { margin: 6px 0 0; }
-.feed-post { background: #fff; border-radius: 8px; padding: 12px 14px 4px; box-shadow: 0 1px 3px #0002; }
-.feed-post h3 { margin: 8px 0 4px; font: 600 15px 'Segoe UI', var(--read); }
-.feed-post > p { margin: 0 0 6px; }
-.post-head { display: flex; gap: 10px; align-items: center; }
-.post-head div { display: flex; flex-direction: column; line-height: 1.3; }
-.post-head .meta { font-size: 11px; }
-.post-avatar { width: 40px; height: 40px; border-radius: 50%; background: #e8e1cf; image-rendering: pixelated; object-fit: cover; }
-.post-avatar.letter { display: grid; place-items: center; background: #3a6ea5; color: #fff; font-weight: bold; }
-.post-avatar.big { width: 56px; height: 56px; font-size: 22px; }
-.post-counts { border-bottom: 1px solid #eee; padding-bottom: 6px; }
-.post-actions { display: flex; gap: 4px; padding: 2px 0; }
-.post-action { flex: 1; border: 0; background: none; padding: 6px; border-radius: 4px; font: 600 12px 'Segoe UI', var(--read); color: #666; cursor: pointer; }
-.post-action:hover:not(:disabled) { background: #f3f2ef; }
-.post-action.on { color: #0a66c2; }
-.post-action:disabled { cursor: default; opacity: 0.6; }
-
 /* The Oktopus wordmark, in the console's blue. */
 .okta-brand { display: inline-flex; color: #1662dd; }
 .oktopus-logo { display: block; }
-/* The company mark: navy line art, with a lighter star for a head. */
-.burrow-logo { color: #1d3f6e; }
-.burrow-logo .logo-star { color: #6f9cc8; }
 
-/* The intranet's news front page: the big story with its picture, then the rest in a grid. */
-.news-front { display: grid; grid-template-columns: minmax(0, 1fr) 230px; gap: 14px; padding: 14px 16px; align-items: start; }
-.news-main, .news-side { display: grid; gap: 12px; }
-.news-hero { background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 4px #0002; }
-.news-hero-text { padding: 12px 16px 14px; }
-.news-hero h1 { margin: 2px 0 6px; font: 700 24px Georgia, serif; color: #1b1a19; }
-.news-hero p { margin: 0 0 8px; font-size: 14px; line-height: 1.5; }
-.kicker { color: #b5452b; font: 700 11px 'Segoe UI', var(--read); text-transform: uppercase; letter-spacing: 0.08em; }
-.news-picture {
-  position: relative; display: grid; place-items: center; height: 110px; overflow: hidden;
-  background: radial-gradient(circle at 25% 20%, #ffffff55, transparent 45%), linear-gradient(135deg, var(--tone), color-mix(in srgb, var(--tone) 55%, #000));
-}
+/* Burrow Hub, the intranet: a company portal laid out like the big CRM platforms. Blue header band, section tabs, icon tiles, cards. */
+.ridge-page { --brand: #0176d3; --brand-dark: #014486; --line: #e5e5e5; --ink-2: #444; --weak: #747474; background: #f3f3f3; font: 13px/1.45 'Segoe UI', system-ui, -apple-system, sans-serif; color: #181818; }
+.portal { display: flex; flex-direction: column; min-height: 100%; }
+.tile { display: inline-grid; place-items: center; flex: none; width: 24px; height: 24px; border-radius: 4px; background: var(--tile); color: #fff; }
+.tile.big { width: 40px; height: 40px; border-radius: 6px; }
+
+.gh { display: flex; align-items: center; gap: 16px; padding: 6px 14px; background: #fff; border-bottom: 1px solid var(--line); }
+.gh-brand { display: flex; align-items: center; gap: 8px; border: 0; background: none; padding: 0; cursor: pointer; font: 15px 'Segoe UI', system-ui, sans-serif; color: var(--brand-dark); }
+.gh-brand .burrow-logo { color: var(--brand-dark); }
+.gh-search { flex: 1; max-width: 420px; margin: 0 auto; display: flex; align-items: center; gap: 6px; padding: 0 10px; border: 1px solid #c9c9c9; border-radius: 4px; background: #fff; color: var(--weak); }
+.gh-search:focus-within { border-color: var(--brand); box-shadow: 0 0 3px var(--brand); }
+.gh-input { flex: 1; min-width: 0; border: 0; outline: none; padding: 5px 0; font: inherit; background: none; color: #181818; }
+.gh-tools { display: flex; align-items: center; gap: 6px; }
+.gh-tool { display: grid; place-items: center; width: 30px; height: 30px; border: 0; border-radius: 50%; background: none; color: var(--weak); cursor: pointer; }
+.gh-tool:hover { background: #f3f3f3; color: var(--brand); }
+.gh-me { display: inline-flex; border-radius: 50%; overflow: hidden; box-shadow: 0 0 0 2px #fff, 0 0 0 3px var(--line); }
+
+.ab { position: relative; z-index: 2; display: flex; align-items: stretch; gap: 2px; padding: 0 10px; background: #fff; border-bottom: 1px solid var(--line); box-shadow: 0 2px 3px #0000000f; }
+.ab-name { display: flex; align-items: center; padding: 0 16px 0 6px; font-size: 17px; color: #181818; }
+.ab-tab { position: relative; border: 0; background: none; padding: 9px 12px; font: inherit; color: var(--ink-2); cursor: pointer; }
+.ab-tab:hover { background: #f3f3f3; }
+.ab-tab.on { font-weight: 700; color: #181818; }
+.ab-tab.on::after { content: ''; position: absolute; left: 0; right: 0; bottom: -1px; height: 3px; background: var(--brand); }
+
+.launcher { position: relative; display: flex; align-items: center; }
+.launcher summary { list-style: none; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 4px; color: var(--weak); cursor: pointer; }
+.launcher summary::-webkit-details-marker { display: none; }
+.launcher summary:hover, .launcher[open] summary { background: #f3f3f3; color: var(--brand); }
+.launcher-panel { position: absolute; top: calc(100% + 6px); left: 0; width: 420px; padding: 12px; background: #fff; border: 1px solid var(--line); border-radius: 6px; box-shadow: 0 8px 24px #0003; }
+.launcher-title { margin: 0 0 8px; font-size: 16px; }
+.launcher-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.launcher-app { display: flex; align-items: center; gap: 10px; padding: 8px; border: 1px solid var(--line); border-radius: 6px; background: #fff; font: inherit; text-align: left; cursor: pointer; }
+.launcher-app:hover { border-color: var(--brand); background: #f3f9ff; }
+.launcher-app > span:last-child { display: flex; flex-direction: column; }
+.launcher-app > span:last-child span { font-size: 11px; color: var(--weak); }
+
+/* The page sits on a blue band, with the hills of Burrow Hollow faint behind it. */
+.pz { flex: 1; display: grid; gap: 12px; align-content: start; padding: 12px; background:
+  url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 120' preserveAspectRatio='none'%3E%3Cpath d='M0 90 Q80 40 160 70 T330 60 T480 75 T600 55 V120 H0Z' fill='%23ffffff' fill-opacity='.12'/%3E%3Cpath d='M0 105 Q120 70 240 95 T450 88 T600 92 V120 H0Z' fill='%23ffffff' fill-opacity='.14'/%3E%3C/svg%3E") top / 100% 150px no-repeat,
+  linear-gradient(#0b5cab, #1b96ff 150px, #f3f3f3 150px); }
+/* The banner's painting (a loop, if it moves) under a blue wash, so the page still reads as Burrow Hub. */
+.pz { position: relative; }
+.pz > :not(.pz-banner) { position: relative; }
+.pz-banner { position: absolute; left: 0; right: 0; top: 0; height: 150px; overflow: hidden; }
+.pz-banner .art { width: 100%; height: 100%; object-fit: cover; display: block; }
+.pz-banner:has(.art)::after { content: ''; position: absolute; inset: 0; background: linear-gradient(#0b5cabcc, #1b96ff80 60%, #f3f3f3); }
+.news-picture.painted::after, .post-scene:has(.art) { background: none; }
+.news-picture .art { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.post-scene:has(.art) { padding: 0; overflow: hidden; }
+.post-scene .art { display: block; width: 100%; aspect-ratio: 16 / 9; max-height: 220px; object-fit: cover; }
+.ph { display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: #fff; border: 1px solid var(--line); border-radius: 6px; box-shadow: 0 2px 2px #0000000d; }
+.ph-text { flex: 1; min-width: 0; }
+.ph-eyebrow { margin: 0; font-size: 12px; color: var(--weak); }
+.ph h1 { margin: 0; font: 700 18px 'Segoe UI', system-ui, sans-serif; color: #181818; }
+.ph-sub { margin: 2px 0 0; color: var(--ink-2); }
+.ph-actions { display: flex; gap: 6px; }
+.lb { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border: 1px solid #c9c9c9; border-radius: 4px; background: #fff; color: var(--brand); font: 600 13px 'Segoe UI', system-ui, sans-serif; cursor: pointer; }
+.lb.brand { background: var(--brand); border-color: var(--brand); color: #fff; }
+.lb.brand:hover { background: var(--brand-dark); }
+
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+.kpi { display: flex; flex-direction: column; gap: 2px; padding: 10px 14px; background: #fff; border: 1px solid var(--line); border-radius: 6px; box-shadow: 0 2px 2px #0000000d; }
+.kpi-label { font-size: 11px; color: var(--weak); text-transform: uppercase; letter-spacing: 0.04em; }
+.kpi strong { font-size: 17px; font-weight: 600; }
+.up, .down { display: inline-flex; align-items: center; gap: 2px; font-weight: 600; }
+.up { color: #2e844a; }
+.down { color: #ba0517; }
+
+.cols { display: grid; grid-template-columns: minmax(0, 1fr) 250px; gap: 12px; align-items: start; }
+.col-main, .col-side { display: grid; gap: 12px; }
+.lc { background: #fff; border: 1px solid var(--line); border-radius: 6px; box-shadow: 0 2px 2px #0000000d; }
+.lc-head { display: flex; align-items: center; gap: 10px; padding: 10px 14px 0; }
+.lc-head h2 { margin: 0; font: 700 14px 'Segoe UI', system-ui, sans-serif; }
+.lc-body { display: grid; gap: 8px; padding: 10px 14px 12px; }
+.lc-body p { margin: 0; }
+.lc-list { list-style: none; margin: 0; padding: 0; display: grid; }
+.lc-list li { display: flex; flex-direction: column; padding: 6px 0; border-top: 1px solid #f0f0f0; }
+.lc-list li:first-child { border-top: 0; padding-top: 0; }
+.lc-list strong { font-size: 11px; color: var(--weak); text-transform: uppercase; letter-spacing: 0.04em; }
+.stock-line { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+.stock-line.small { font-size: 11px; color: var(--weak); }
+.spark { width: 100%; height: 48px; }
+.spark polyline { fill: none; stroke: var(--brand); stroke-width: 2.5; }
+.site-link { border: 0; background: none; font: inherit; color: var(--brand); padding: 0; cursor: pointer; }
+.site-link:hover { text-decoration: underline; }
+.site-link.more { justify-self: start; font-weight: 600; }
+.site-foot { padding: 10px 18px; font-size: 11px; color: var(--weak); text-align: center; }
+.portal .meta { color: var(--weak); font-size: inherit; }
+.byline { display: flex; align-items: center; gap: 4px; margin: 0; font-size: 12px; color: var(--weak); }
+
+.news-hero { border-radius: 4px; overflow: hidden; border: 1px solid var(--line); }
+.news-hero-text { padding: 10px 14px 12px; }
+.news-hero h3 { margin: 0 0 4px; font: 700 20px 'Segoe UI', system-ui, sans-serif; }
+.news-hero p { margin: 0 0 8px; font-size: 14px; }
+.news-picture { position: relative; display: grid; place-items: center; height: 110px; overflow: hidden; background: linear-gradient(135deg, var(--tone), color-mix(in srgb, var(--tone), #000 35%)); }
 .news-picture::after { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(115deg, #ffffff0a 0 14px, transparent 14px 30px); }
 .news-picture span { font-size: 38px; letter-spacing: 6px; filter: drop-shadow(0 3px 4px #0005); }
-.news-picture.big { height: 210px; }
-.news-picture.big span { font-size: 72px; letter-spacing: 12px; }
-.section-title { margin: 4px 0 0; font: 600 15px 'Segoe UI', var(--read); color: #444; }
-.news-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
-.news-story { background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px #0002; }
+.news-picture.big { height: 180px; }
+.news-picture.big span { font-size: 64px; letter-spacing: 12px; }
+.news-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+.news-story { border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
 .news-story > div { padding: 8px 12px 10px; }
-.news-story h3 { margin: 0 0 4px; font: 700 15px Georgia, serif; }
-.news-story p { margin: 0 0 6px; font-size: 12px; line-height: 1.45; }
-.byline { display: flex; align-items: center; gap: 4px; color: #6e6e6e; font-size: 11px; margin: 0; }
-.feed-teaser { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: #fff; border-radius: 8px; box-shadow: 0 1px 3px #0002; font-weight: 600; }
-.card-title { margin: 0 0 6px; font: 600 12px 'Segoe UI', var(--read); color: #555; text-transform: uppercase; letter-spacing: 0.05em; }
+.news-story h3 { margin: 0 0 4px; font: 700 14px 'Segoe UI', system-ui, sans-serif; }
+.news-story p { margin: 0 0 6px; font-size: 12px; }
+.feed-teaser { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: #fff; border: 1px solid var(--line); border-radius: 6px; font-weight: 600; }
+.feed-teaser > span:nth-child(2) { flex: 1; }
 
-/* Burrow Feed. */
-.post-scene { margin: 4px 0 8px; padding: 14px; text-align: center; font-size: 34px; letter-spacing: 8px; background: linear-gradient(135deg, #f6efe2, #e9eef5); border-radius: 8px; }
-.post-comments { list-style: none; margin: 0; padding: 6px 0 8px; display: grid; gap: 6px; border-top: 1px solid #eee; }
+.feed { display: grid; grid-template-columns: 190px minmax(0, 1fr) 210px; gap: 12px; align-items: start; }
+.feed-left, .feed-right, .feed-main { display: grid; gap: 12px; }
+.feed-me { display: flex; flex-direction: column; align-items: center; gap: 2px; text-align: center; }
+.feed-me p { margin: 6px 0 0; }
+.feed-post { padding: 12px 14px 4px; background: #fff; border: 1px solid var(--line); border-radius: 6px; box-shadow: 0 2px 2px #0000000d; }
+.feed-post > p { margin: 8px 0 6px; }
+.post-head { display: flex; gap: 10px; align-items: center; }
+.post-head div { display: flex; flex-direction: column; line-height: 1.3; }
+.post-head .meta { font-size: 11px; }
+.post-scene { margin: 4px 0 8px; padding: 14px; text-align: center; font-size: 34px; letter-spacing: 8px; background: linear-gradient(135deg, #eef4ff, #f3f3f3); border-radius: 4px; }
+.post-counts { margin: 0; padding-bottom: 6px; border-bottom: 1px solid #f0f0f0; font-size: 12px; }
+.post-actions { display: flex; gap: 4px; padding: 2px 0; }
+.post-action { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border: 0; border-radius: 4px; background: none; font: 600 12px 'Segoe UI', system-ui, sans-serif; color: var(--weak); cursor: pointer; }
+.post-action:hover { background: #f3f3f3; }
+.post-action.on { color: var(--brand); }
+.post-comments { list-style: none; margin: 0; padding: 6px 0 8px; display: grid; gap: 6px; border-top: 1px solid #f0f0f0; }
 .post-comments li { display: flex; gap: 8px; align-items: flex-start; font-size: 12px; }
-.post-comments li > span { background: #f2f2f2; border-radius: 10px; padding: 5px 10px; }
+.post-comments li > span { background: #f3f3f3; border-radius: 10px; padding: 5px 10px; }
 .feed-team { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
 .feed-team li { display: flex; gap: 8px; align-items: center; font-size: 12px; }
 .feed-team li > span { display: flex; flex-direction: column; line-height: 1.2; }
-.portrait { flex-shrink: 0; border-radius: 50%; }
 
-/* About: a cover picture and Burrow through the years. */
-.about-cover { display: grid; place-items: center; height: 120px; font-size: 44px; letter-spacing: 14px; background: linear-gradient(#bcd6ef, #e8f0e0 70%, #b8cf8f); }
-.history { list-style: none; margin: 0; padding: 0 0 0 12px; border-left: 3px solid #6f9cc8; display: grid; gap: 8px; }
-.history li { display: grid; grid-template-columns: 44px 1fr; gap: 8px; font-size: 13px; }
-.history strong { color: #1d3f6e; }
+/* People: a list view, the CRM way. */
+.lt-wrap { overflow: auto; }
+.lt { width: 100%; border-collapse: collapse; }
+.lt th { padding: 8px 12px; text-align: left; font-size: 12px; font-weight: 600; color: var(--ink-2); background: #f3f3f3; border-bottom: 1px solid var(--line); }
+.lt td { padding: 7px 12px; border-bottom: 1px solid #f0f0f0; }
+.lt tr:hover td { background: #f3f9ff; }
+.lt-name { display: inline-flex; align-items: center; gap: 8px; color: var(--brand); font-weight: 600; }
+.pill { display: inline-block; padding: 1px 8px; border-radius: 10px; background: #e5f1fb; color: var(--brand-dark); font-size: 12px; }
+
+.portal .policy-list { font: inherit; }
+.values { font-weight: 600; color: var(--brand-dark); }
+.history { list-style: none; margin: 0; padding: 0 0 0 12px; border-left: 2px solid #c9c9c9; display: grid; gap: 10px; }
+.history li { position: relative; display: grid; grid-template-columns: 40px 1fr; gap: 8px; font-size: 12px; }
+.history li::before { content: ''; position: absolute; left: -18px; top: 4px; width: 10px; height: 10px; border-radius: 50%; background: #7f56d9; box-shadow: 0 0 0 2px #fff; }
+.history strong { color: var(--brand-dark); }
+.results { list-style: none; margin: 0; padding: 8px; display: grid; gap: 4px; }
+.results li.meta { padding: 6px 8px; }
+.result { display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px; border: 0; border-radius: 4px; background: none; font: inherit; text-align: left; cursor: pointer; }
+.result:hover { background: #f3f9ff; }
+.result > span { display: flex; flex-direction: column; }
+.result strong { color: var(--brand); }
+
+/* People: names and faces that open a profile. */
+.person-link { display: inline-flex; align-items: center; gap: 8px; border: 0; background: none; padding: 0; font: inherit; color: var(--brand); font-weight: 600; text-align: left; cursor: pointer; }
+.person-link:hover { text-decoration: underline; }
+.person { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; }
+.lt-now { color: var(--ink-2); font-size: 12px; }
+
+/* A profile: big face, who they are, and where they are right now. */
+.profile-head { gap: 16px; }
+.profile-face { flex: none; display: inline-flex; padding: 0; border: 3px solid #fff; border-radius: 50%; background: none; box-shadow: 0 0 0 1px var(--line), 0 2px 6px #0002; }
+button.profile-face { cursor: zoom-in; }
+button.profile-face:hover, button.profile-face:focus-visible { box-shadow: 0 0 0 3px var(--brand), 0 2px 6px #0002; }
+.presence { align-self: flex-start; padding: 3px 10px 3px 22px; position: relative; border-radius: 12px; background: #e3f5e8; color: #2e844a; font-size: 12px; font-weight: 600; }
+.presence::before { content: ''; position: absolute; left: 9px; top: 50%; width: 8px; height: 8px; margin-top: -4px; border-radius: 50%; background: currentColor; }
+.presence.gone { background: #f3f3f3; color: var(--weak); }
+.now { font-weight: 600; }
+.quote { font-style: italic; color: var(--ink-2); }
+.details { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 0; }
+.details dt { color: var(--weak); }
+.details dd { margin: 0; }
+.routine li { flex-direction: row; gap: 10px; }
+.routine strong { min-width: 36px; }
+
+/* Someone's photo, full size, over the browser. */
+.ridge { position: relative; }
+.viewer { position: absolute; inset: 0; z-index: 5; display: grid; place-items: center; background: #0d1b2acc; }
+.viewer figure { margin: 0; display: grid; justify-items: center; gap: 10px; }
+.viewer img { width: min(60vh, 70%); max-width: 520px; aspect-ratio: 1; border-radius: 8px; box-shadow: 0 12px 40px #0008; }
+.viewer figcaption { color: #fff; font-size: 14px; }
+.viewer-close { position: absolute; top: 12px; right: 12px; display: grid; place-items: center; width: 34px; height: 34px; border: 0; border-radius: 50%; background: #fff; color: #181818; cursor: pointer; }
+
+/* The company mark: navy line art, with a lighter star for a head. */
+.portrait.painted { border-radius: 50%; object-fit: cover; flex: none; background: #dfe7ef; }
+.burrow-logo { color: #1d3f6e; }
+.burrow-logo .logo-star { color: #6f9cc8; }
 
 /* ServiceSoon: laid out like the service desk platform real IT teams use. */
 .crt-screen .desk.sn { background: #f6f7f8; font: 13px 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; color: #2e2e2e; }

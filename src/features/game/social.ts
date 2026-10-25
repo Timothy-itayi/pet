@@ -9,26 +9,28 @@ export interface SocialPost {
   text: string;
   /** A small picture with the post, drawn as a scene of emoji. */
   scene?: string;
+  /** What its generated picture shows, for posts with a picture. See art.ts. */
+  shows?: string;
   likes: number;
   comments: [string, string][];
 }
 
 export const SOCIAL: SocialPost[] = [
   { day: -9, from: 'Otis', text: 'Reminder: the fire exit is not a storage cupboard. I have removed eleven boxes of A4 and a bicycle.', likes: 14, comments: [['Marlo', 'The bicycle is mine. Where is it?'], ['Otis', 'Fire exit. Outside. Where it belongs.']] },
-  { day: -6, from: 'Biscuit', text: 'I made carrot cake for everyone!! It’s in the kitchen!! Please don’t tell Mr. Grisby there were three before there were two!!', scene: '\u{1F370}\u{1F370}\u{1F955}', likes: 31, comments: [['Dot', 'Best cake in the valley.'], ['Mr. Grisby', 'I know about the third cake.']] },
+  { day: -6, from: 'Biscuit', text: 'I made carrot cake for everyone!! It’s in the kitchen!! Please don’t tell Mr. Grisby there were three before there were two!!', scene: '\u{1F370}\u{1F370}\u{1F955}', shows: 'Two carrot cakes on an office kitchen counter beside an empty plate covered in crumbs where a third cake used to be', likes: 31, comments: [['Dot', 'Best cake in the valley.'], ['Mr. Grisby', 'I know about the third cake.']] },
   { day: -4, from: 'Sam', text: 'Six years. One last thing: the server room key is in the drawer marked “definitely not the server room key”. Be good to the printer. — Sam', likes: 42, comments: [['Juniper', 'We’ll miss you Sam!!'], ['Otis', 'Thank you for everything. Hoo.']] },
   { day: -3, from: 'Juniper', text: 'Kudos to Wren for writing the whole spring campaign in a weekend. Three-day weekend. Still counts.', likes: 19, comments: [['Wren', 'It was four days. But thank you!']] },
-  { day: -1, from: 'Dot', text: 'Finance month-end is DONE. The numbers add up. I checked twice. Then a third time. Then Otis checked.', scene: '\u{1F4CA}✅', likes: 23, comments: [['Otis', 'They add up. Hoo.']] },
+  { day: -1, from: 'Dot', text: 'Finance month-end is DONE. The numbers add up. I checked twice. Then a third time. Then Otis checked.', scene: '\u{1F4CA}✅', shows: 'A tidy stack of ledgers on a finance desk, an adding machine with a long paper tape curling onto the floor', likes: 23, comments: [['Otis', 'They add up. Hoo.']] },
   { day: 1, from: 'Marlo', text: 'Whoever keeps parking in the space marked MARLO: I know it’s a company car. I know it’s you, Mr. Grisby.', likes: 27, comments: [['Mr. Grisby', 'The sign is a suggestion.'], ['Pip', 'ribbit']] },
   { day: 1, from: 'Pip', text: 'Lost: one blue stapler. Answers to “stapler”. If found please return to Operations. No questions asked. Some questions asked.', likes: 9, comments: [['Biscuit', 'Is it the one in the kitchen??']] },
-  { day: 2, from: 'Otis', text: 'Happy 12th work anniversary to Dot! Twelve years of keeping us solvent.', scene: '\u{1F389}12\u{1F389}', likes: 38, comments: [['Dot', 'Has it really been twelve?'], ['Juniper', 'Happy anniversary!!']] },
-  { day: 3, from: 'Biscuit', text: 'It’s my birthday!! There is cake!! I made it myself, which explains the shape!!', scene: '\u{1F382}\u{1F388}', likes: 44, comments: [['Marlo', 'Happy birthday, Biscuit.'], ['Fern', 'Happy birthday!']] },
-  { day: 4, from: 'Wren', text: 'Our spring campaign just hit 10,000 people. That’s more people than live in Burrow Hollow. Twice.', scene: '\u{1F4C8}\u{1F680}', likes: 29, comments: [['Mr. Grisby', 'Excellent. Do it again but bigger.']] },
+  { day: 2, from: 'Otis', text: 'Happy 12th work anniversary to Dot! Twelve years of keeping us solvent.', scene: '\u{1F389}12\u{1F389}', shows: 'A finance desk decorated with paper bunting, a cupcake with a single candle and a balloon shaped like the number twelve', likes: 38, comments: [['Dot', 'Has it really been twelve?'], ['Juniper', 'Happy anniversary!!']] },
+  { day: 3, from: 'Biscuit', text: 'It’s my birthday!! There is cake!! I made it myself, which explains the shape!!', scene: '\u{1F382}\u{1F388}', shows: 'A lopsided homemade birthday cake on the office kitchen table, balloons tied to a chair', likes: 44, comments: [['Marlo', 'Happy birthday, Biscuit.'], ['Fern', 'Happy birthday!']] },
+  { day: 4, from: 'Wren', text: 'Our spring campaign just hit 10,000 people. That’s more people than live in Burrow Hollow. Twice.', scene: '\u{1F4C8}\u{1F680}', shows: 'A corkboard of marketing posters with a little paper rocket pinned through them and a chart line climbing off the edge', likes: 29, comments: [['Mr. Grisby', 'Excellent. Do it again but bigger.']] },
   { day: 5, from: 'Dot', text: 'Thank you to our new IT intern for fixing the finance printer in four minutes. It’s been broken since March.', likes: 21, comments: [['Pip', 'they fixed mine too. ribbit']] },
-  { day: 6, from: 'Basil', text: 'New office plant in Marketing. Her name is Gloria. Please do not water Gloria. I water Gloria.', scene: '\u{1FAB4}', likes: 17, comments: [['Biscuit', 'I may have watered Gloria.']] },
+  { day: 6, from: 'Basil', text: 'New office plant in Marketing. Her name is Gloria. Please do not water Gloria. I water Gloria.', scene: '\u{1FAB4}', shows: 'A glossy office plant in a pot on a marketing desk with a small watering can beside it and a stern little sign', likes: 17, comments: [['Biscuit', 'I may have watered Gloria.']] },
   { day: 7, from: 'Fern', text: 'First day! Everyone has been so lovely. And I can already log in to everything. Is that normal here?', likes: 33, comments: [['Juniper', 'It is now!'], ['Marlo', 'It is not.']] },
   { day: 8, from: 'Marlo', text: 'Welcome to Sales, Basil. Your desk is the one with the good chair. You’re welcome.', likes: 15, comments: [['Basil', 'It squeaks.']] },
-  { day: 9, from: 'Juniper', text: 'Wren’s leaving card is in the kitchen. Also her mug. Also she took our good mug. Wren, we know.', scene: '\u{1F48C}☕', likes: 26, comments: [['Otis', 'The mug was company property. Hoo.']] },
+  { day: 9, from: 'Juniper', text: 'Wren’s leaving card is in the kitchen. Also her mug. Also she took our good mug. Wren, we know.', scene: '\u{1F48C}☕', shows: 'An office kitchen counter with a leaving card, and a row of mug hooks with one hook empty', likes: 26, comments: [['Otis', 'The mug was company property. Hoo.']] },
   { day: 10, from: 'Pip', text: 'Found: blue stapler. It was in my drawer. It was always in my drawer. ribbit.', likes: 24, comments: [['Otis', 'Case closed.']] },
 ];
 
