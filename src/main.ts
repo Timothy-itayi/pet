@@ -1,10 +1,10 @@
 import './style.css';
-import { CLOSE, CLOSING_SOON, COMPANY, GAME_MINUTES_PER_SECOND, LOCKUP } from './features/game/data.ts';
+import { CLOSE, CLOSING_SOON, COMPANY, GAME_MINUTES_PER_SECOND, LOCKUP, VILLAGERS } from './features/game/data.ts';
 import { newGame, SELF, tick, type GameState } from './features/game/rules.ts';
 import { ROOM_ITEMS, SIPS } from './features/room3d/items.ts';
 import { goTo, holdPhone, lowerPhone, mountRoom, openDrawer, phoneGlassElement, screenElement, setAtComputer, setLamp, setMug, setPhones, setScreen, setTools, showRoom, snapTo } from './features/room3d/view.ts';
 import { drawerSlots, held, needsPush, onMyWay, phoneName, roguePending } from './features/game/phones.ts';
-import { dayMood } from './features/game/people.ts';
+import { atBurrow, dayMood, PEOPLE, sayNow, whereIs } from './features/game/people.ts';
 import { phoneScreen } from './features/ui/phone.ts';
 import { loadGame, saveGame } from './features/save/save.ts';
 import type { App } from './features/ui/app.ts';
@@ -173,7 +173,22 @@ setInterval(() => {
   else { app.state = next; saveGame(next); app.refreshTimes(); }
   closingTime(before, next);
   phoneNews(before, next);
+  if (quiet) quietChat(before, next);
 }, 1000);
+
+/** How often, in game minutes, someone says something while it's quiet in the first week. */
+const CHAT_EVERY = 40;
+
+/** The first week, nothing on: every so often a colleague says something about their day, so quiet time isn't dead air. */
+function quietChat(before: GameState, after: GameState): void {
+  if (after.day > 5 || after.clock >= CLOSE || Math.floor(before.clock / CHAT_EVERY) === Math.floor(after.clock / CHAT_EVERY)) return;
+  const here = Object.keys(PEOPLE).filter((p) => p !== SELF && atBurrow(p, after.day) && !['home', 'leaving'].includes(whereIs(p, after.day, after.clock).doing));
+  const login = here[Math.floor(after.clock / CHAT_EVERY + after.day) % here.length];
+  const text = login && sayNow(login, after);
+  if (!login || !text) return;
+  notify(app, { app: 'chat', from: VILLAGERS[login as keyof typeof VILLAGERS]?.name ?? login, text });
+  app.rerender();
+}
 
 /** Someone turning up at your desk about a phone, or Mr. Grisby approving a replacement: said wherever you are. */
 function phoneNews(before: GameState, after: GameState): void {

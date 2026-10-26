@@ -49,11 +49,13 @@ function wordmark(): HTMLElement {
 
 function header(app: App): HTMLElement {
   const { state } = app;
+  const goal = scriptFor(state.day).goal;
+  const met = goal > 0 && state.today.resolved >= goal;
   return h('header', { class: 'sn-header' },
     wordmark(),
     h('span', { class: 'sn-app' }, 'Service Desk'),
     h('span', { class: 'sn-search', 'aria-hidden': 'true' }, '\u{1F50D} Search'),
-    h('span', { class: 'sn-goal', 'data-testid': 'goal' }, `Resolved today ${state.today.resolved}/${scriptFor(state.day).goal}`),
+    h('span', { class: `sn-goal${met ? ' met' : ''}`, 'data-testid': 'goal' }, met ? `Goal met ✓ ${state.today.resolved}/${goal}` : `Resolved today ${state.today.resolved}/${goal}`),
     h('span', { class: 'sn-clock', 'data-clock': true, 'data-testid': 'clock' }, clockText(state.clock)),
     h('span', { class: 'sn-user' }, h('span', { class: 'sn-avatar', 'aria-hidden': 'true' }, 'I'), 'intern'));
 }
