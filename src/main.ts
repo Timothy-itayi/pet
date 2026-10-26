@@ -157,9 +157,10 @@ const bigChange = (a: GameState, b: GameState) =>
   a.chats.join() !== b.chats.join() || a.notice !== b.notice ||
   b.queue.some((id) => a.tickets[id]?.messages.length !== b.tickets[id]?.messages.length);
 
-// The office clock: it runs from when you log in until security locks up at 6pm, and stops while you're holding something or in another tab.
+// The office clock: it runs from when you log in until security locks up at 6pm, and stops while you're paused, holding something or in another tab.
 setInterval(() => {
   const { ui } = app;
+  if (ui.paused !== undefined) return;
   // The computer's own clock runs regardless: left on while you're away, it locks itself and then sleeps, right there on the monitor.
   const power = powerAway(ui.power, ui.leftAt, performance.now());
   if (power !== ui.power) { ui.power = power; app.rerender(); }

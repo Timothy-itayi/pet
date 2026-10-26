@@ -57,6 +57,8 @@ export interface Ui {
   /** Sips taken from Sam's mug (it's empty after SIPS.length). */
   sips?: number;
   power: Power;
+  /** Paused (when, in real ms): the office clock stops until you resume. */
+  paused?: number;
   /** When (performance.now()) you stepped away from the computer, to know if it has locked or gone to sleep. Cleared when you sit back down. */
   leftAt?: number;
   /** ServiceSoon: the list or incident form you're looking at, the form's tab, and the resolution you've picked. */

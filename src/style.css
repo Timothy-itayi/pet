@@ -316,6 +316,7 @@ body.in-room #app .room-hud > * { pointer-events: auto; }
 .room-bottom .caption { border: 4px double var(--ink); border-radius: 8px; box-shadow: 0 3px 0 var(--ink); }
 .hover-label { margin: 0; min-height: 1.6em; text-align: center; font-family: var(--pixel); color: #fff3a8; text-shadow: 0 2px 0 #000; }
 .room-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.drawer-hint { margin: 0; align-self: center; color: var(--paper); font: 0.95rem var(--pixel); }
 .room-actions .btn.new { background: #fff3a8; border-color: var(--leaf-dark); }
 .inspect-panel {
   position: absolute; left: 4vw; top: 50%; transform: translateY(-50%); max-width: min(420px, 40vw);
@@ -392,6 +393,12 @@ body.in-room #app .room-hud > * { pointer-events: auto; }
 .inspect-panel .back-chip { margin-top: 8px; }
 .sound-chip { position: absolute; right: 16px; bottom: 24px; font-size: 1rem; }
 .computer-hud .sound-chip { position: static; margin-top: 8px; }
+.pause-chip { position: absolute; right: 64px; bottom: 24px; font-size: 1rem; }
+.computer-hud .pause-chip { position: static; margin-top: 8px; }
+.pause-overlay { position: fixed; inset: 0; z-index: 2000; display: grid; place-items: center; background: #0d0a08c4; pointer-events: auto; }
+.pause-card { min-width: 280px; padding: 20px 28px; text-align: center; color: var(--ink); background: var(--paper); border: 3px solid var(--ink); border-radius: 10px; box-shadow: 4px 4px 0 #0008; }
+.pause-card h2 { margin: 0 0 6px; font: 1.6rem var(--pixel); }
+.pause-card p { margin: 0 0 14px; }
 
 /* Tickets and chat tabs */
 .tabs { display: flex; gap: 4px; margin-bottom: 4px; }
