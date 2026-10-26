@@ -425,7 +425,7 @@ describe('money and endings', () => {
     expect(apply(withNotes, 'ocean').ending).toBe('hired');
     expect(apply(fixesOnly, 'lighthouse')).toBe(fixesOnly); // a security job needs access written up, not just done
     expect(apply(withNotes, 'lighthouse')).toMatchObject({ ending: 'hired', jobId: 'lighthouse' });
-  });
+  }, 30_000); // plays every day of the game
 });
 
 describe('Active Directory', () => {
@@ -515,7 +515,7 @@ describe('Oktopus', () => {
     expect(s.okta.log.filter((e) => e.by?.startsWith('flow:')).map((e) => `${e.event} ${e.target}`)).toEqual([
       'user.lifecycle.create hazel', 'user.account.update_profile pip', 'user.lifecycle.deactivate hazel', 'user.lifecycle.create rowan',
     ]);
-  });
+  }, 30_000); // plays every day of the game
 
   it('gives an app to everyone a rule puts in its group, and to nobody else', () => {
     const s = giveMarketingHootsweet(morningOf(6));
