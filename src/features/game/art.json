@@ -221,5 +221,21 @@
   "news-the-budget-is-frozen-again": {
     "image": true,
     "loop": true
+  },
+  "face-clover": {
+    "image": true,
+    "large": true
+  },
+  "face-moss": {
+    "image": true,
+    "large": true
+  },
+  "face-tansy": {
+    "image": true,
+    "large": true
+  },
+  "face-hector": {
+    "image": true,
+    "large": true
   }
 }
