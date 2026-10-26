@@ -1,4 +1,4 @@
-import { Box3, Color, Group, Mesh, MeshStandardMaterial, type Object3D } from 'three';
+import { Box3, CanvasTexture, Color, Group, Mesh, MeshStandardMaterial, PlaneGeometry, SRGBColorSpace, type Object3D } from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 
@@ -34,12 +34,37 @@ export function switchGlass(phone: Object3D, glow: number): void {
 }
 
 /** What's in the drawer: before the budget, a takeaway menu and some rubber bands; after it, the box of phones. */
-export function fillDrawer(inside: Object3D, phones: { id: string; copy: Object3D; glow: number }[], pickables: Map<string, Object3D>): void {
+/** A little white asset sticker with the phone's number, stuck on the tray beside it: so you can tell which one's which. */
+function sticker(n: string): Mesh {
+  const c = document.createElement('canvas');
+  c.width = c.height = 64;
+  const ctx = c.getContext('2d');
+  if (ctx) {
+    ctx.fillStyle = '#f4f1e8';
+    ctx.fillRect(0, 0, 64, 64);
+    ctx.fillStyle = '#1b2a4a';
+    ctx.font = 'bold 44px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(n, 32, 35);
+  }
+  const map = new CanvasTexture(c);
+  map.colorSpace = SRGBColorSpace;
+  const label = new Mesh(new PlaneGeometry(0.02, 0.02), new MeshStandardMaterial({ map, roughness: 0.8 }));
+  label.rotation.x = -Math.PI / 2;
+  return label;
+}
+
+/**
+ * What's in the drawer: before the budget, a takeaway menu and some rubber bands; after it, the box of phones. Each
+ * phone lies in its own slot (0 to 5) and stays there, with its number on a sticker beside it.
+ */
+export function fillDrawer(inside: Object3D, phones: { id: string; slot: number; copy: Object3D; glow: number }[], boxed: boolean, pickables: Map<string, Object3D>): void {
   for (const old of [...inside.children]) {
     inside.remove(old);
     for (const [id, o] of pickables) if (o === old) pickables.delete(id);
   }
-  if (!phones.length) {
+  if (!boxed) {
     const menu = new Mesh(new RoundedBoxGeometry(0.15, 0.002, 0.21, 2, 0.001), new MeshStandardMaterial({ color: new Color('#e8dcc0'), roughness: 0.9 }));
     menu.position.set(-0.05, 0.001, -0.17);
     menu.rotation.y = 0.2;
@@ -50,15 +75,17 @@ export function fillDrawer(inside: Object3D, phones: { id: string; copy: Object3
   }
   // The phones lie face up in the box's cardboard tray, two rows of three, tops away from you.
   const tray = new Mesh(new RoundedBoxGeometry(0.3, 0.012, 0.29, 2, 0.003), new MeshStandardMaterial({ color: new Color('#c9a878'), roughness: 0.95 }));
-  tray.position.set(0, 0.006, -0.17);
+  tray.position.set(0, 0.006, -0.2);
   inside.add(tray);
-  phones.forEach(({ id, copy, glow }, i) => {
+  for (const { id, slot, copy, glow } of phones) {
     switchGlass(copy, glow);
     const holder = new Group();
     copy.rotation.x = -Math.PI / 2;
-    holder.add(copy);
-    holder.position.set(-0.085 + (i % 3) * 0.085, 0.017, -0.03 - Math.floor(i / 3) * 0.135);
+    const label = sticker(id.replace('phone-', ''));
+    label.position.set(-0.042, 0.001, -0.1);
+    holder.add(copy, label);
+    holder.position.set(-0.085 + (slot % 3) * 0.085, 0.017, -0.06 - Math.floor(slot / 3) * 0.135);
     inside.add(holder);
     pickables.set(id, holder);
-  });
+  }
 }

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { createFromHr, requireMfa, resetMfa } from './identity.ts';
 import { hrOn } from './oktopus.ts';
 import {
-  APPROVAL_MINUTES, breakPhone, PICKUP_AFTER, replaceProblem, requestReplacement, settleRequests, takeBroken, visitor,
+  APPROVAL_MINUTES, breakPhone, onMyWay, PICKUP_AFTER, replaceProblem, requestReplacement, settleRequests, takeBroken, visitor,
   addPasscode, answerPush, answerRogue, handOver, held, installApp, needsPush, newPhones, phoneFor, PHONES_DAY, putDown, roguePending,
   ROGUE, scan, setUpPhone, takePhone, verifyCode, verifyProblem, VERIFY,
 } from './phones.ts';
@@ -123,5 +123,17 @@ describe('company phones', () => {
     s = phoneFor(s, 'dot');
     expect(s.phones.find((p) => p.id === s.okta.verify.dot)).toMatchObject({ for: 'dot', where: 'given' });
     expect(replaceProblem(s, 'dot', 'Dot', 0)).toBeUndefined();
+  });
+
+  it('on their way over, people say it their own way: by their mood, if it took ages, or if they broke it', () => {
+    const s = scan(ready(day16()), 'phone-1', 'dot').state;
+    const visit = { login: 'dot', why: 'pickup' as const, phone: 'phone-1' };
+    expect(onMyWay(s, visit, 'bright')).toMatch(/On my way! I\u2019ve cleared a whole drawer/);
+    expect(onMyWay(s, visit, 'low')).toMatch(/one of those days/);
+    // Dot asked on day 17 at 9:40; ready the next afternoon, she's given up hoping.
+    const later = { ...s, day: 18, phones: s.phones.map((p) => ({ ...p, enrolledAt: 18 * 1440 + 900 })) };
+    expect(onMyWay(later, visit, 'bright')).toMatch(/I\u2019d stopped hoping/);
+    expect(onMyWay(s, { ...visit, why: 'dropoff' }, 'bright')).toMatch(/bringing you the pieces/);
+    expect(onMyWay(s, { ...visit, login: 'wren' }, 'usual')).toBe('On my way over for the phone. Thanks!');
   });
 });

@@ -918,6 +918,8 @@ export function parseSave(raw: string | null): GameState | undefined {
     // Saves from before company phones: none yet (they turn up at the start of day 16), nobody on Oktopus Verify.
     s.phones ??= [];
     s.requests ??= [];
+    // Saves from before phones kept their place in the tray: the first six go back where they came from.
+    for (const p of s.phones) if (p.slot === undefined && Number(p.id.slice(6)) <= 6) p.slot = Number(p.id.slice(6)) - 1;
     if (s.okta) { s.okta.verify ??= {}; s.okta.selfEnroll ??= false; }
     if ((s.day ?? 0) > PHONES_DAY && !s.phones.length) s.phones = newPhones();
     // Saves from before fields had types: the event's fields move inside its Person.

@@ -9,7 +9,7 @@ import {
 } from '../game/phones.ts';
 import { SELF } from '../game/rules.ts';
 import type { App, PhoneScreen } from './app.ts';
-import { phoneGlassElement, scanMotion } from '../room3d/view.ts';
+import { phoneGlassElement } from '../room3d/view.ts';
 import { clockText, h } from './dom.ts';
 import { shutter } from './sound.ts';
 import { qr } from './oktopus.ts';
@@ -119,16 +119,13 @@ function verify(app: App, phone: Phone): HTMLElement {
             if (next !== app.state) { ui.phoneScreen = 'verify'; app.set(next); } else app.rerender();
           };
           if (!showing) { read(); return; }
-          // Up to the monitor, snap, and back: a flash on the glass and the shutter sound when the picture's taken.
-          const { flashAt, done } = scanMotion();
-          setTimeout(() => {
-            shutter();
-            const glass = phoneGlassElement();
-            glass.classList.remove('flash');
-            void glass.offsetWidth;
-            glass.classList.add('flash');
-          }, flashAt);
-          void done.then(read);
+          // Snap: a flash on the glass and the shutter sound, then the code is read.
+          shutter();
+          const glass = phoneGlassElement();
+          glass.classList.remove('flash');
+          void glass.offsetWidth;
+          glass.classList.add('flash');
+          setTimeout(read, 450);
         },
       }, 'Scan'),
       ui.phoneSaid && h('p', { class: 'pv-said', role: 'status', 'data-testid': 'phone-said' }, ui.phoneSaid));

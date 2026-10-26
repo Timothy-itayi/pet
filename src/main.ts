@@ -3,7 +3,8 @@ import { CLOSE, CLOSING_SOON, COMPANY, GAME_MINUTES_PER_SECOND, LOCKUP } from '.
 import { newGame, SELF, tick, type GameState } from './features/game/rules.ts';
 import { ROOM_ITEMS, SIPS } from './features/room3d/items.ts';
 import { goTo, holdPhone, lowerPhone, mountRoom, openDrawer, phoneGlassElement, screenElement, setAtComputer, setLamp, setMug, setPhones, setScreen, setTools, showRoom, snapTo } from './features/room3d/view.ts';
-import { held, needsPush, roguePending } from './features/game/phones.ts';
+import { drawerSlots, held, needsPush, onMyWay, phoneName, roguePending } from './features/game/phones.ts';
+import { dayMood } from './features/game/people.ts';
 import { phoneScreen } from './features/ui/phone.ts';
 import { loadGame, saveGame } from './features/save/save.ts';
 import type { App } from './features/ui/app.ts';
@@ -102,7 +103,10 @@ const app: App = {
     openDrawer(ui.view === 'room' && ui.shot === 'drawer' && !fullPage);
     const buzzing = roguePending(app.state) || (needsPush(app.state) && ui.windows.some((w) => w.id === 'okta'));
     const wanted = deskVisitor(app.state)?.phone;
-    void setPhones(app.state.phones.filter((x) => x.where === 'drawer').map((x) => ({ id: x.id, glow: (x.owner === SELF && buzzing) || x.id === wanted ? 2 : x.setUp ? 1 : 0 })));
+    void setPhones(drawerSlots(app.state.phones).map(({ id, slot }) => {
+      const x = app.state.phones.find((p) => p.id === id);
+      return { id, slot, glow: (x?.owner === SELF && buzzing) || id === wanted ? 2 : x?.setUp ? 1 : 0 };
+    }), app.state.phones.length > 0);
     // The phone in your hand, held up to your face, its screen drawn on its glass.
     const phoneUp = Boolean(ui.phoneUp && held(app.state)) && !fullPage;
     if (phoneUp) void holdPhone(); else lowerPhone();
@@ -169,14 +173,14 @@ function phoneNews(before: GameState, after: GameState): void {
   const visit = deskVisitor(after);
   const lines: [string, string][] = [];
   if (visit && visitKey(before) !== visitKey(after)) {
-    const name = after.okta.users[visit.login]?.name ?? visit.login;
-    lines.push([name, visit.why === 'pickup' ? `${name} is at your desk to pick up the phone you set up.` : `${name} is at your desk with the broken phone.`]);
+    // In their own words, and their own mood: on their way over.
+    lines.push([after.okta.users[visit.login]?.name ?? visit.login, onMyWay(after, visit, dayMood(visit.login, after.day).mood)]);
   }
   if (approvals(after) > approvals(before)) lines.push(['Mr. Grisby', 'Approved. The replacement phone is in your top drawer. Try not to let anyone put it on a car roof.']);
   for (const [from, text] of lines) {
     chime();
     notify(app, { app: 'chat', from, text });
-    if (app.ui.view !== 'computer') app.ui.note = text;
+    if (app.ui.view !== 'computer') app.ui.note = `${from}: \u201C${text}\u201D`;
   }
   if (lines.length) app.rerender();
 }
@@ -218,21 +222,12 @@ function staticTile(): string {
 }
 document.documentElement.style.setProperty('--static', `url(${staticTile()})`);
 
-/** What a phone in the drawer is, when you point at it. */
-function phoneLabel(id: string): string {
-  const phone = app.state.phones.find((p) => p.id === id);
-  if (phone?.broken) return 'A broken phone';
-  if (phone?.owner === SELF) return 'Your phone';
-  if (phone?.owner) return `${app.state.okta.users[phone.owner]?.name ?? phone.owner}\u2019s phone`;
-  return phone?.setUp ? 'A company phone (set up)' : 'A new company phone';
-}
-
 snapTo('overview');
 void mountRoom({
   pick: (id) => pickInRoom(app, id),
   hover: (id) => {
     const label = page.querySelector<HTMLElement>('[data-hover]');
-    if (label) label.textContent = id === 'tool' ? 'Something in the tray' : id?.startsWith('phone-') ? phoneLabel(id) : ROOM_ITEMS.find((i) => i.id === id)?.label ?? '';
+    if (label) label.textContent = id === 'tool' ? 'Something in the tray' : id?.startsWith('phone-') ? phoneName(app.state, id) : ROOM_ITEMS.find((i) => i.id === id)?.label ?? '';
   },
 }).then(() => app.rerender());
 app.rerender();

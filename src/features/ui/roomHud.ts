@@ -1,8 +1,8 @@
 import { CLOSE, COMPANY, DAYS, TOOLS } from '../game/data.ts';
-import { handOver, held, putDown, requestReplacement, takeBroken, takePhone, visitor } from '../game/phones.ts';
+import { drawerSlots, handOver, held, phoneName, putDown, requestReplacement, takeBroken, takePhone, visitor } from '../game/phones.ts';
 import { whereIs } from '../game/people.ts';
 import { portrait } from './portrait.ts';
-import { canClockOut, clockOut, SELF, weekday, weekOf, type GameState } from '../game/rules.ts';
+import { canClockOut, clockOut, weekday, weekOf, type GameState } from '../game/rules.ts';
 import { ON_THE_WALL, ROOM_ITEMS, SIPS } from '../room3d/items.ts';
 import { closeInspect, goTo, inspectItem, isInspecting, pressMouse, sipMug, spinChair, swayPlant, turnInspected } from '../room3d/view.ts';
 import type { App } from './app.ts';
@@ -205,7 +205,7 @@ export function computerHud(app: App): HTMLElement {
   return h('main', { class: 'room-hud computer-hud' },
     h('button', { class: 'back-chip', 'data-testid': 'stand-up', 'aria-label': 'Stand up', title: 'Stand up', onclick: () => leaveComputer(app) }, '\u2190'),
     soundChip(app),
-    visit && h('p', { class: 'visitor-waiting', role: 'status' }, `${app.state.okta.users[visit.login]?.name ?? visit.login} is waiting at your desk. Stand up to see them.`),
+    visit && h('p', { class: 'visitor-waiting', role: 'status' }, `${app.state.okta.users[visit.login]?.name ?? visit.login} is coming to your desk. Stand up to see them.`),
     phoneChips(app));
 }
 
@@ -243,7 +243,7 @@ export function roomHud(app: App): HTMLElement {
     : state.day === 1 && state.phase === 'boot' ? 'Your first day. This was Sam\u2019s desk. Sam left notes.'
     : 'Sam\u2019s desk. Well, yours now.');
   const here = ui.shot === 'drawer'
-    ? state.phones.filter((p) => p.where === 'drawer').map((p, i) => ({ id: p.id, label: p.broken ? 'A broken phone' : p.owner === SELF ? 'Your phone' : `Company phone ${i + 1}${p.setUp ? ' (set up)' : ''}` }))
+    ? drawerSlots(state.phones).sort((a, b) => a.slot - b.slot).map(({ id }) => ({ id, label: phoneName(state, id) }))
     : ROOM_ITEMS.filter((i) => ON_THE_WALL.includes(i.id) === (ui.shot === 'wall'));
   const things = [...here, ...(state.tools.length && ui.shot === 'overview' ? [{ id: 'tool', label: describe(app, 'tool')?.label ?? 'Tool' }] : [])];
   return h('main', { class: 'room-hud', 'data-testid': 'room' },
