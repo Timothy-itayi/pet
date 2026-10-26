@@ -1,3 +1,4 @@
+import { REASONING } from './reasoning.ts';
 import type { Issue, Ticket } from './types.ts';
 
 export const ISSUES: Issue[] = [
@@ -2630,3 +2631,11 @@ export const TICKETS: Ticket[] = [
     workaround: 'Type the list out by hand for Otis',
   },
 ];
+
+// Sam's method, written into every kind of problem (see reasoning.ts).
+for (const issue of ISSUES) {
+  const r = REASONING[issue.id];
+  if (!r) continue;
+  for (const a of issue.asks) Object.assign(a, r.asks[a.id]);
+  for (const f of issue.fixes) Object.assign(f, r.fixes[f.id]);
+}

@@ -5,6 +5,7 @@ import {
 } from './data.ts';
 import { MINUTES_A_DAY, newAccounts, type Account } from './directory.ts';
 import { flowProblem, runToday, TASKS, TRIGGERS, upgradeFlow } from './flows.ts';
+import { cluesFor, crossedBy, firstTest, methodStars, suspectsOf, type Stars } from './notebook.ts';
 import { BREAK, breakPhone, newPhones, PHONES_DAY, replacedSince, replaceProblem, settleRequests, verifyProblem, type HardwareRequest, type Phone } from './phones.ts';
 import { awayLine, backAt, dayMood } from './people.ts';
 import { appsOf, CATALOG, hrOn, needsMfa, newOkta, type Okta } from './oktopus.ts';
@@ -44,6 +45,9 @@ export interface TicketState {
    * or done, having confirmed a suggestion works. Nothing: it's your move. One thing at a time, like a real call.
    */
   caller?: { doing: 'answer' | 'try'; id: string; until: number } | { doing: 'confirmed'; id: string };
+  /** Your notebook page for it: the suspects ruled out (fix ids), and how you went about your first test. */
+  crossed?: string[];
+  first?: { fix: string; asked: number; crossed: number; simplest: boolean };
 }
 
 export interface Outcome {
@@ -57,6 +61,9 @@ export interface Outcome {
   noteMiss?: string;
   /** Fixed with a tool from your desk: its runbook page is the note to write. */
   tool?: string;
+  /** Sam's method, scored: how you went about it. And the clue you picked as the one that proved it. */
+  stars?: Stars;
+  clue?: string;
 }
 
 export interface Today {
@@ -72,6 +79,9 @@ export interface Today {
   overtime: number;
   /** Who became a friend or nemesis today, or stopped being one. */
   bonds: { who: VillagerId; now: Relation }[];
+  /** Sam's method stars earned today, out of how many there were. */
+  stars?: number;
+  maxStars?: number;
 }
 
 export interface GameState {
@@ -98,6 +108,8 @@ export interface GameState {
   runbook: Record<string, PageStatus>;
   /** The runbook pages you've written, in your own words, by page. */
   written: Record<string, string>;
+  /** Your notebook: for each page, the clue that proved it and what you ruled out on the way. */
+  clues?: Record<string, { clue: string; ruledOut: string[]; fix: string }>;
   /** Tools on your desk. */
   tools: string[];
   /** Everyone's account in Active Directory, by login. */
@@ -635,6 +647,7 @@ export function suggest(s: GameState, id: string, fixId: string): GameState {
   return act(s, (d) => {
     const st = ticketState(d, id);
     st.status = 'open';
+    st.first ??= firstTest(t, st, fixId);
     const text = fixId === 'console' ? 'I\u2019ve made the change on my side. Could you check it\u2019s working now?' : `Suggested: ${f.label}.`;
     st.messages.push({ from: 'you', text, at: d.clock });
     st.caller = { doing: 'try', id: fixId, until: replyAt(d, t, callerMinutes(d, t, CALLER[t.priority][fixId === 'tool' ? 'tool' : 'tryIt'])) };
@@ -653,6 +666,7 @@ function hear(d: GameState, t: Ticket, c: { doing: 'answer' | 'try'; id: string;
   st.caller = undefined;
   if (c.doing === 'answer') {
     st.heard.push(c.id);
+    st.crossed = [...new Set([...(st.crossed ?? []), ...crossedBy(t, c.id)])];
     said(t.details.filter((x) => x.ask === c.id).map((x) => x.text).join(' ') || (issue.asks.find((a) => a.id === c.id)?.none ?? '\u2026'));
     return;
   }
@@ -667,6 +681,8 @@ function hear(d: GameState, t: Ticket, c: { doing: 'answer' | 'try'; id: string;
   // You can check again after more console work, so that one never gets used up.
   if (c.id !== 'console') st.tried.push(c.id);
   if (f?.ruledOut || (c.id !== 'console' && c.id === issue.correctFix)) {
+    // A sensible test that wasn't it: one less suspect.
+    st.crossed = [...new Set([...(st.crossed ?? []), c.id])];
     said(f?.ruledOut ?? 'Tried that. Still not working.');
     return;
   }
@@ -699,6 +715,11 @@ export function resolve(s: GameState, id: string): GameState {
     const card = d.outcomes.at(-1);
     const tool = c.id === 'tool' ? toolFor(d, t) : undefined;
     if (tool && card) card.tool = tool.id;
+    // Sam's method: how you went about it, for the card and the day's tally.
+    const stars = methodStars(t, ticketState(d, id));
+    if (card) card.stars = stars;
+    d.today.stars = (d.today.stars ?? 0) + stars.got;
+    d.today.maxStars = (d.today.maxStars ?? 0) + stars.max;
     advance(d, COST.resolve);
   });
 }
@@ -778,8 +799,48 @@ export function noteTarget(s: GameState, o: Outcome): { page: string; title: str
   const tool = TOOLS.find((x) => x.id === o.tool);
   if (tool && s.runbook[`tool:${tool.id}`] !== 'yours') return { page: `tool:${tool.id}`, title: tool.name, note: tool.note };
   const issue = issueOf(ticketById(o.ticketId));
-  if (s.runbook[issue.id] !== 'yours') return { page: issue.id, title: issue.title, note: issue.note };
+  // Not yours yet; or you've just picked the clue, and can put it in your own words too.
+  if (s.runbook[issue.id] !== 'yours' || o.clue) return { page: issue.id, title: issue.title, note: issue.note };
   return undefined;
+}
+
+/**
+ * "How did you know?" After a fix, pick the clue that proved it. That, the fix and what you ruled out on the way
+ * become your notebook entry for this kind of problem, and its runbook page is yours.
+ */
+export function recordClue(s: GameState, clue: string): GameState {
+  const o = s.outcomes[0];
+  if (o?.kind !== 'fix' || o.clue) return s;
+  const t = ticketById(o.ticketId);
+  const st = ticketState(s, t.id);
+  if (!cluesFor(t, st).includes(clue)) return s;
+  const issue = issueOf(t);
+  return act(s, (d) => {
+    const card = d.outcomes[0];
+    if (!card) return;
+    card.clue = clue;
+    const ruledOut = suspectsOf(t).filter((f) => (st.crossed ?? []).includes(f.id)).map((f) => f.suspect ?? f.label);
+    const fix = suggestions(d, t).find((x) => x.id === fixFor(t))?.label ?? issue.title;
+    d.clues = { ...d.clues, [issue.id]: { clue, ruledOut, fix } };
+    if (d.runbook[issue.id] === 'yours') return;
+    d.runbook[issue.id] = 'yours';
+    d.written[issue.id] = `${fix}. How I knew: ${clue}${ruledOut.length ? ` Ruled out: ${ruledOut.join('; ')}.` : ''}`;
+    d.xp[issue.skill] += XP.note;
+    d.today.xp += XP.note;
+    d.today.notes += 1;
+    card.xp += XP.note;
+  });
+}
+
+/** Rule a suspect out yourself, or put it back: your notebook, your call. Free; it's thinking, not doing. */
+export function ruleOut(s: GameState, id: string, fixId: string): GameState {
+  const t = workable(s, id);
+  if (!t || !suspectsOf(t).some((f) => f.id === fixId)) return s;
+  return act(s, (d) => {
+    const st = ticketState(d, id);
+    const crossed = st.crossed ?? [];
+    st.crossed = crossed.includes(fixId) ? crossed.filter((x) => x !== fixId) : [...crossed, fixId];
+  });
 }
 
 /** What's wrong with a typed note, in a sentence; undefined if it's a good one. */
