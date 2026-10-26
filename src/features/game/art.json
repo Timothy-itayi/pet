@@ -217,5 +217,9 @@
   "news-budget-s-up-phones-for-burrow": {
     "image": true,
     "loop": true
+  },
+  "news-the-budget-is-frozen-again": {
+    "image": true,
+    "loop": true
   }
 }

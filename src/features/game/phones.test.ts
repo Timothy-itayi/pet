@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { policyOn } from './data.ts';
 import { createFromHr, requireMfa, resetMfa } from './identity.ts';
 import { hrOn } from './oktopus.ts';
 import {
@@ -135,5 +136,22 @@ describe('company phones', () => {
     expect(onMyWay(later, visit, 'bright')).toMatch(/I\u2019d stopped hoping/);
     expect(onMyWay(s, { ...visit, why: 'dropoff' }, 'bright')).toMatch(/bringing you the pieces/);
     expect(onMyWay(s, { ...visit, login: 'wren' }, 'usual')).toBe('On my way over for the phone. Thanks!');
+  });
+
+  it('the budget: frozen, open for the phones from day 16, frozen again from day 24, when Mr. Grisby says no', () => {
+    expect(policyOn(10)[3]).toMatch(/Budget freeze: no new hardware/);
+    expect(policyOn(16)[3]).toMatch(/needs Mr\. Grisby\u2019s approval/);
+    expect(policyOn(24)[3]).toMatch(/Budget freeze \(again\)/);
+    let s = handOver(scan(ready({ ...day16(), day: 24 }), 'phone-1', 'dot').state, 'phone-1');
+    s = structuredClone(s);
+    breakPhone(s, 'dot');
+    s = requestReplacement(takeBroken(s, 'phone-1'), 'phone-1');
+    s = structuredClone({ ...s, clock: s.clock + APPROVAL_MINUTES });
+    settleRequests(s);
+    expect(s.requests[0]?.refusedAt).toBeDefined();
+    expect(s.phones.find((p) => p.id === 'phone-1')?.broken).toBe(true); // nothing new is coming
+    expect(replaceProblem(s, 'dot', 'Dot', 0)).toMatch(/Mr\. Grisby said no/);
+    s = phoneFor(s, 'dot'); // a spare from the drawer instead
+    expect(replaceProblem(s, 'dot', 'Dot', 0)).toBeUndefined();
   });
 });

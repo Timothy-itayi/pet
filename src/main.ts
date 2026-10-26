@@ -147,8 +147,9 @@ function closingTime(before: GameState, after: GameState): void {
 /** Did this tick change more than the clock? Then redraw; otherwise just move the times on. */
 const visitKey = (s: GameState) => { const v = deskVisitor(s); return v ? `${v.login}:${v.why}` : ''; };
 const approvals = (s: GameState) => s.requests.filter((r) => r.approvedAt !== undefined).length;
+const refusals = (s: GameState) => s.requests.filter((r) => r.refusedAt !== undefined).length;
 const bigChange = (a: GameState, b: GameState) =>
-  visitKey(a) !== visitKey(b) || approvals(a) !== approvals(b) || a.phase !== b.phase || a.outcomes.length !== b.outcomes.length || a.queue.join() !== b.queue.join() ||
+  visitKey(a) !== visitKey(b) || approvals(a) !== approvals(b) || refusals(a) !== refusals(b) || a.phase !== b.phase || a.outcomes.length !== b.outcomes.length || a.queue.join() !== b.queue.join() ||
   a.chats.join() !== b.chats.join() || a.notice !== b.notice ||
   b.queue.some((id) => a.tickets[id]?.messages.length !== b.tickets[id]?.messages.length);
 
@@ -176,6 +177,7 @@ function phoneNews(before: GameState, after: GameState): void {
     // In their own words, and their own mood: on their way over.
     lines.push([after.okta.users[visit.login]?.name ?? visit.login, onMyWay(after, visit, dayMood(visit.login, after.day).mood)]);
   }
+  if (refusals(after) > refusals(before)) lines.push(['Mr. Grisby', 'No. Budget freeze. We spent it all on the new floor. Use a spare from your drawer.']);
   if (approvals(after) > approvals(before)) lines.push(['Mr. Grisby', 'Approved. The replacement phone is in your top drawer. Try not to let anyone put it on a car roof.']);
   for (const [from, text] of lines) {
     chime();

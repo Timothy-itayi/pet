@@ -165,6 +165,12 @@ export const NEWS: NewsPost[] = [
     body: 'Our investors are visiting the new floor today. Please look busy. Please also be busy. If they ask about the coffee machine, it is “on a journey”.',
   },
   {
+    day: 24, title: 'The budget is frozen. Again.', from: 'Otis', scene: '\u{1F9CA}\u{1F4B8}', tone: '#334155',
+    shows: 'A small metal cash box on an office desk, a padlock on it and a thin layer of frost across the lid, a tidy ledger beside it',
+    moves: 'Static camera. A little frost creeps across the lid of the cash box.',
+    body: 'Hoo. Between the new floor, the investors\u2019 lunch and six telephones, we have spent the year\u2019s budget in a fortnight. It is frozen again. IT: use what we have. That includes the drawer.',
+  },
+  {
     day: 24, title: 'Wi-Fi by the window', from: 'Juniper', scene: '\u{1F4F6}\u{1FA9F}', tone: '#047857',
     shows: 'A new office access point fixed to the ceiling at the far end of a floor near tall windows, its small light glowing green',
     moves: 'Static camera. The small light on the access point blinks steadily.',

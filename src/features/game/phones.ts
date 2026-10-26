@@ -4,6 +4,7 @@
  * person by scanning the QR code Oktopus shows for them, and handed over. You go first; after a couple by hand, you
  * switch on self-enrolment and everyone does their own.
  */
+import { budgetOn } from './data.ts';
 import { MINUTES_A_DAY } from './directory.ts';
 import { needsMfa } from './oktopus.ts';
 import { clockTime, SELF, type GameState } from './rules.ts';
@@ -180,6 +181,8 @@ export interface HardwareRequest {
   for?: string;
   at: number;
   approvedAt?: number;
+  /** Turned down: from week 5 the budget's frozen again. */
+  refusedAt?: number;
 }
 
 /** Ask for a replacement for the broken phone in your hand. It goes to Mr. Grisby to approve. */
@@ -197,7 +200,9 @@ export function requestReplacement(s: GameState, id: string): GameState {
  */
 export function settleRequests(d: GameState): void {
   for (const r of d.requests) {
-    if (r.approvedAt !== undefined || now(d) < r.at + APPROVAL_MINUTES) continue;
+    if (r.approvedAt !== undefined || r.refusedAt !== undefined || now(d) < r.at + APPROVAL_MINUTES) continue;
+    // The budget's frozen again: no, and make do with a spare.
+    if (budgetOn(d.day) === 'refrozen') { r.refusedAt = now(d); continue; }
     r.approvedAt = now(d);
     // The new one goes in the broken one's place in the tray.
     const slot = d.phones.find((p) => p.id === r.phone)?.slot;
@@ -254,8 +259,13 @@ export function replaceProblem(s: GameState, who: string, name: string, since: n
       ? `${name} still has the broken phone. Take it off them when they come over, then ask for a replacement.`
       : `${name}’s phone is broken, and a new one has to be approved. Hold the broken phone and request a replacement.`;
   }
-  if (request.approvedAt === undefined) return `The replacement is waiting for Mr. Grisby to approve it.`;
   const phone = s.phones.find((p) => p.id === s.okta.verify[who]);
+  if (request.refusedAt !== undefined) {
+    // No new phone, so a spare from the drawer it is.
+    if (!phone || phone.broken || (phone.enrolledAt ?? -1) < since) return `Mr. Grisby said no: the budget\u2019s frozen again. Set up a spare from your drawer and enrol it to ${name} instead.`;
+    return phone.where === 'given' ? undefined : `${name}\u2019s spare is ready. Hand it over when they come for it.`;
+  }
+  if (request.approvedAt === undefined) return `The replacement is waiting for Mr. Grisby to approve it.`;
   if (!phone || phone.for !== who || (phone.enrolledAt ?? -1) < since) return `The replacement’s in your drawer. Set it up and enrol it to ${name}.`;
   return phone.where === 'given' ? undefined : `${name}’s new phone is ready. Hand it over when they come for it.`;
 }

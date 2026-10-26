@@ -169,7 +169,7 @@ function phoneChips(app: App): HTMLElement | false {
   const request = state.requests.find((r) => r.phone === phone.id);
   return h('div', { class: 'phone-actions', role: 'group', 'aria-label': 'Your phone' },
     phone.broken && (request
-      ? h('p', { class: 'phone-request', role: 'status' }, 'Replacement requested. Waiting for Mr. Grisby to approve it.')
+      ? h('p', { class: 'phone-request', role: 'status' }, request.refusedAt !== undefined ? 'Mr. Grisby said no: budget freeze. Use a spare from the drawer.' : 'Replacement requested. Waiting for Mr. Grisby to approve it.')
       : h('button', { class: 'btn primary', 'data-testid': 'phone-request', onclick: () => app.set(requestReplacement(state, phone.id)) }, 'Request a replacement (Mr. Grisby approves)')),
     h('button', { class: 'btn', 'data-testid': 'phone-lower', onclick: lower }, 'Lower it'),
     ui.view === 'room' && h('button', { class: 'btn', 'data-testid': 'phone-put-back', onclick: () => { ui.phoneUp = false; app.set(putDown(state)); } }, 'Put it back in the drawer'));

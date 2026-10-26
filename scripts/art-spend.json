@@ -622,5 +622,17 @@
     "kind": "loop",
     "usd": 0.36,
     "at": "2026-10-25T23:44:39.938Z"
+  },
+  {
+    "id": "news-the-budget-is-frozen-again",
+    "kind": "image",
+    "usd": 0.036,
+    "at": "2026-10-26T00:12:25.982Z"
+  },
+  {
+    "id": "news-the-budget-is-frozen-again",
+    "kind": "loop",
+    "usd": 0.36,
+    "at": "2026-10-26T00:13:48.825Z"
   }
 ]

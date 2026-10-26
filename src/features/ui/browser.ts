@@ -1,4 +1,4 @@
-import { COMPANY, DAYS, POLICY } from '../game/data.ts';
+import { COMPANY, DAYS, policyOn } from '../game/data.ts';
 import { artFor, BANNER, faceId, feedArt, newsArt } from '../game/art.ts';
 import { NEWS, newsFor, type NewsPost } from '../game/news.ts';
 import { HISTORY, socialFor, type SocialPost } from '../game/social.ts';
@@ -390,7 +390,7 @@ function itHelp(app: App): HTMLElement {
     pageHead(SECTIONS.it, 'IT Help', 'Need something fixed?', 'Log a ticket. That’s how it gets fixed, and it’s how we know what keeps breaking. The IT team (one intern) will reply as soon as they can.',
       h('button', { class: 'lb brand', onclick: () => openApp(app, 'desk') }, icon(Ticket, 14), 'Open the Service Desk')),
     h('div', { class: 'cols' },
-      h('div', { class: 'col-main' }, card('How IT handles things', ShieldCheck, '#3a49da', h('ol', { class: 'policy-list' }, ...POLICY.map((rule) => h('li', {}, rule))))),
+      h('div', { class: 'col-main' }, card('How IT handles things', ShieldCheck, '#3a49da', h('ol', { class: 'policy-list' }, ...policyOn(app.state.day).map((rule) => h('li', {}, rule))))),
       h('aside', { class: 'col-side' }, card('Your password', KeyRound, '#d83a00', h('p', {}, 'Nobody from IT will ever ask for your password. Not even nicely. Not even Mr. Grisby.')))));
 }
 

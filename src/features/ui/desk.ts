@@ -1,4 +1,4 @@
-import { DAYS, ISSUES, MANAGER, MAX_PUSHES, POLICY, REPLIES, TICKETS, VILLAGERS, WORKAROUND_RETURNS_AFTER } from '../game/data.ts';
+import { DAYS, ISSUES, MANAGER, MAX_PUSHES, policyOn, REPLIES, TICKETS, VILLAGERS, WORKAROUND_RETURNS_AFTER } from '../game/data.ts';
 import { MINUTES_A_DAY } from '../game/directory.ts';
 import { OKTOPUS_DAY } from '../game/oktopus.ts';
 import { sayNow, statusText } from '../game/people.ts';
@@ -121,7 +121,7 @@ function knowledge(s: GameState, t: Ticket): HTMLElement {
       h('h3', {}, issue.title),
       h('p', {}, text ?? '')),
     h('p', { class: 'sn-panel-title' }, 'Policy'),
-    h('p', { class: 'policy-line', 'data-testid': 'policy-line' }, h('strong', {}, `Rule ${issue.rule}: `), POLICY[issue.rule - 1] ?? ''));
+    h('p', { class: 'policy-line', 'data-testid': 'policy-line' }, h('strong', {}, `Rule ${issue.rule}: `), policyOn(s.day)[issue.rule - 1] ?? ''));
 }
 
 /** Where the conversation stands, in a line: whose move it is. */
