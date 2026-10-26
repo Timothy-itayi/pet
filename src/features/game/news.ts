@@ -111,6 +111,12 @@ export const NEWS: NewsPost[] = [
     body: 'Hazel has decided Finance isn\u2019t for her. She was with us two days, and she was lovely. If you have seen a calculator, please return it to Finance.',
   },
   {
+    day: 16, title: 'Budget\u2019s up: phones for Burrow', from: 'Mr. Grisby', scene: '\u{1F4E6}\u{1F4F1}', tone: '#14532d',
+    shows: 'An open cardboard box of six identical black smartphones in their trays on an old wooden desk, a sticky note on the lid saying IT',
+    moves: 'Static camera. One phone screen lights up briefly with a white tick, then fades.',
+    body: 'Good news. After the auditors, the board found some budget. I have spent it on phones. Six. IT is setting them up, starting with IT. Do not ask me what Oktopus Verify is. Ask IT.',
+  },
+  {
     day: 16, title: 'The auditors\u2019 findings', from: 'Otis', scene: '\u{1F50E}\u{1F4CB}', tone: '#334155',
     shows: 'A thick report on a meeting room table with coloured flags sticking out of it, a red pen beside it, blinds half drawn',
     moves: 'Static camera. The report\u2019s flags flutter slightly in the air-conditioning and the light through the blinds shifts.',
@@ -118,9 +124,9 @@ export const NEWS: NewsPost[] = [
   },
   {
     day: 17, title: 'Sign in with your phone', from: 'Mr. Grisby', scene: '\u{1F4F1}\u{1F510}', tone: '#1e3a8a',
-    shows: 'An old desk phone and a small modern mobile phone side by side on a desk, a padlock between them, lit by a monitor',
-    moves: 'Static camera. The mobile phone\u2019s screen lights up softly, then dims.',
-    body: 'From today Oktopus will ask for your phone as well as your password. This is called MFA, apparently. If you don\u2019t have a phone, Biscuit has a drawer of them.',
+    shows: 'A close-up of a hand holding a black smartphone; on its screen a sign-in request with a big navy circle and a white tick, and two buttons, Yes and No. No computer in the picture',
+    moves: 'Static camera. The phone buzzes slightly and the tick on its screen pulses once.',
+    body: 'From today Oktopus will ask for your phone as well as your password. This is called MFA, apparently. IT is setting up company phones for Finance. Everyone else: Oktopus will walk you through it.',
   },
   {
     day: 18, title: 'Please stop plugging things in', from: 'IT', scene: '\u{1F50C}\u{1F6AB}', tone: '#7f1d1d',
@@ -157,6 +163,12 @@ export const NEWS: NewsPost[] = [
     shows: 'A smart new meeting room with a long table, three empty leather chairs and a projector beam lighting an empty screen',
     moves: 'Static camera. The projector beam flickers and dust drifts through it.',
     body: 'Our investors are visiting the new floor today. Please look busy. Please also be busy. If they ask about the coffee machine, it is “on a journey”.',
+  },
+  {
+    day: 24, title: 'The budget is frozen. Again.', from: 'Otis', scene: '\u{1F9CA}\u{1F4B8}', tone: '#334155',
+    shows: 'A small metal cash box on an office desk, a padlock on it and a thin layer of frost across the lid, a tidy ledger beside it',
+    moves: 'Static camera. A little frost creeps across the lid of the cash box.',
+    body: 'Hoo. Between the new floor, the investors\u2019 lunch and six telephones, we have spent the year\u2019s budget in a fortnight. It is frozen again. IT: use what we have. That includes the drawer.',
   },
   {
     day: 24, title: 'Wi-Fi by the window', from: 'Juniper', scene: '\u{1F4F6}\u{1FA9F}', tone: '#047857',

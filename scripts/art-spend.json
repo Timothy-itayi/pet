@@ -598,5 +598,41 @@
     "kind": "upscale",
     "usd": 0.01,
     "at": "2026-10-25T15:21:02.433Z"
+  },
+  {
+    "id": "news-budget-s-up-phones-for-burrow",
+    "kind": "image",
+    "usd": 0.036,
+    "at": "2026-10-25T23:41:19.360Z"
+  },
+  {
+    "id": "news-budget-s-up-phones-for-burrow",
+    "kind": "loop",
+    "usd": 0.36,
+    "at": "2026-10-25T23:42:46.760Z"
+  },
+  {
+    "id": "news-sign-in-with-your-phone",
+    "kind": "image",
+    "usd": 0.036,
+    "at": "2026-10-25T23:43:24.336Z"
+  },
+  {
+    "id": "news-sign-in-with-your-phone",
+    "kind": "loop",
+    "usd": 0.36,
+    "at": "2026-10-25T23:44:39.938Z"
+  },
+  {
+    "id": "news-the-budget-is-frozen-again",
+    "kind": "image",
+    "usd": 0.036,
+    "at": "2026-10-26T00:12:25.982Z"
+  },
+  {
+    "id": "news-the-budget-is-frozen-again",
+    "kind": "loop",
+    "usd": 0.36,
+    "at": "2026-10-26T00:13:48.825Z"
   }
 ]

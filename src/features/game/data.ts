@@ -62,6 +62,22 @@ export const POLICY = [
   'Security: report anything odd. Never reset sign-in for a request from outside the company.',
 ] as const;
 
+/**
+ * The budget, as the hardware rule sees it: frozen at first; open from day 16, when the auditors free some up for
+ * phones (new hardware needs Mr. Grisby's approval); frozen again from day 24, once the new floor and the investors'
+ * visit have spent it.
+ */
+export const BUDGET = { opens: 16, freezes: 24 } as const;
+const HARDWARE = {
+  frozen: 'Hardware: use what we have. Spares cupboard, batteries, the hot-desk PC. Budget freeze: no new hardware.',
+  open: 'Hardware: use what we have first. New or replacement company hardware needs Mr. Grisby\u2019s approval before it\u2019s ordered.',
+  refrozen: 'Hardware: use what we have. Spares, the drawer of phones, the hot-desk PC. Budget freeze (again): no new hardware, approved or not.',
+} as const;
+export const budgetOn = (day: number) => (day >= BUDGET.freezes ? 'refrozen' : day >= BUDGET.opens ? 'open' : 'frozen');
+
+/** The house rules as they stand on a day: the hardware one follows the budget. */
+export const policyOn = (day: number): string[] => POLICY.map((rule, i) => (i === 3 ? HARDWARE[budgetOn(day)] : rule));
+
 /** A worked-around ticket comes back this many days later. */
 export const WORKAROUND_RETURNS_AFTER = 2;
 
@@ -274,7 +290,7 @@ export const JOBS: Job[] = [
     title: 'Junior Security Analyst',
     company: 'Lighthouse Security',
     blurb: 'Help small companies spot phishing, lock down sign-ins and clean up after leavers. You\u2019ll need to know access inside out.',
-    needs: { access: 135 },
+    needs: { access: 145 },
   },
 ];
 

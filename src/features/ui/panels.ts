@@ -1,4 +1,4 @@
-import { DAYS, DAY_SCRIPTS, JOBS, MANAGER, POLICY, VILLAGERS } from '../game/data.ts';
+import { DAYS, DAY_SCRIPTS, JOBS, MANAGER, policyOn, VILLAGERS } from '../game/data.ts';
 import { runbookPages } from '../game/pages.ts';
 import { acceptOffer, apply, isWeekOver, missingFor, peopleWho } from '../game/rules.ts';
 import { SKILLS, type Skill } from '../game/types.ts';
@@ -40,9 +40,9 @@ function mail(app: App): HTMLElement {
 }
 
 /** The IT Service Policy: the house rules every ticket is handled by. Each ticket says which one applies. */
-const policy = () => h('div', { class: 'policy', 'data-testid': 'policy' },
+const policy = (app: App) => h('div', { class: 'policy', 'data-testid': 'policy' },
   h('p', { class: 'meta' }, 'Burrow & Co. IT Service Policy. Rev 1 (written by you, because Sam never did).'),
-  h('ol', { class: 'policy-list' }, ...POLICY.map((rule) => h('li', {}, rule))));
+  h('ol', { class: 'policy-list' }, ...policyOn(app.state.day).map((rule) => h('li', {}, rule))));
 
 /** Sam's Recycle Bin: what Sam deleted on the way out, until you empty it. */
 const BINNED: [string, string, string][] = [

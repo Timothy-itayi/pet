@@ -235,3 +235,6 @@ export const click = () => tick(3200, 0.025, 0.9);
 
 /** A key on the old keyboard: each one a little different, and the space bar and Enter deeper. */
 export const keystroke = (big: boolean) => tick(big ? 900 : 1500 + Math.random() * 700, big ? 0.06 : 0.04, big ? 0.8 : 0.7);
+
+/** A phone camera's shutter: two quick clicks. */
+export const shutter = () => { tick(2600, 0.06, 0.85); setTimeout(() => tick(1700, 0.05, 0.85), 70); };

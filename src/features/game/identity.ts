@@ -67,7 +67,18 @@ export const resetMfa = (s: GameState, login: string) => oktaWork(s, 'user.mfa.f
   const user = okta.users[login];
   if (!user) return false;
   user.mfaResetAt = d.day * MINUTES_A_DAY + d.clock;
+  // Their phone no longer signs them in: lost, stolen or being replaced.
+  const phone = d.phones.find((p) => p.id === okta.verify[login]);
+  if (phone) delete phone.owner;
+  okta.verify = Object.fromEntries(Object.entries(okta.verify).filter(([l]) => l !== login));
 });
+
+/** Let people set up Oktopus Verify on their own phones, the first time they're asked for it. */
+export const setSelfEnroll = (s: GameState, on: boolean) =>
+  oktaWork(s, on ? 'policy.enrollment.self.enable' : 'policy.enrollment.self.disable', 'Oktopus Verify', (okta) => {
+    if (okta.selfEnroll === on) return false;
+    okta.selfEnroll = on;
+  });
 
 /** Add a group. Names are kept exactly as typed (rules match them exactly); blank and duplicate names are refused. */
 export const addGroup = (s: GameState, name: string) => oktaWork(s, 'group.lifecycle.create', name.trim(), (okta) => {

@@ -4,11 +4,12 @@ import {
 } from 'three';
 import { CSS3DObject, CSS3DRenderer } from 'three/examples/jsm/renderers/CSS3DRenderer.js';
 import { COMPUTER_Z, DESK_TOP, GLASS, buildRoom, toolObject, type Room } from './room.ts';
-import { cameraAt, type Pose } from './camera.ts';
+import { cameraAt, easeInOut, type Pose } from './camera.ts';
 import { setLampOn } from './lamp.ts';
 import { setCoffee } from './mug.ts';
+import { fillDrawer, glassBox, phoneModel, switchGlass } from './phone.ts';
 
-export type Shot = 'overview' | 'wall' | 'computer';
+export type Shot = 'overview' | 'wall' | 'computer' | 'drawer';
 /** What the CRT shows. */
 export type ScreenState = 'off' | 'asleep' | 'on';
 
@@ -24,6 +25,8 @@ const SHOTS: Record<Shot, Pose> = {
   wall: { pos: [0, 1.48, 0.5], look: [0, 1.16, -0.82] },
   // Close enough that the glass fills the view, with a little bezel showing round the edge.
   computer: { pos: [0, SCREEN_Y, SCREEN_Z + 0.36], look: [0, SCREEN_Y, SCREEN_Z] },
+  // Leaning over the open top drawer, looking down into it.
+  drawer: { pos: [-0.5, 1.22, 0.5], look: [-0.5, 0.56, 0.17] },
 };
 /**
  * A shot, fitted to the window. At the computer the camera sits close enough to fill a 4:3 or wider window with the
@@ -37,7 +40,7 @@ function shotFor(shot: Shot): Pose {
 }
 const MOVE_MS = 1500;
 /** How far the camera drifts as you move the mouse, so the room never feels like a still picture. */
-const DRIFT = { overview: 0.035, wall: 0.015, computer: 0 } as const;
+const DRIFT = { overview: 0.035, wall: 0.015, computer: 0, drawer: 0.01 } as const;
 
 interface Handlers { pick: (id: string) => void; hover: (id: string | undefined) => void }
 
@@ -54,7 +57,13 @@ const v = {
   hovered: undefined as string | undefined,
   handlers: undefined as Handlers | undefined,
   tools: [] as string[],
+  phones: [] as string[],
   inspect: undefined as { renderer: WebGLRenderer; scene: Scene; camera: PerspectiveCamera; item: Group; aim: Quaternion; born: number } | undefined,
+  /** The phone in your hand, held up to your face. */
+  hold: undefined as { renderer: WebGLRenderer; scene: Scene; camera: PerspectiveCamera; item: Group; born: number; leaving?: number; glass: Box3 } | undefined,
+  /** The phone's screen page, laid over its glass once it's up. The game draws the phone's screens into this. */
+  phoneGlass: document.createElement('div'),
+  drawerOut: 0,
   reduced: matchMedia('(prefers-reduced-motion: reduce)').matches,
   css: undefined as CSS3DRenderer | undefined,
   cssScene: new Scene(),
@@ -73,7 +82,7 @@ function idOf(object: Object3D | null): string | undefined {
 }
 
 function pickAt(x: number, y: number): string | undefined {
-  if (!v.room || v.inspect || moving()) return undefined;
+  if (!v.room || v.inspect || v.hold || moving()) return undefined;
   raycaster.setFromCamera(new Vector2(x, y), v.camera);
   // The first solid thing under the pointer decides, so the desk blocks the wall behind it.
   const hit = raycaster.intersectObject(v.room.scene, true).find((h) => h.object instanceof Mesh);
@@ -98,11 +107,13 @@ function resize(): void {
   v.camera.updateProjectionMatrix();
   // Sitting at the computer when the window changes shape: refit so the screen still fits.
   if (v.shot === 'computer') v.from = v.to = shotFor('computer');
-  if (v.inspect) {
-    v.inspect.renderer.setSize(innerWidth, innerHeight);
-    v.inspect.camera.aspect = innerWidth / innerHeight;
-    v.inspect.camera.updateProjectionMatrix();
+  for (const held of [v.inspect, v.hold]) {
+    if (!held) continue;
+    held.renderer.setSize(innerWidth, innerHeight);
+    held.camera.aspect = innerWidth / innerHeight;
+    held.camera.updateProjectionMatrix();
   }
+  if (v.hold) placeHeld(v.hold.item, v.hold.camera);
 }
 
 /** Small one-off movements in the room (a chair turning, leaves swaying), each given how far through it is, 0 to 1. */
@@ -139,6 +150,21 @@ function frame(): void {
     ins.item.scale.setScalar(1 - (1 - grow) ** 3);
     ins.renderer.render(ins.scene, ins.camera);
   }
+  const hold = v.hold;
+  if (hold) {
+    // GTA style: it comes up from below and turns to face you; going down, the same backwards.
+    const up = v.reduced ? 1 : Math.min(1, (now - hold.born) / HOLD_MS);
+    const down = hold.leaving === undefined ? 0 : v.reduced ? 1 : Math.min(1, (now - hold.leaving) / HOLD_MS);
+    const k = easeInOut(up) * (1 - easeInOut(down));
+    const rest = hold.item.userData.rest as Vector3;
+    hold.item.position.set(rest.x + 0.15 * (1 - k), rest.y - 1.2 * (1 - k), rest.z);
+    hold.item.rotation.set(-0.9 * (1 - k), -0.5 * (1 - k), 0.25 * (1 - k));
+    hold.renderer.render(hold.scene, hold.camera);
+    const settled = up === 1 && hold.leaving === undefined;
+    if (settled) fitGlass(hold);
+    v.phoneGlass.hidden = !settled;
+    if (down === 1) dropHold();
+  }
 }
 
 /** Create the 3D room behind the page. Safe to call more than once. */
@@ -173,6 +199,10 @@ export async function mountRoom(handlers: Handlers): Promise<void> {
   onGlass.scale.setScalar(GLASS.w / SCREEN_PX.w);
   v.cssScene.add(onGlass);
   setTools(v.tools);
+  void setPhones([], false);
+  v.phoneGlass.className = 'phone-glass';
+  v.phoneGlass.hidden = true;
+  document.body.append(v.phoneGlass);
   resize();
   addEventListener('resize', resize);
   renderer.domElement.addEventListener('pointermove', (e) => {
@@ -383,3 +413,112 @@ export function turnInspected(dx: number, dy: number): void {
   const turn = new Quaternion().setFromAxisAngle(UP, dx).multiply(new Quaternion().setFromAxisAngle(RIGHT, dy));
   v.inspect.aim.premultiply(turn).normalize();
 }
+
+// ---- The drawer and the company phones ----------------------------------------------------------------------------
+
+/** Slide the top drawer open or shut. */
+export function openDrawer(open: boolean): void {
+  const drawer = v.room?.drawer;
+  const to = open ? 0.38 : 0;
+  if (!drawer || v.drawerOut === to) return;
+  const from = v.drawerOut;
+  const rest = (drawer.userData.restZ ??= drawer.position.z) as number;
+  v.drawerOut = to;
+  play(600, (k) => { drawer.position.z = rest + from + (to - from) * easeInOut(k); });
+}
+
+/** Put the phones that are in the drawer into it (none before they arrive), each with how lit its glass is: see switchGlass. */
+export async function setPhones(phones: { id: string; slot: number; glow: number }[], boxed: boolean): Promise<void> {
+  const ids = [String(boxed), ...phones.map((p) => `${p.id}:${p.slot}:${p.glow}`)];
+  const same = ids.join() === v.phones.join() && v.room?.drawer.userData.filled === true;
+  v.phones = ids;
+  const room = v.room;
+  if (!room || same) return;
+  const inside = room.drawer.getObjectByName('drawer-inside');
+  if (!inside) return;
+  const model = phones.length ? await phoneModel() : undefined;
+  if (v.phones !== ids) return; // something newer came in while the model loaded
+  fillDrawer(inside, phones.map(({ id, slot, glow }) => ({ id, slot, glow, copy: model?.clone(true) ?? new Group() })), boxed, room.pickables);
+  room.drawer.userData.filled = true;
+}
+
+const HOLD_MS = 550;
+/** The phone's screen page is laid out at this size, then scaled onto the glass: an iPhone 4S's own points. */
+export const PHONE_PX = { w: 320, h: 480 } as const;
+
+/** Where a held phone rests: upright, facing you, filling most of the height, over to the right like a phone in your hand. */
+function placeHeld(item: Group, camera: PerspectiveCamera): void {
+  const halfW = Math.tan((camera.fov * Math.PI) / 360) * camera.position.z * camera.aspect;
+  const rest = new Vector3(Math.max(0, halfW - 0.36), 0, 0);
+  item.userData.rest = rest;
+}
+
+/** Lay the phone's screen page exactly over its glass: the glass's corners, on the screen, in CSS pixels. */
+function fitGlass(hold: NonNullable<typeof v.hold>): void {
+  hold.item.updateWorldMatrix(true, true);
+  const corners = [new Vector3(hold.glass.min.x, hold.glass.min.y, hold.glass.max.z), new Vector3(hold.glass.max.x, hold.glass.max.y, hold.glass.max.z)]
+    .map((c) => c.applyMatrix4(hold.item.matrixWorld).project(hold.camera))
+    .map((c) => ({ x: (c.x + 1) / 2 * innerWidth, y: (1 - c.y) / 2 * innerHeight }));
+  const [a, b] = corners as [{ x: number; y: number }, { x: number; y: number }];
+  const scale = (b.x - a.x) / PHONE_PX.w;
+  Object.assign(v.phoneGlass.style, { left: `${a.x}px`, top: `${b.y}px`, width: `${PHONE_PX.w}px`, height: `${PHONE_PX.h}px`, transform: `scale(${scale})` });
+}
+
+/** Bring the phone in your hand up to your face. */
+export async function holdPhone(): Promise<void> {
+  if (v.hold) { v.hold.leaving = undefined; return; }
+  const model = await phoneModel();
+  if (v.hold) return;
+  const renderer = new WebGLRenderer({ antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.outputColorSpace = SRGBColorSpace;
+  renderer.toneMapping = ACESFilmicToneMapping;
+  renderer.domElement.className = 'hold-canvas';
+  renderer.domElement.setAttribute('aria-hidden', 'true');
+  document.body.append(renderer.domElement);
+  const scene = new Scene();
+  scene.add(new AmbientLight('#ffffff', 1.1));
+  const key = new DirectionalLight('#fff2dc', 2);
+  key.position.set(-1, 2, 3);
+  scene.add(key);
+  const copy = model.clone(true);
+  // Its own glass stays dark: the phone's screen page is laid over it.
+  switchGlass(copy, 0);
+  // Centre the phone on its glass, and scale it to fill most of the view's height.
+  copy.position.sub(glassBox(copy).getCenter(new Vector3()));
+  const fit = new Group();
+  fit.scale.setScalar(0.78 / 0.115);
+  fit.add(copy);
+  const item = new Group();
+  item.add(fit);
+  scene.add(item);
+  const camera = new PerspectiveCamera(35, innerWidth / innerHeight, 0.01, 10);
+  camera.position.set(0, 0, 1.6);
+  camera.lookAt(0, 0, 0);
+  placeHeld(item, camera);
+  // The glass, measured while the phone sits at the origin: so it's in the held item's own space.
+  item.updateWorldMatrix(true, true);
+  const onGlass = new Box3().setFromObject(copy.getObjectByName('IP4S_Screen') ?? copy);
+  v.hold = { renderer, scene, camera, item, born: performance.now(), glass: onGlass };
+  resize();
+  v.renderer?.domElement.classList.add('blurred');
+}
+
+/** Lower the phone: it drops back out of view, and the room comes back into focus. */
+export function lowerPhone(): void {
+  if (v.hold && v.hold.leaving === undefined) v.hold.leaving = performance.now();
+  v.phoneGlass.hidden = true;
+}
+
+function dropHold(): void {
+  const hold = v.hold;
+  if (!hold) return;
+  hold.renderer.domElement.remove();
+  hold.renderer.dispose();
+  v.hold = undefined;
+  if (!v.inspect) v.renderer?.domElement.classList.remove('blurred');
+}
+
+/** The phone's screen page: drawn into by the game while you hold a phone up. */
+export const phoneGlassElement = () => v.phoneGlass;
+export const isHolding = () => Boolean(v.hold && v.hold.leaving === undefined);

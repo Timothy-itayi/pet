@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { CLOSE, DAILY_COST, LOCKUP, DAYS, GOAL_VOUCHER, ISSUES, REPLIES, START_SAVINGS, THANKS, TICKETS, TOOLS, VILLAGERS } from './data.ts';
-import { addApp, addGroup, addRule, assignApp, createFromHr, requireMfa, resetMfa, setActive, updateFromHr } from './identity.ts';
+import { addApp, addGroup, addRule, assignApp, createFromHr, requireMfa, resetMfa, setActive, setSelfEnroll, updateFromHr } from './identity.ts';
+import { APPROVAL_MINUTES, PHONES_DAY, phoneFor, requestReplacement, takeBroken } from './phones.ts';
 import type { Department } from './directory.ts';
 import { goodFlows, withGoodFlows } from './flows.ts';
 import { appsOf, groupsOf, hrOn, needsMfa, newOkta } from './oktopus.ts';
@@ -48,14 +49,21 @@ function admin(s: GameState, id: string): GameState {
     case 'unlock': return unlockAccount(s, t.who);
     case 'reset': return resetPassword(s, t.who, { mustChange: true, unlock: true });
     case 'disable': return (t.subjects ?? ['sam']).reduce((x, l) => setEnabled(x, l, false), s);
-    case 'mfa-policy': return requireMfa(s, 'Everyone', true);
+    case 'mfa-policy': { const on = requireMfa(s, 'Everyone', true); return on.day >= PHONES_DAY ? setSelfEnroll(on, true) : on; }
     case 'flow': return t.flow ? withGoodFlows(s, t.flow, t.everywhere) : s;
     case 'okta-setup': return setUpTeams(s, t.team);
     case 'okta-app': return giveApp(s, t.app, t.team);
     case 'joiner': return createFromHr(s, t.subject ?? '');
     case 'mover': return updateFromHr(s, t.subject ?? '');
     case 'leaver': return setActive(s, t.subject ?? '', false);
-    case 'mfa': return resetMfa(s, t.who);
+    case 'mfa': { const reset = resetMfa(s, t.who); return issueOf(t).id === 'mfa' && t.day >= PHONES_DAY ? phoneFor(reset, t.who) : reset; }
+    case 'verify': return phoneFor(s, t.subject ?? t.who);
+    case 'replace': {
+      const who = t.subject ?? t.who;
+      const broken = s.phones.find((p) => p.owner === who && p.broken);
+      const asked = broken ? requestReplacement(takeBroken(s, broken.id), broken.id) : s;
+      return phoneFor(tick(asked, APPROVAL_MINUTES), who);
+    }
     case undefined: return s;
   }
 }
@@ -330,7 +338,7 @@ describe('people away from their desk', () => {
   it('a question asked while they are at lunch is answered once they are back, and they say so', () => {
     let s = until(dotsTicket(), '12:05'); // Dot lunches 12:00 to 12:40
     s = ask(s, 't101', 'screen');
-    expect(ticketState(s, 't101').messages.at(-1)?.text).toBe('At lunch till 12:40. I’ll look then.');
+    expect(ticketState(s, 't101').messages.at(-1)?.text).toBe('At lunch till 12:40pm. I’ll look then.');
     const c = ticketState(s, 't101').caller;
     expect(c && 'until' in c && c.until).toBeGreaterThanOrEqual(clockTime('12:42'));
   });
@@ -493,6 +501,14 @@ describe('Oktopus', () => {
     // From day 17 the sweep ran every morning (days 17 to 25), and the Voyago report was run on day 23.
     expect(s.okta.runs.filter((r) => r.flow === 'flow-sweep')).toHaveLength(9);
     expect(s.okta.flows.map((f) => f.id)).toContain('flow-sweep'); // the report doesn't replace the sweep
+    // Week 4's phones: you, Dot and Otis by hand, then self-enrolment; Otis's lost one replaced from the drawer.
+    expect(Object.keys(s.okta.verify).sort()).toEqual(['dot', 'intern', 'otis']);
+    expect(s.okta.selfEnroll).toBe(true);
+    expect(s.phones.filter((p) => p.where === 'given').map((p) => p.owner ?? 'lost').sort()).toEqual(['dot', 'lost', 'otis']);
+    // Dot broke hers on day 19: Mr. Grisby approved a replacement, which was set up and handed to her.
+    expect(s.requests).toMatchObject([{ for: 'dot', approvedAt: expect.any(Number) }]);
+    expect(s.phones.find((p) => p.id === s.okta.verify.dot)).toMatchObject({ for: 'dot', where: 'given' });
+    expect(s.okta.verify.otis).toBe('phone-4');
     expect(s.okta.runs.find((r) => r.flow === 'flow-report')?.steps.at(-1)?.values.Message).toMatch(/Dot \(Accounts Clerk\)/);
     expect(s.accounts.wren?.enabled).toBe(false);
     expect(s.okta.runs.every((r) => r.steps.every((x) => !x.error))).toBe(true);

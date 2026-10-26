@@ -244,6 +244,8 @@ export interface Room {
   traySpot: Group;
   /** The mouse's left button, which goes down when you click the mouse. */
   mouseButton: Mesh;
+  /** The top drawer of the desk, which slides out. Its contents go in its 'drawer-inside' group. */
+  drawer: Object3D;
 }
 
 export async function buildRoom(): Promise<Room> {
@@ -283,7 +285,9 @@ export async function buildRoom(): Promise<Room> {
   scene.add(emptySpot(0.45, 0.32, 0.02, [-0.42, 1.25, WALL_Z + 0.02]));
 
   // The desk, centred, with its front edge at z = 0.
-  add(undefined, desk(DESK_TOP));
+  const sams = add(undefined, desk(DESK_TOP));
+  const drawer = sams.getObjectByName('drawer') ?? new Group();
+  pickables.set('drawer', drawer);
   const top = DESK_TOP;
   // Sam's CRT, a little off-centre, with its glass facing you.
   const set = computerSet(top);
@@ -387,5 +391,5 @@ export async function buildRoom(): Promise<Room> {
   add(undefined, tallPlant);
 
 
-  return { scene, pickables, glass: set.glass, led: set.led, screenLight, traySpot, mouseButton: rodent.leftButton };
+  return { scene, pickables, glass: set.glass, led: set.led, screenLight, traySpot, mouseButton: rodent.leftButton, drawer };
 }

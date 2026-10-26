@@ -1,8 +1,11 @@
 import './style.css';
 import { CLOSE, CLOSING_SOON, COMPANY, GAME_MINUTES_PER_SECOND, LOCKUP } from './features/game/data.ts';
-import { newGame, tick, type GameState } from './features/game/rules.ts';
+import { newGame, SELF, tick, type GameState } from './features/game/rules.ts';
 import { ROOM_ITEMS, SIPS } from './features/room3d/items.ts';
-import { goTo, mountRoom, screenElement, setAtComputer, setLamp, setMug, setScreen, setTools, showRoom, snapTo } from './features/room3d/view.ts';
+import { goTo, holdPhone, lowerPhone, mountRoom, openDrawer, phoneGlassElement, screenElement, setAtComputer, setLamp, setMug, setPhones, setScreen, setTools, showRoom, snapTo } from './features/room3d/view.ts';
+import { drawerSlots, held, needsPush, onMyWay, phoneName, roguePending } from './features/game/phones.ts';
+import { dayMood } from './features/game/people.ts';
+import { phoneScreen } from './features/ui/phone.ts';
 import { loadGame, saveGame } from './features/save/save.ts';
 import type { App } from './features/ui/app.ts';
 import { asleepScreen, computerScreen, darkScreen } from './features/ui/boot.ts';
@@ -10,7 +13,7 @@ import { refreshTimes } from './features/ui/desk.ts';
 import { powerAway } from './features/ui/power.ts';
 import { desktopScreen, notify } from './features/ui/desktop.ts';
 import { dayEndScreen, endingScreen } from './features/ui/endings.ts';
-import { announce, computerHud, pickInRoom, roomHud, roomKeys } from './features/ui/roomHud.ts';
+import { announce, computerHud, deskVisitor, pickInRoom, roomHud, roomKeys } from './features/ui/roomHud.ts';
 import { ambience, chime, click, keystroke, wake } from './features/ui/sound.ts';
 
 const page = document.querySelector<HTMLDivElement>('#app');
@@ -96,6 +99,18 @@ const app: App = {
     void goTo(atComputer ? 'computer' : ui.shot);
     setScreen(p === 'off' ? 'off' : p === 'asleep' ? 'asleep' : 'on');
     setTools(app.state.tools);
+    // The top drawer, open while you're looking into it, with whatever phones are still in it.
+    openDrawer(ui.view === 'room' && ui.shot === 'drawer' && !fullPage);
+    const buzzing = roguePending(app.state) || (needsPush(app.state) && ui.windows.some((w) => w.id === 'okta'));
+    const wanted = deskVisitor(app.state)?.phone;
+    void setPhones(drawerSlots(app.state.phones).map(({ id, slot }) => {
+      const x = app.state.phones.find((p) => p.id === id);
+      return { id, slot, glow: (x?.owner === SELF && buzzing) || id === wanted ? 2 : x?.setUp ? 1 : 0 };
+    }), app.state.phones.length > 0);
+    // The phone in your hand, held up to your face, its screen drawn on its glass.
+    const phoneUp = Boolean(ui.phoneUp && held(app.state)) && !fullPage;
+    if (phoneUp) void holdPhone(); else lowerPhone();
+    mount(phoneGlassElement(), phoneScreen(app), false);
     setLamp(!ui.lampOff);
     setMug(1 - (ui.sips ?? 0) / SIPS.length);
   },
@@ -130,8 +145,11 @@ function closingTime(before: GameState, after: GameState): void {
 }
 
 /** Did this tick change more than the clock? Then redraw; otherwise just move the times on. */
+const visitKey = (s: GameState) => { const v = deskVisitor(s); return v ? `${v.login}:${v.why}` : ''; };
+const approvals = (s: GameState) => s.requests.filter((r) => r.approvedAt !== undefined).length;
+const refusals = (s: GameState) => s.requests.filter((r) => r.refusedAt !== undefined).length;
 const bigChange = (a: GameState, b: GameState) =>
-  a.phase !== b.phase || a.outcomes.length !== b.outcomes.length || a.queue.join() !== b.queue.join() ||
+  visitKey(a) !== visitKey(b) || approvals(a) !== approvals(b) || refusals(a) !== refusals(b) || a.phase !== b.phase || a.outcomes.length !== b.outcomes.length || a.queue.join() !== b.queue.join() ||
   a.chats.join() !== b.chats.join() || a.notice !== b.notice ||
   b.queue.some((id) => a.tickets[id]?.messages.length !== b.tickets[id]?.messages.length);
 
@@ -148,7 +166,26 @@ setInterval(() => {
   if (bigChange(before, next)) { announce(app, before, next); app.set(next); }
   else { app.state = next; saveGame(next); app.refreshTimes(); }
   closingTime(before, next);
+  phoneNews(before, next);
 }, 1000);
+
+/** Someone turning up at your desk about a phone, or Mr. Grisby approving a replacement: said wherever you are. */
+function phoneNews(before: GameState, after: GameState): void {
+  const visit = deskVisitor(after);
+  const lines: [string, string][] = [];
+  if (visit && visitKey(before) !== visitKey(after)) {
+    // In their own words, and their own mood: on their way over.
+    lines.push([after.okta.users[visit.login]?.name ?? visit.login, onMyWay(after, visit, dayMood(visit.login, after.day).mood)]);
+  }
+  if (refusals(after) > refusals(before)) lines.push(['Mr. Grisby', 'No. Budget freeze. We spent it all on the new floor. Use a spare from your drawer.']);
+  if (approvals(after) > approvals(before)) lines.push(['Mr. Grisby', 'Approved. The replacement phone is in your top drawer. Try not to let anyone put it on a car roof.']);
+  for (const [from, text] of lines) {
+    chime();
+    notify(app, { app: 'chat', from, text });
+    if (app.ui.view !== 'computer') app.ui.note = `${from}: \u201C${text}\u201D`;
+  }
+  if (lines.length) app.rerender();
+}
 
 addEventListener('keydown', (e) => roomKeys(app, e));
 addEventListener('keydown', wake);
@@ -192,7 +229,7 @@ void mountRoom({
   pick: (id) => pickInRoom(app, id),
   hover: (id) => {
     const label = page.querySelector<HTMLElement>('[data-hover]');
-    if (label) label.textContent = id === 'tool' ? 'Something in the tray' : ROOM_ITEMS.find((i) => i.id === id)?.label ?? '';
+    if (label) label.textContent = id === 'tool' ? 'Something in the tray' : id?.startsWith('phone-') ? phoneName(app.state, id) : ROOM_ITEMS.find((i) => i.id === id)?.label ?? '';
   },
 }).then(() => app.rerender());
 app.rerender();

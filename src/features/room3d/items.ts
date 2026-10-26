@@ -2,7 +2,7 @@
  * What clicking something in the room does: sit at it, press it, tap it, look at it (a line of text),
  * pick it up and turn it over, or a little action of its own.
  */
-export type ItemKind = 'computer' | 'power' | 'mouse' | 'wall' | 'look' | 'pickup' | 'spin' | 'sway' | 'lamp' | 'sip';
+export type ItemKind = 'computer' | 'power' | 'mouse' | 'wall' | 'look' | 'pickup' | 'spin' | 'sway' | 'lamp' | 'sip' | 'drawer';
 
 export interface RoomItem {
   id: string;
@@ -33,8 +33,9 @@ export const ROOM_ITEMS: RoomItem[] = [
   { id: 'mug', label: 'Sam’s mug', kind: 'sip', says: () => 'WELL, SHIT.' },
   { id: 'tray', label: 'Ticket tray', kind: 'look', says: () => 'The ticket tray. Empty for now. It won’t stay that way.' },
   { id: 'plant', label: 'Plant', kind: 'sway', says: () => 'The leaves bob about. Mostly alive. Sam watered it on Fridays.' },
-  { id: 'phone', label: 'Where the phone was', kind: 'look', says: () => 'A clean rectangle in the dust where a phone used to be. Budget cuts.' },
+  { id: 'phone', label: 'Where the phone was', kind: 'look', says: (day) => (day >= 16 ? 'A clean rectangle in the dust where a phone used to be. The new ones are in the top drawer.' : 'A clean rectangle in the dust where a phone used to be. Budget cuts.') },
   { id: 'binders', label: 'Sam’s old binders', kind: 'look', says: () => 'Sam’s binders: \u201CPrinters 2016\u201D, \u201CPrinters 2017\u201D, \u201CPrinters (other)\u201D.' },
+  { id: 'drawer', label: 'Top drawer', kind: 'drawer', says: (day) => (day >= 16 ? 'The box of company phones, in their cardboard tray. Pick one up.' : 'Sam\u2019s drawer: a takeaway menu and some rubber bands. Not much else.') },
   { id: 'chair', label: 'Sam’s chair', kind: 'spin', says: () => 'It squeaks round. It still leans slightly to the left.' },
 ];
 

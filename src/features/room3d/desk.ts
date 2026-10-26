@@ -115,11 +115,30 @@ export function desk(top: number): Object3D {
   const heights = [space * 0.28, space * 0.34, space * 0.38];
   let y = under - gap;
   heights.forEach((h, i) => {
-    const out = i === 0 ? 0.012 : 0;
     const cy = y - h / 2;
-    g.add(panel(pw - 0.024, h, 0.02, drawerWood, [(ped.l + ped.r) / 2, cy, ped.front + 0.01 + out], 0.005));
-    g.add(knob([(ped.l + ped.r) / 2, cy, ped.front + 0.02 + out]));
     y -= h + gap;
+    if (i > 0) {
+      g.add(panel(pw - 0.024, h, 0.02, drawerWood, [(ped.l + ped.r) / 2, cy, ped.front + 0.01], 0.005));
+      g.add(knob([(ped.l + ped.r) / 2, cy, ped.front + 0.02]));
+      return;
+    }
+    // The top drawer is a real drawer: a box behind its front that slides out, with whatever's kept in it inside.
+    const drawer = new Group();
+    drawer.name = 'drawer';
+    drawer.position.set((ped.l + ped.r) / 2, cy, ped.front + 0.012);
+    drawer.add(panel(pw - 0.024, h, 0.02, drawerWood, [0, 0, 0.01], 0.005));
+    drawer.add(knob([0, 0, 0.02]));
+    const inner = new MeshStandardMaterial({ color: new Color('#5b3a22'), roughness: 0.85 });
+    const depth = 0.42;
+    const iw = pw - 0.06;
+    drawer.add(panel(iw, 0.008, depth, inner, [0, -h / 2 + 0.012, -depth / 2]));
+    for (const x of [-iw / 2, iw / 2]) drawer.add(panel(0.012, h - 0.03, depth, inner, [x, -0.008, -depth / 2]));
+    drawer.add(panel(iw, h - 0.03, 0.012, inner, [0, -0.008, -depth]));
+    const inside = new Group();
+    inside.name = 'drawer-inside';
+    inside.position.y = -h / 2 + 0.016;
+    drawer.add(inside);
+    g.add(drawer);
   });
 
   // Right end: open shelves between two sides, with a back.

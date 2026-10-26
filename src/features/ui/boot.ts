@@ -72,8 +72,9 @@ export function computerScreen(app: App): HTMLElement {
   const stage = (s: 'splash' | 'reveal' | 'login') => { root.dataset.stage = s; };
   const firstLoad = !ui.booted && app.hasSave;
 
-  // Logging in starts the working day (the office clock runs from now), except at the weekend.
-  const enter = (next = state) => {
+  // Logging in starts the working day (the office clock runs from now), except at the weekend. The game as it is now,
+  // not as it was when this screen was drawn: a locked screen stays up while the day goes on behind it.
+  const enter = (next = app.state) => {
     ui.booted = true;
     ui.power = 'on';
     const starting = next.phase === 'boot' || (next.phase === 'desktop' && !isWeekOver(next));

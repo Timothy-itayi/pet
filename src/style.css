@@ -1290,3 +1290,104 @@ button.profile-face:hover, button.profile-face:focus-visible { box-shadow: 0 0 0
 .flow-helpers { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
 .flow-helpers li { display: flex; justify-content: space-between; align-items: center; }
 .okta-actions { display: flex; gap: 6px; }
+
+/* The phone in your hand: the 3D phone, and its screen page laid over the glass. */
+.hold-canvas { position: fixed; inset: 0; z-index: 2; display: block; pointer-events: none; }
+.phone-glass { position: fixed; z-index: 4; transform-origin: 0 0; overflow: visible; background: #000; color: #111; font: 15px -apple-system, 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+.phone-glass[hidden] { display: none; }
+
+/* BurrowOS mobile: the company phone's screens, laid out at 320 by 480 and scaled onto the glass. */
+.pv { position: relative; width: 320px; height: 480px; display: flex; flex-direction: column; background: linear-gradient(160deg, #1b2a4a, #0b1222 70%); color: #fff; overflow: hidden; }
+.pv-status { display: flex; justify-content: space-between; padding: 3px 8px; font-size: 11px; background: #0006; }
+.pv-hello { flex: 1; display: grid; place-content: center; gap: 18px; border: 0; background: none; color: #fff; cursor: pointer; }
+.pv-hello-word { font: 300 54px 'Helvetica Neue', Helvetica, sans-serif; }
+.pv-hint { font-size: 13px; opacity: 0.7; }
+.pv-page { flex: 1; display: flex; flex-direction: column; background: #f2f2f7; color: #111; overflow-y: auto; }
+.pv-passcode { background: #0b1222; color: #fff; align-items: center; padding-top: 30px; gap: 14px; }
+.pv-title { margin: 14px 16px 8px; font-size: 17px; font-weight: 600; text-align: center; }
+.pv-dots { display: flex; gap: 14px; margin: 0; }
+.pv-dots span { width: 13px; height: 13px; border: 1.5px solid #fff; border-radius: 50%; }
+.pv-dots span.on { background: #fff; }
+.pv-keys { display: grid; grid-template-columns: repeat(3, 64px); gap: 12px 22px; margin-top: 8px; }
+.pv-key { width: 64px; height: 64px; border-radius: 50%; border: 1.5px solid #ffffff66; background: #ffffff14; color: #fff; font-size: 26px; cursor: pointer; }
+.pv-key:active { background: #ffffff55; }
+.pv-link { border: 0; background: none; color: #0a84ff; font-size: 14px; cursor: pointer; padding: 6px; }
+.pv-home { flex: 1; display: flex; flex-direction: column; justify-content: space-between; padding: 22px 12px 14px; }
+.pv-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px 6px; }
+.pv-app { display: grid; justify-items: center; gap: 5px; border: 0; background: none; color: #fff; font-size: 11px; cursor: pointer; }
+.pv-app-icon { display: grid; place-items: center; width: 56px; height: 56px; border-radius: 13px; font-size: 26px; font-weight: 700; box-shadow: 0 2px 6px #0007; }
+.pv-app-icon.store { background: linear-gradient(#36a3ff, #0a64e0); }
+.pv-app-icon.settings { background: linear-gradient(#a9aeb6, #6b7079); }
+.pv-app-icon.verify { background: #fff; }
+.pv-wallpaper-note { margin: 0; text-align: center; font-size: 11px; opacity: 0.6; }
+.pv-icon { display: inline-grid; place-items: center; width: var(--s); height: var(--s); border-radius: 50%; background: #1c3f94; color: #fff; font-size: calc(var(--s) * 0.55); font-weight: 900; flex: none; }
+.pv-head { display: flex; align-items: center; gap: 6px; min-height: 42px; padding: 0 10px; background: #f8f8fb; border-bottom: 1px solid #d8d8de; font-weight: 600; }
+.pv-head.navy { background: #1c3f94; color: #fff; border: 0; }
+.pv-head span { flex: 1; text-align: center; }
+.pv-back, .pv-plus { border: 0; background: none; color: inherit; font-size: 26px; line-height: 1; cursor: pointer; width: 28px; }
+.pv-head.navy .pv-back, .pv-head.navy .pv-plus { color: #fff; }
+.pv-search { margin: 10px; padding: 7px 10px; border-radius: 9px; background: #e3e3e9; color: #555; font-size: 14px; }
+.pv-listing { display: flex; align-items: center; gap: 10px; margin: 6px 12px; padding: 10px; background: #fff; border-radius: 12px; }
+.pv-listing > div { flex: 1; display: grid; gap: 2px; }
+.pv-sub { color: #6e6e76; font-size: 12px; display: block; }
+.pv-get { border: 0; border-radius: 14px; padding: 5px 16px; background: #e5e5ea; color: #0a84ff; font-weight: 700; cursor: pointer; }
+.pv-get.wide { margin: 14px auto; padding: 9px 40px; background: #1c3f94; color: #fff; }
+.pv-blurb { margin: 8px 14px; font-size: 13px; color: #333; }
+.pv-rows { list-style: none; margin: 12px 10px; padding: 0; background: #fff; border-radius: 12px; }
+.pv-rows li { display: flex; justify-content: space-between; align-items: center; padding: 11px 12px; border-bottom: 1px solid #ececf0; font-size: 14px; }
+.pv-rows li:last-child { border: 0; }
+.pv-choice { display: grid; gap: 2px; margin: 6px 12px; padding: 12px; text-align: left; background: #fff; border: 0; border-radius: 12px; cursor: pointer; }
+.pv-said { margin: 8px 12px; padding: 8px 10px; border-radius: 8px; background: #fff3cd; color: #5c4200; font-size: 13px; }
+.pv-said.ok { background: #dff3e4; color: #1d5b2c; }
+.pv-viewfinder { display: grid; place-items: center; height: 230px; margin: 12px; border-radius: 12px; background: #111; color: #ddd; outline: 3px dashed #ffffff55; outline-offset: -18px; }
+.pv-viewfinder.found { outline-color: #34c759; }
+.pv-viewfinder .okta-qr { transform: scale(1.3); }
+.pv-account { display: flex; gap: 10px; margin: 12px; padding: 12px; background: #fff; border-radius: 12px; }
+.pv-account > div { display: grid; gap: 2px; flex: 1; }
+.pv-org { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 8px; background: #c4561c; color: #fff; font-weight: 700; flex: none; }
+.pv-code { margin-top: 6px; font-size: 32px; letter-spacing: 1px; color: #1c3f94; }
+.pv-timer { height: 4px; border-radius: 2px; background: linear-gradient(90deg, #1c3f94 calc(var(--left) * 100%), #d8d8de 0); }
+.pv-empty { margin: 30px 20px; text-align: center; color: #6e6e76; }
+.pv-push { position: absolute; left: 8px; right: 8px; top: 26px; display: grid; gap: 6px; padding: 12px; background: #fffffff2; color: #111; border-radius: 14px; box-shadow: 0 8px 30px #0009; animation: pv-drop 0.35s ease-out; }
+@keyframes pv-drop { from { transform: translateY(-120%); } }
+.pv-push-head { display: flex; align-items: center; gap: 6px; font-size: 13px; }
+.pv-push-title { margin: 2px 0; font-size: 17px; font-weight: 700; }
+.pv-push dl { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; margin: 0; font-size: 13px; }
+.pv-push dt { color: #6e6e76; }
+.pv-push dd { margin: 0; }
+.pv-push-yes, .pv-push-no { padding: 9px; border-radius: 10px; border: 0; font-weight: 700; font-size: 14px; cursor: pointer; }
+.pv-push-yes { background: #1c3f94; color: #fff; }
+.pv-push-no { background: #ececf0; color: #b3261e; }
+/* Your phone, in the room or at the computer: a button to bring it up, and what to do with it once it's up. */
+.phone-chip { position: fixed; right: 16px; bottom: 16px; z-index: 5; font-size: 22px; }
+.phone-actions { position: fixed; right: 16px; bottom: 76px; z-index: 5; display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+/* Oktopus: the enrolment QR code. */
+.okta-enrol { display: flex; gap: 16px; align-items: flex-start; }
+.okta-enrol ol { margin: 6px 0; padding-left: 18px; }
+.okta-qr { display: grid; grid-template-columns: repeat(21, 6px); background: #fff; padding: 8px; border: 1px solid #ddd; flex: none; }
+.okta-qr span { width: 6px; height: 6px; }
+.okta-qr span.on { background: #111; }
+.okta-push-wait { display: grid; justify-items: center; text-align: center; gap: 8px; padding-top: 40px; }
+
+.pv-wrap { position: relative; width: 320px; height: 480px; }
+/* The physical home button sits below the glass: 63 points under it, 68 across, in the glass's own scale. */
+.pv-home-button { position: absolute; left: 126px; top: 511px; width: 68px; height: 68px; border-radius: 50%; border: 0; background: transparent; cursor: pointer; }
+.pv-home-button:focus-visible { outline: 3px solid #0a84ff; }
+/* Taking a picture: the glass flashes white. */
+.phone-glass.flash::after { content: ''; position: absolute; inset: 0; width: 320px; height: 480px; background: #fff; animation: pv-flash 0.45s ease-out forwards; pointer-events: none; }
+@keyframes pv-flash { from { opacity: 0.95; } to { opacity: 0; } }
+/* A broken phone: black, cracked across, and nothing on it. */
+.pv-broken { background: #050608; justify-content: center; align-items: center; }
+.pv-crack { position: absolute; inset: 0; width: 100%; height: 100%; background:
+  linear-gradient(118deg, transparent 49.6%, #ffffff55 49.8%, transparent 50.1%),
+  linear-gradient(62deg, transparent 39.7%, #ffffff44 39.9%, transparent 40.2%),
+  linear-gradient(160deg, transparent 69.7%, #ffffff3a 69.9%, transparent 70.2%),
+  radial-gradient(circle at 58% 44%, #ffffff30 0 6px, transparent 7px); }
+.pv-dead { position: relative; color: #ffffff66; font-size: 13px; }
+/* Someone at your desk about a phone. */
+.visitor { position: fixed; left: 16px; bottom: 76px; z-index: 5; display: flex; gap: 12px; align-items: center; max-width: min(420px, calc(100vw - 32px)); padding: 12px 14px; background: #fff8e8; color: #2a1d10; border: 2px solid #2a1d10; border-radius: 10px; box-shadow: 0 6px 20px #0008; animation: visitor-in 0.4s ease-out; }
+.visitor p { margin: 0 0 6px; }
+.visitor .portrait { border-radius: 50%; flex: none; }
+@keyframes visitor-in { from { transform: translateX(-30px); opacity: 0; } }
+.visitor-waiting { position: fixed; left: 50%; bottom: 14px; transform: translateX(-50%); z-index: 5; margin: 0; padding: 6px 12px; background: #fff8e8; color: #2a1d10; border-radius: 8px; box-shadow: 0 4px 12px #0007; }
+.phone-request { margin: 0; padding: 6px 10px; background: #fff8e8; color: #2a1d10; border-radius: 6px; }

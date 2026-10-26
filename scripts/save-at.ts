@@ -10,7 +10,8 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { DAYS } from '../src/features/game/data.ts';
 import type { Department } from '../src/features/game/directory.ts';
 import { withGoodFlows } from '../src/features/game/flows.ts';
-import { addApp, addGroup, addRule, assignApp, createFromHr, requireMfa, resetMfa, setActive, updateFromHr } from '../src/features/game/identity.ts';
+import { addApp, addGroup, addRule, assignApp, createFromHr, requireMfa, resetMfa, setActive, setSelfEnroll, updateFromHr } from '../src/features/game/identity.ts';
+import { APPROVAL_MINUTES, PHONES_DAY, phoneFor, requestReplacement, takeBroken } from '../src/features/game/phones.ts';
 import { CATALOG, hrOn } from '../src/features/game/oktopus.ts';
 import {
   askForTicket, clockOut, fixFor, goHome, goTo, issueOf, newGame, next, resetPassword, resolve, setEnabled, suggest, tick, ticketById, unlockAccount, type GameState,
@@ -39,14 +40,21 @@ function admin(s: GameState, id: string): GameState {
     case 'unlock': return unlockAccount(s, t.who);
     case 'reset': return resetPassword(s, t.who, { mustChange: true, unlock: true });
     case 'disable': return (t.subjects ?? ['sam']).reduce((x, l) => setEnabled(x, l, false), s);
-    case 'mfa-policy': return requireMfa(s, 'Everyone', true);
+    case 'mfa-policy': { const on = requireMfa(s, 'Everyone', true); return on.day >= PHONES_DAY ? setSelfEnroll(on, true) : on; }
     case 'flow': return t.flow ? withGoodFlows(s, t.flow, t.everywhere) : s;
     case 'okta-setup': return teams(s, t.team);
     case 'okta-app': return app(s, t.app, t.team);
     case 'joiner': return createFromHr(s, t.subject ?? '');
     case 'mover': return updateFromHr(s, t.subject ?? '');
     case 'leaver': return setActive(s, t.subject ?? '', false);
-    case 'mfa': return resetMfa(s, t.who);
+    case 'mfa': { const reset = resetMfa(s, t.who); return issueOf(t).id === 'mfa' && t.day >= PHONES_DAY ? phoneFor(reset, t.who) : reset; }
+    case 'verify': return phoneFor(s, t.subject ?? t.who);
+    case 'replace': {
+      const who = t.subject ?? t.who;
+      const broken = s.phones.find((p) => p.owner === who && p.broken);
+      const asked = broken ? requestReplacement(takeBroken(s, broken.id), broken.id) : s;
+      return phoneFor(tick(asked, APPROVAL_MINUTES), who);
+    }
     case undefined: return s;
   }
 }
