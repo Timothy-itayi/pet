@@ -1,3 +1,4 @@
+import { NEW_STAFF_TICKETS } from './newStaff.ts';
 import { REASONING } from './reasoning.ts';
 import type { Issue, Ticket } from './types.ts';
 
@@ -937,7 +938,7 @@ export const ISSUES: Issue[] = [
 export const TICKETS: Ticket[] = [
   // Day 1
   {
-    id: 't101', day: 1, at: '9:05', who: 'dot', via: 'walkup', where: 'Finance corner', priority: 'normal', issue: 'paper-jam', mood: 1,
+    id: 't101', day: 1, at: '9:05', who: 'dot', via: 'tray', priority: 'normal', issue: 'paper-jam', mood: 1,
     title: 'The printer is broken',
     message: 'The printer’s out of ink. I pressed print three times and nothing!',
     details: [
@@ -947,7 +948,7 @@ export const TICKETS: Ticket[] = [
     workaround: 'Send it to the printer upstairs for now',
   },
   {
-    id: 't102', day: 1, at: '9:50', who: 'juniper', via: 'tray', priority: 'high', issue: 'airplane-mode', mood: 2,
+    id: 't102', day: 1, at: '9:45', who: 'juniper', via: 'tray', priority: 'high', issue: 'airplane-mode', mood: 2,
     title: 'The internet is down!!',
     message: 'Internet down for the WHOLE office. Please fix ASAP.',
     details: [
@@ -957,7 +958,7 @@ export const TICKETS: Ticket[] = [
     workaround: 'Let her use the hot-desk PC for now',
   },
   {
-    id: 'f101', day: 1, at: '11:30', who: 'biscuit', via: 'floor', where: 'Kitchen', priority: 'normal', issue: 'mouse-battery', mood: 0,
+    id: 'f101', day: 1, at: '10:25', who: 'biscuit', via: 'floor', where: 'Kitchen', priority: 'normal', issue: 'mouse-battery', mood: 0,
     title: 'Mouse stopped working',
     message: 'Oh! You’re here! Can you look at my mouse real quick? It just stopped.',
     details: [
@@ -1249,7 +1250,7 @@ export const TICKETS: Ticket[] = [
     workaround: 'Let her work from the hot-desk PC',
   },
   {
-    id: 't505', day: 5, at: '11:50', who: 'otis', via: 'walkup', where: 'Meeting room', priority: 'normal', issue: 'default-printer', mood: 1,
+    id: 't505', day: 5, at: '11:10', who: 'otis', via: 'walkup', where: 'Meeting room', priority: 'normal', issue: 'default-printer', mood: 1,
     title: 'My prints go upstairs',
     message: 'Every time I print, it comes out on the floor above. I have climbed those stairs six times today. Hoo.',
     details: [
@@ -1501,7 +1502,7 @@ export const TICKETS: Ticket[] = [
     workaround: 'Let her use the hot-desk PC',
   },
   {
-    id: 't1004', day: 10, at: '11:50', who: 'marlo', via: 'walkup', where: 'Meeting room', priority: 'normal', issue: 'monitor-input', mood: 1,
+    id: 't1004', day: 10, at: '11:10', who: 'marlo', via: 'walkup', where: 'Meeting room', priority: 'normal', issue: 'monitor-input', mood: 1,
     title: 'Big screen blank before the board',
     message: 'The board meeting is in five minutes and the big screen is blank. Again. I’m starting to take it personally.',
     details: [
@@ -1546,7 +1547,7 @@ export const TICKETS: Ticket[] = [
     message: 'The investors loved Marketing on Oktopus. Now they want everyone on it. Everyone. Even Otis. Today, please. Honk.',
     details: [
       { label: 'Oktopus', text: 'Marketing only.' },
-      { label: 'HR file', text: 'Ten people across six departments, including you.' },
+      { label: 'HR file', text: 'Fourteen people across six departments, including you.' },
       { label: 'Who', text: 'Everyone in the HR file. Yes, you too.', ask: 'who' },
       { label: 'Teams', text: 'Every department gets its own group, so apps can go to teams later.', ask: 'groups' },
     ],
@@ -1911,7 +1912,7 @@ export const TICKETS: Ticket[] = [
     workaround: 'Tell her to ignore it',
   },
   {
-    id: 't1603', day: 16, at: '10:40', who: 'biscuit', via: 'walkup', where: 'Kitchen', priority: 'normal', issue: 'monitor-input', mood: 0,
+    id: 't1603', day: 16, at: '10:30', who: 'biscuit', via: 'walkup', where: 'Kitchen', priority: 'normal', issue: 'monitor-input', mood: 0,
     title: 'Kitchen telly has gone blue!!',
     message: 'The kitchen screen for the menu just says “No signal”!! Everyone’s asking what soup it is!!',
     details: [
@@ -2630,6 +2631,8 @@ export const TICKETS: Ticket[] = [
     ],
     workaround: 'Type the list out by hand for Otis',
   },
+  // Clover, Moss, Tansy and Hector's everyday problems, and a few more from the old hands, to fill the mornings.
+  ...NEW_STAFF_TICKETS,
 ];
 
 // Sam's method, written into every kind of problem (see reasoning.ts).

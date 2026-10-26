@@ -30,6 +30,10 @@ const BASE: HrRow[] = [
   { employeeId: 'EMP-1007', login: 'marlo', name: 'Marlo', dept: 'Sales', title: 'Sales Lead', manager: 'EMP-1001', status: 'active' },
   { employeeId: 'EMP-1008', login: 'biscuit', name: 'Biscuit', dept: 'Operations', title: 'Office Assistant', manager: 'EMP-1001', status: 'active' },
   { employeeId: 'EMP-1009', login: 'pip', name: 'Pip', dept: 'Operations', title: 'Operations Assistant', manager: 'EMP-1001', status: 'active' },
+  { employeeId: 'EMP-1014', login: 'clover', name: 'Clover', dept: 'Operations', title: 'Warehouse Supervisor', manager: 'EMP-1001', status: 'active' },
+  { employeeId: 'EMP-1015', login: 'moss', name: 'Moss', dept: 'Operations', title: 'Delivery Driver', manager: 'EMP-1014', status: 'active' },
+  { employeeId: 'EMP-1016', login: 'tansy', name: 'Tansy', dept: 'Sales', title: 'Account Manager', manager: 'EMP-1007', status: 'active' },
+  { employeeId: 'EMP-1017', login: 'hector', name: 'Hector', dept: 'Finance', title: 'Payroll Officer', manager: 'EMP-1003', status: 'active' },
   { employeeId: 'EMP-0042', login: 'sam', name: 'Sam', dept: 'IT', title: 'IT Administrator', manager: 'EMP-1001', status: 'terminated' },
   { employeeId: 'EMP-1010', login: 'intern', name: 'Intern (you)', dept: 'IT', title: 'IT Intern', manager: 'EMP-1001', status: 'active' },
 ];

@@ -1008,6 +1008,9 @@ export function parseSave(raw: string | null): GameState | undefined {
     // Saves from before company phones: none yet (they turn up at the start of day 16), nobody on Oktopus Verify.
     s.phones ??= [];
     s.requests ??= [];
+    // Saves from before Clover, Moss, Tansy and Hector joined: neutral with them, and a fresh account each.
+    for (const k of Object.keys(VILLAGERS)) if (s.bonds) s.bonds[k as VillagerId] ??= 0;
+    if (s.accounts) for (const [k, a] of Object.entries(newAccounts())) s.accounts[k] ??= a;
     // Saves from before direct pings were kept: none yet.
     s.pings ??= [];
     // Saves from before phones kept their place in the tray: the first six go back where they came from.

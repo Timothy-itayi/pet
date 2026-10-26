@@ -103,6 +103,18 @@ export const VILLAGERS = {
   grisby: { opener: 'Pop by my office. Social call. Bring your toolkit.', name: MANAGER,
     fond: 'Ah, my star intern. Unpaid star, but a star.',
     grudge: 'Make this quick. I have a meeting about you.' },
+  clover: { opener: 'Got a minute? Two, if you count the walk. I’ll count it.', name: 'Clover',
+    fond: 'You again. Good. You’ve never moved my label printer. Counted.',
+    grudge: 'I’ve put you on the clipboard. Under “incidents”. Counted.' },
+  moss: { opener: 'hm hm hmmm. you about, chief? got a minute between drops', name: 'Moss',
+    fond: 'Chief! Hm hm hmmm. Brought you a coffee from the garage. It’s been in the van a bit.',
+    grudge: 'Chief. Hm. No humming today. You know why.' },
+  tansy: { opener: 'Quick one before my next call. Free? Let’s close this.', name: 'Tansy',
+    fond: 'My favourite person in IT! Which, I know, is a small field. Deal?',
+    grudge: 'I’ve got a call in five, so I’ll be brief: you owe me one. Shake on it? No? Fine.' },
+  hector: { opener: 'Excuse me. Are you free? I would like to say something. Verbally first, then in writing.', name: 'Hector',
+    fond: 'Oh, it’s you. Good. Thank you for last time. I wrote it down.',
+    grudge: 'I have noted what happened. In writing. With the time.' },
 } satisfies Record<string, Villager>;
 export type VillagerId = keyof typeof VILLAGERS;
 
@@ -283,14 +295,14 @@ export const JOBS: Job[] = [
     title: 'IT Support Technician',
     company: 'Big Ocean Corp',
     blurb: 'Fast-paced team supporting 2,000 staff. Accounts, access and networking experience a must.',
-    needs: { devices: 132, networks: 70, access: 130 },
+    needs: { devices: 200, networks: 108, access: 150 },
   },
   {
     id: 'lighthouse',
     title: 'Junior Security Analyst',
     company: 'Lighthouse Security',
     blurb: 'Help small companies spot phishing, lock down sign-ins and clean up after leavers. You\u2019ll need to know access inside out.',
-    needs: { access: 145 },
+    needs: { access: 168 },
   },
 ];
 
