@@ -8,7 +8,7 @@ import { monitorNote as samsNote } from './notes.ts';
 /** The CRT's glass: where the game's computer screen shows through. Width and height in metres. */
 export const GLASS = { w: 0.32, h: 0.24 } as const;
 /** How far back from its old spot the computer sits, to leave room for the keyboard. */
-export const COMPUTER_Z = -0.07;
+export const COMPUTER_Z = -0.15;
 
 const BEIGE = '#d8cdb3';
 const SHADE = '#c4b99e';
@@ -118,6 +118,10 @@ export function computerSet(top: number): { group: Group; glass: Mesh; powerButt
   const powerButton = new Mesh(new CylinderGeometry(0.016, 0.016, 0.012, 48), new MeshStandardMaterial({ color: new Color('#a8a08c'), roughness: 0.5 }));
   powerButton.rotation.x = Math.PI / 2;
   powerButton.position.set(0.17, top + 0.05, z - 0.116);
+  // An invisible, wider disc over the button, so a click just off its edge still counts.
+  const reach = new Mesh(new CylinderGeometry(0.03, 0.03, 0.012, 24), new MeshBasicMaterial({ visible: false }));
+  reach.position.y = 0.004;
+  powerButton.add(reach);
   const led = new MeshStandardMaterial({ color: new Color('#203a24'), emissive: new Color('#7fdc7f'), emissiveIntensity: 0 });
   const ledMesh = new Mesh(new BoxGeometry(0.012, 0.006, 0.004), led);
   ledMesh.position.set(0.12, top + 0.05, z - 0.118);

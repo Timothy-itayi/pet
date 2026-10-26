@@ -1,8 +1,10 @@
 import { COMPANY, DAYS } from '../game/data.ts';
 import { goTo, isWeekOver, newGame, weekday, weekOf } from '../game/rules.ts';
 import type { App } from './app.ts';
+import { SAMS_MAIL } from './panels.ts';
 import { morningNotes, openApp } from './desktop.ts';
 import { h } from './dom.ts';
+import { logo } from './browser.ts';
 
 
 /** An old machine's BIOS, line by line, with how long each one takes (ms). */
@@ -24,6 +26,20 @@ const SPLASH: [string, number][] = [
 const REVEAL_MS = 3200;
 
 const dayLine = (day: number) => (day > DAYS ? 'Saturday. Of course.' : `${weekday(day)}, week ${weekOf(day)}`);
+
+/** "New game" throws away your progress, so it's a quiet link that asks first. */
+function newGameLink(start: () => void): HTMLElement {
+  const box = h('p', { class: 'login-new' });
+  const ask = () => box.replaceChildren(
+    'Start over from day 1? Your progress will be lost. ',
+    h('button', { class: 'link', type: 'button', 'data-testid': 'new-game-yes', onclick: start }, 'Yes, start over'),
+    ' · ',
+    h('button', { class: 'link', type: 'button', 'data-autofocus': true, onclick: () => { box.replaceChildren(link()); } }, 'No'),
+  );
+  const link = () => h('button', { class: 'link', type: 'button', 'data-testid': 'new-game', onclick: () => { ask(); box.querySelector<HTMLElement>('[data-autofocus]')?.focus(); } }, 'New game');
+  box.append(link());
+  return box;
+}
 
 /** Off: just dark glass. The power button is on the case. */
 export function darkScreen(): HTMLElement {
@@ -57,13 +73,13 @@ export function computerScreen(app: App): HTMLElement {
   const log = h('pre', { class: 'boot-log', 'aria-live': 'polite' });
   const status = h('p', { class: 'splash-status', 'aria-live': 'polite' });
   const splash = h('div', { class: 'splash' },
-    h('div', { class: 'os-logo', 'aria-hidden': 'true' }),
+    h('div', { class: 'os-logo', 'aria-hidden': 'true' }, logo(88)),
     h('p', { class: 'splash-name' }, 'BurrowOS ', h('b', {}, '2000')),
     h('p', { class: 'splash-edition' }, 'Professional'),
     h('div', { class: 'splash-bar', 'aria-hidden': 'true' }, h('span')),
     status);
   const reveal = h('div', { class: 'reveal', 'aria-hidden': 'true' },
-    h('div', { class: 'os-logo' }),
+    h('div', { class: 'os-logo' }, logo(88)),
     h('p', { class: 'reveal-hello' }, 'Welcome'),
     h('p', { class: 'reveal-day' }, dayLine(state.day)));
   const login = h('form', { class: 'login', 'data-testid': 'login' });
@@ -83,6 +99,8 @@ export function computerScreen(app: App): HTMLElement {
     app.set(s);
     // The last Saturday: Mr. Grisby's email about The Conversation is waiting, open, so nobody misses the ending.
     if (isWeekOver(s) && s.phase === 'desktop') openApp(app, 'mail');
+    // Your first morning: Sam's email is waiting, open. It's how Sam went about every problem, and the duck.
+    if (starting && s.day === 1) { ui.mailDay = SAMS_MAIL; openApp(app, 'mail'); }
   };
   login.addEventListener('submit', (e) => { e.preventDefault(); enter(); });
 
@@ -101,8 +119,9 @@ export function computerScreen(app: App): HTMLElement {
       h('div', { class: 'row' },
         h('button', { class: 'btn primary', type: 'submit', 'data-testid': 'log-in' },
           firstLoad ? (isWeekOver(state) || state.phase === 'ending' ? 'Continue' : `Continue (Day ${state.day})`) : 'Log in'),
-        firstLoad && h('button', { class: 'btn', type: 'button', onclick: () => enter(newGame()) }, 'New game')),
+      ),
     );
+    if (firstLoad) login.append(newGameLink(() => enter(newGame())));
     // Outside the form: the form's fade-in would otherwise pin this to the form instead of the bottom of the screen.
     root.append(h('p', { class: 'login-foot' }, `${COMPANY} \u00b7 ${dayLine(state.day)}`));
     login.querySelector<HTMLElement>('[data-autofocus]')?.focus();
@@ -113,18 +132,21 @@ export function computerScreen(app: App): HTMLElement {
     queueMicrotask(showLogin);
     return root;
   }
-  // It's old. It takes its time, and there's no hurrying it.
+  // It's old. It takes its time, and there's no hurrying it. After your first two mornings you've seen it: a quick boot.
+  const quick = state.day > 2;
   let at = 300;
-  for (const [i, [line, wait]] of BIOS.entries()) {
+  for (const [i, [line, wait]] of (quick ? BIOS.slice(-1) : BIOS).entries()) {
     setTimeout(() => { log.textContent += (i ? '\n' : '') + line; }, at);
     at += wait;
   }
-  setTimeout(() => stage('splash'), at);
-  for (const [line, wait] of SPLASH) {
-    setTimeout(() => { status.textContent = line; }, at);
-    at += wait;
+  if (!quick) {
+    setTimeout(() => stage('splash'), at);
+    for (const [line, wait] of SPLASH) {
+      setTimeout(() => { status.textContent = line; }, at);
+      at += wait;
+    }
   }
   setTimeout(() => stage('reveal'), at);
-  setTimeout(showLogin, at + REVEAL_MS);
+  setTimeout(showLogin, at + (quick ? REVEAL_MS / 2 : REVEAL_MS));
   return root;
 }

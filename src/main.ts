@@ -1,6 +1,7 @@
 import './style.css';
 import { CLOSE, CLOSING_SOON, COMPANY, GAME_MINUTES_PER_SECOND, LOCKUP } from './features/game/data.ts';
-import { newGame, SELF, tick, type GameState } from './features/game/rules.ts';
+import { newPosts, personName } from './features/game/channels.ts';
+import { newGame, ping, SELF, tick, type GameState } from './features/game/rules.ts';
 import { ROOM_ITEMS, SIPS } from './features/room3d/items.ts';
 import { goTo, holdPhone, lowerPhone, mountRoom, openDrawer, phoneGlassElement, screenElement, setAtComputer, setLamp, setMug, setPhones, setScreen, setTools, showRoom, snapTo } from './features/room3d/view.ts';
 import { drawerSlots, held, needsPush, onMyWay, phoneName, roguePending } from './features/game/phones.ts';
@@ -120,6 +121,9 @@ const app: App = {
   },
 };
 
+/** How much faster the clock runs while there's nothing to do. */
+const QUIET_SPEEDUP = 2;
+
 /** Long enough for the camera to pull back and to read the caption. */
 const WIND_DOWN_MS = 3200;
 
@@ -153,21 +157,37 @@ const bigChange = (a: GameState, b: GameState) =>
   a.chats.join() !== b.chats.join() || a.notice !== b.notice ||
   b.queue.some((id) => a.tickets[id]?.messages.length !== b.tickets[id]?.messages.length);
 
-// The office clock: it runs from when you log in until security locks up at 6pm, and stops while you're holding something or in another tab.
+// The office clock: it runs from when you log in until security locks up at 6pm, and stops while you're paused, holding something or in another tab.
 setInterval(() => {
   const { ui } = app;
+  if (ui.paused !== undefined) return;
   // The computer's own clock runs regardless: left on while you're away, it locks itself and then sleeps, right there on the monitor.
   const power = powerAway(ui.power, ui.leftAt, performance.now());
   if (power !== ui.power) { ui.power = power; app.rerender(); }
   if (!ui.booted || ui.inspecting || document.hidden) return;
-  const next = tick(app.state, GAME_MINUTES_PER_SECOND);
+  // Nothing waiting on you, nobody at your desk: quiet time passes twice as fast, so you're not sat watching the clock.
+  const s = app.state;
+  const quiet = !s.queue.length && !s.chats.length && !s.outcomes.length && !deskVisitor(s);
+  const next = tick(s, GAME_MINUTES_PER_SECOND * (quiet ? QUIET_SPEEDUP : 1));
   if (next === app.state) return;
   const before = app.state;
   if (bigChange(before, next)) { announce(app, before, next); app.set(next); }
   else { app.state = next; saveGame(next); app.refreshTimes(); }
   closingTime(before, next);
   phoneNews(before, next);
+  channelChat(before, next, quiet);
 }, 1000);
+
+/**
+ * Colleagues chatting (see channels.ts): when the clock passes a post's time and nothing is waiting on you, it pops
+ * up and opens its channel when clicked. Otherwise it just waits in the channel as unread.
+ */
+function channelChat(before: GameState, after: GameState, quiet: boolean): void {
+  const fresh = before.day === after.day ? newPosts(after.day, before.clock, after.clock) : [];
+  if (!fresh.length) return;
+  if (quiet) for (const p of fresh) notify(app, { app: 'chat', from: `Burrow Chat \u00b7 #${p.channel}`, text: `${personName(p.from)}: ${p.text}`, channel: p.channel });
+  app.rerender();
+}
 
 /** Someone turning up at your desk about a phone, or Mr. Grisby approving a replacement: said wherever you are. */
 function phoneNews(before: GameState, after: GameState): void {
@@ -181,14 +201,28 @@ function phoneNews(before: GameState, after: GameState): void {
   if (approvals(after) > approvals(before)) lines.push(['Mr. Grisby', 'Approved. The replacement phone is in your top drawer. Try not to let anyone put it on a car roof.']);
   for (const [from, text] of lines) {
     chime();
-    notify(app, { app: 'chat', from, text });
+    // Kept as a direct message too, so it can be found again in Burrow Chat.
+    app.state = ping(app.state, from, text);
+    notify(app, { app: 'chat', from: `Burrow Chat \u00b7 ${from}`, text, dm: from });
     if (app.ui.view !== 'computer') app.ui.note = `${from}: \u201C${text}\u201D`;
   }
-  if (lines.length) app.rerender();
+  if (lines.length) { saveGame(app.state); app.rerender(); }
 }
 
 addEventListener('keydown', (e) => roomKeys(app, e));
 addEventListener('keydown', wake);
+// At the computer, Tab stays inside the window in front: it never wanders into windows behind it, or off the screen.
+addEventListener('keydown', (e) => {
+  if (e.key !== 'Tab' || app.ui.view !== 'computer' || app.ui.flying) return;
+  const win = screenElement().querySelector<HTMLElement>('.win.front:not([hidden])');
+  if (!win) return;
+  const stops = [...win.querySelectorAll<HTMLElement>('button, [href], input, select, textarea, summary, [tabindex]:not([tabindex="-1"])')]
+    .filter((x) => !x.matches(':disabled') && x.offsetParent !== null);
+  if (!stops.length) return;
+  const at = stops.indexOf(document.activeElement as HTMLElement);
+  const next = at < 0 ? stops[e.shiftKey ? stops.length - 1 : 0] : e.shiftKey && at === 0 ? stops.at(-1) : !e.shiftKey && at === stops.length - 1 ? stops[0] : undefined;
+  if (next) { e.preventDefault(); next.focus({ preventScroll: true }); }
+});
 // At the computer, the first Tab goes into the screen, not to the "stand up" arrow beside it.
 addEventListener('keydown', (e) => {
   if (e.key !== 'Tab' || e.shiftKey || app.ui.view !== 'computer' || app.ui.flying || document.activeElement !== document.body) return;

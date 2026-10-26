@@ -36,6 +36,10 @@ export interface Fix {
   ruledOut?: string;
   /** What they say when it works, if not the usual thanks. */
   works?: string;
+  /** In the notebook, what this fix would mean is wrong, in plain words ("Airplane mode is on"). The label if not given. */
+  suspect?: string;
+  /** How much it costs to test: 1 a quick check, 2 a bit of effort, 3 drastic. Sam tested the simplest first. */
+  effort?: 1 | 2 | 3;
 }
 
 /** A work note the player types, which becomes a runbook page. It counts if it says what was really wrong. */
@@ -52,6 +56,10 @@ export interface Ask {
   text: string;
   /** Their answer when this ticket has nothing to say about it. */
   none: string;
+  /** Which of Sam's steps it is: gathering context ("what changed?"), or isolating ("one person or everyone?"). */
+  step?: 'context' | 'isolate';
+  /** The suspects (fix ids) this question's answer rules out, usually. Never the ticket's real cause. */
+  rulesOut?: string[];
 }
 
 /** Something you can see on the ticket: what's on their screen, a sticker, a cable. */

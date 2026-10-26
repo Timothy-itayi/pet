@@ -73,8 +73,8 @@ function handle(s: GameState, id: string, act: Act): GameState {
 }
 /** Day 1: Dot's printer ticket, submitted at 9:05. */
 const dotsTicket = (s = atDesk()) => until(s, '9:06');
-/** The same morning, with Dot already your friend: friends message you on chat instead. */
-const dotAsFriend = () => { const s = atDesk(); return { ...s, bonds: { ...s.bonds, dot: 1 } }; };
+/** The same morning, with Biscuit already your friend: friends message you on chat instead (Dot's is a tray ticket, so hers never would). */
+const biscuitAsFriend = () => { const s = atDesk(); return { ...s, bonds: { ...s.bonds, biscuit: 1 } }; };
 const solve = (s: GameState, id: string) => handle(s, id, (x, i) => fix(admin(x, i), i, correct(i)));
 /** Run the clock to a time, dealing with everything that turns up on the way except the one under test. */
 function serveUntil(s: GameState, hm: string, except?: string): GameState {
@@ -121,13 +121,13 @@ describe('the queue and the clock', () => {
     let s = atDesk();
     expect(s.clock).toBe(9 * 60);
     expect(s.queue).toEqual([]);
-    s = serveUntil(s, '9:50');
+    s = serveUntil(s, '9:45');
     expect(s.queue).toEqual(['t102']);
     expect(ticketState(s, 't102')).toMatchObject({ status: 'new', mood: 2 });
   });
 
   it('lets people wait: in IT, waiting is normal, so leaving a ticket a while doesn\u2019t make anyone crosser', () => {
-    const s = until(serveUntil(atDesk(), '9:50'), '13:00');
+    const s = until(serveUntil(atDesk(), '9:45'), '13:00');
     expect(ticketState(s, 't102').mood).toBe(2);
     expect(s.queue).toContain('t102');
     expect(s.outcomes).toEqual([]);
@@ -145,7 +145,7 @@ describe('the queue and the clock', () => {
   });
 
   it('replying marks the ticket open and tells them it\u2019s in hand', () => {
-    const s = reply(serveUntil(atDesk(), '9:50'), 't102');
+    const s = reply(serveUntil(atDesk(), '9:45'), 't102');
     expect(ticketState(s, 't102').status).toBe('open');
     expect(ticketState(s, 't102').messages.at(-1)).toMatchObject({ from: 'you', text: REPLIES.first });
   });
@@ -156,7 +156,7 @@ describe('the queue and the clock', () => {
   });
 
   it('ends the day when the building locks at 6 and carries anything unresolved over to tomorrow, no crosser', () => {
-    let s = reply(serveUntil(atDesk(), '9:50'), 't102');
+    let s = reply(serveUntil(atDesk(), '9:45'), 't102');
     while (s.phase === 'desk') s = s.outcomes.length ? next(s) : tick(reply(s, 't102'), 50); // keep her updated all day
     expect(s.clock).toBe(LOCKUP);
     expect(s.today.overtime).toBe(60);
@@ -191,29 +191,30 @@ describe('staying late', () => {
 describe('chat', () => {
   it('is only for friends: everyone else submits a ticket', () => {
     expect(until(atDesk(), '9:05')).toMatchObject({ queue: ['t101'], chats: [] });
-    const s = until(dotAsFriend(), '9:05');
-    expect(s).toMatchObject({ queue: [], chats: ['t101'] });
-    expect(ticketState(s, 't101').messages[0]?.text).toBe(VILLAGERS.dot.opener);
-    expect(ticketState(s, 't101').messages[1]?.text).toContain(ticketById('t101').message);
-    expect(fix(s, 't101', 'jam')).toBe(s); // a chat isn't a ticket: you can't fix it until it's logged
+    expect(until(atDesk(), '10:25')).toMatchObject({ queue: ['t101', 't102', 'f101'], chats: [] });
+    const s = until(biscuitAsFriend(), '10:25');
+    expect(s).toMatchObject({ queue: ['t101', 't102'], chats: ['f101'] });
+    expect(ticketState(s, 'f101').messages[0]?.text).toBe(VILLAGERS.biscuit.opener);
+    expect(ticketState(s, 'f101').messages[1]?.text).toContain(ticketById('f101').message);
+    expect(fix(s, 'f101', 'battery')).toBe(s); // a chat isn't a ticket: you can't fix it until it's logged
   });
 
   it('"Please log a ticket" annoys a friend, but it\u2019s the rule, not your fault: it lands in your queue and counts', () => {
-    let s = next(askForTicket(until(dotAsFriend(), '9:05'), 't101'));
+    let s = next(askForTicket(until(biscuitAsFriend(), '10:25'), 'f101'));
     expect(s.chats).toEqual([]);
-    s = until(s, '9:40');
-    expect(s.queue).toContain('t101');
-    expect(ticketState(s, 't101')).toMatchObject({ mood: 1, logged: true, asked: true, slips: 0 });
-    expect(ticketState(s, 't101').messages.at(-1)?.text).toMatch(/ticket you asked for/);
-    s = next(fix(s, 't101', 'jam'));
+    s = until(s, '11:00');
+    expect(s.queue).toContain('f101');
+    expect(ticketState(s, 'f101')).toMatchObject({ mood: 1, logged: true, asked: true, slips: 0 });
+    expect(ticketState(s, 'f101').messages.at(-1)?.text).toMatch(/ticket you asked for/);
+    s = next(fix(s, 'f101', 'battery'));
     expect(s.today.resolved).toBe(1);
-    expect(relation(s, 'dot')).toBe('friend');
+    expect(relation(s, 'biscuit')).toBe('friend');
   });
 
   it('waiting on chat doesn\u2019t upset them either', () => {
-    const s = until(dotAsFriend(), '12:00');
-    expect(s.chats).toContain('t101');
-    expect(ticketState(s, 't101').mood).toBe(0);
+    const s = until(biscuitAsFriend(), '12:00');
+    expect(s.chats).toContain('f101');
+    expect(ticketState(s, 'f101').mood).toBe(0);
   });
 });
 
@@ -234,7 +235,7 @@ describe('troubleshooting with the caller', () => {
   });
 
   it('someone with an urgent ticket gets back to you quicker', () => {
-    const s = ask(serveUntil(atDesk(), '9:50'), 't102', 'others'); // Juniper's is high priority
+    const s = ask(serveUntil(atDesk(), '9:45'), 't102', 'others'); // Juniper's is high priority
     expect(ticketState(s, 't102').caller).toBeUndefined();
     expect(ticketState(s, 't102').messages.at(-1)).toMatchObject({ from: 'them', text: 'Everyone else is happily online.' });
   });
@@ -425,7 +426,7 @@ describe('money and endings', () => {
     expect(apply(withNotes, 'ocean').ending).toBe('hired');
     expect(apply(fixesOnly, 'lighthouse')).toBe(fixesOnly); // a security job needs access written up, not just done
     expect(apply(withNotes, 'lighthouse')).toMatchObject({ ending: 'hired', jobId: 'lighthouse' });
-  });
+  }, 30_000); // plays every day of the game
 });
 
 describe('Active Directory', () => {
@@ -495,7 +496,11 @@ describe('Oktopus', () => {
     expect(s.okta.users.hazel?.status).toBe('deactivated');
     expect(appsOf(s.okta, 'rowan')).toEqual(['canvass']); // week 5's joiner: Sales' app, from the rules
     expect(needsMfa(s.okta, 'rowan')).toBe(true); // and phone sign-in, because the policy is on Everyone
-    expect(Object.keys(s.okta.users)).toHaveLength(13); // everyone who's been on the HR file since Oktopus arrived
+    expect(appsOf(s.okta, 'hector')).toEqual(['voyago']); // Finance's Payroll Officer: in Finance from the start
+    expect(appsOf(s.okta, 'tansy')).toEqual(['canvass']); // an Account Manager in Sales
+    expect(appsOf(s.okta, 'clover')).toEqual([]); // Operations never get an app
+    expect(needsMfa(s.okta, 'moss')).toBe(true); // but everyone's covered by phone sign-in
+    expect(Object.keys(s.okta.users)).toHaveLength(17); // everyone who's been on the HR file since Oktopus arrived: 13 before, plus Clover, Moss, Tansy and Hector
     // From week 3 the flows did the joiners, movers and leavers, first thing in the morning, not you.
     expect(s.okta.runs.filter((r) => !r.test && r.subject).map((r) => r.subject)).toEqual(['hazel', 'pip', 'hazel', 'rowan']);
     // From day 17 the sweep ran every morning (days 17 to 25), and the Voyago report was run on day 23.
@@ -515,7 +520,7 @@ describe('Oktopus', () => {
     expect(s.okta.log.filter((e) => e.by?.startsWith('flow:')).map((e) => `${e.event} ${e.target}`)).toEqual([
       'user.lifecycle.create hazel', 'user.account.update_profile pip', 'user.lifecycle.deactivate hazel', 'user.lifecycle.create rowan',
     ]);
-  });
+  }, 30_000); // plays every day of the game
 
   it('gives an app to everyone a rule puts in its group, and to nobody else', () => {
     const s = giveMarketingHootsweet(morningOf(6));

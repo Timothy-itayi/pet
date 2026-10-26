@@ -1,3 +1,4 @@
+import type { Channel } from '../game/channels.ts';
 import type { FlowRun } from '../game/flows.ts';
 import type { Department } from '../game/directory.ts';
 import type { GameState } from '../game/rules.ts';
@@ -20,13 +21,15 @@ export interface Win {
   max?: boolean;
 }
 
-/** A notification in the corner of the screen. Clicking it opens `app`, on `ticket` if there is one. */
+/** A notification in the corner of the screen. Clicking it opens `app`, on `ticket`, `channel` or the direct message from `dm` if there is one. */
 export interface Toast {
   id: number;
   app: AppId;
   from: string;
   text: string;
   ticket?: string;
+  channel?: Channel;
+  dm?: string;
   /** Already on screen: it slid in once and shouldn't slide in again on every redraw. */
   shown?: boolean;
 }
@@ -54,6 +57,8 @@ export interface Ui {
   /** Sips taken from Sam's mug (it's empty after SIPS.length). */
   sips?: number;
   power: Power;
+  /** Paused (when, in real ms): the office clock stops until you resume. */
+  paused?: number;
   /** When (performance.now()) you stepped away from the computer, to know if it has locked or gone to sleep. Cleared when you sit back down. */
   leftAt?: number;
   /** ServiceSoon: the list or incident form you're looking at, the form's tab, and the resolution you've picked. */
@@ -94,6 +99,15 @@ export interface Ui {
   flowTyping?: string;
   /** People opened (▸) into their fields, as card:output. */
   flowOpened?: string[];
+  /** A flow you've asked to delete, waiting for "Are you sure?". */
+  flowDeleting?: string;
+  /** Sam's duck: which ticket it's talking about and how many times you've asked; issues it's piped up on itself. */
+  duck?: { ticket: string; times: number };
+  duckSpoke?: string[];
+  /** Notebook suspects already stamped RULED OUT, so the stamp only thunks down once. */
+  stamped?: string[];
+  /** On the lesson card: you've chosen to put your notebook entry in your own words too. */
+  ownWords?: boolean;
   /** The phone in your hand is held up to your face; which of its screens is open; what it said last; a passcode being typed. */
   phoneUp?: boolean;
   phoneScreen?: PhoneScreen;
@@ -108,8 +122,11 @@ export interface Ui {
   flowScrollTo?: number;
   oktaApp?: string;
   oktaVerify?: string;
-  /** Burrow Chat: a channel you're reading, or a direct message (ui.chat) when unset. */
-  channel?: 'general' | 'service-desk';
+  /** Burrow Chat: a channel you're reading, or a direct message (ui.ping from a colleague, ui.chat about a ticket) when unset. */
+  channel?: Channel;
+  ping?: string;
+  /** When (stampOf) you last looked at each channel or direct message, for the unread counts. */
+  seen?: Record<string, number>;
   /** The mail you're reading, by day (the newest when unset). */
   mailDay?: number;
   /** Ridge: open tabs (each with its own back/forward history), the one in front, and announcements you've liked. */

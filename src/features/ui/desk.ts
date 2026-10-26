@@ -3,10 +3,11 @@ import { MINUTES_A_DAY } from '../game/directory.ts';
 import { OKTOPUS_DAY } from '../game/oktopus.ts';
 import { sayNow, statusText } from '../game/people.ts';
 import {
-  ask, canPush, canWorkaround, clockTime, fixFor, isKnown, issueOf, fill, liveFact, moodName, next, noteTarget, pushBack, relation, reply, resolve,
-  scriptFor, suggest, suggestions, ticketById, ticketState, workaround, writeNote, type GameState, type Outcome, type Status, type TicketState,
+  ask, canPush, canWorkaround, clockTime, fixFor, isKnown, issueOf, fill, knownDetails, liveFact, lookUp, LOOKED_UP, moodName, next, noteTarget, pushBack, relation, reply, resolve,
+  recordClue, ruleOut, scriptFor, suggest, suggestions, ticketById, ticketState, weekOf, workaround, writeNote, type GameState, type Outcome, type Status, type TicketState,
 } from '../game/rules.ts';
-import type { ConsoleFix, Ticket } from '../game/types.ts';
+import { cluesFor, duckLine, effortOf, SAMS_METHOD, suspectsOf, suspectText } from '../game/notebook.ts';
+import type { ConsoleFix, Fix, Ticket } from '../game/types.ts';
 import { portrait } from './portrait.ts';
 import type { App } from './app.ts';
 import { openApp } from './desktop.ts';
@@ -48,11 +49,13 @@ function wordmark(): HTMLElement {
 
 function header(app: App): HTMLElement {
   const { state } = app;
+  const goal = scriptFor(state.day).goal;
+  const met = goal > 0 && state.today.resolved >= goal;
   return h('header', { class: 'sn-header' },
     wordmark(),
     h('span', { class: 'sn-app' }, 'Service Desk'),
     h('span', { class: 'sn-search', 'aria-hidden': 'true' }, '\u{1F50D} Search'),
-    h('span', { class: 'sn-goal', 'data-testid': 'goal' }, `Resolved today ${state.today.resolved}/${scriptFor(state.day).goal}`),
+    h('span', { class: `sn-goal${met ? ' met' : ''}`, 'data-testid': 'goal' }, met ? `Goal met ✓ ${state.today.resolved}/${goal}` : `Resolved today ${state.today.resolved}/${goal}`),
     h('span', { class: 'sn-clock', 'data-clock': true, 'data-testid': 'clock' }, clockText(state.clock)),
     h('span', { class: 'sn-user' }, h('span', { class: 'sn-avatar', 'aria-hidden': 'true' }, 'I'), 'intern'));
 }
@@ -152,41 +155,134 @@ function callerLine(app: App, t: Ticket): HTMLElement {
     : h('p', {}, `Find out what\u2019s really going on: ask ${name} a question, or suggest something to try.`));
 }
 
-/** Questions to ask and things to suggest: one at a time, and they reply after a few office minutes. */
+/** Effort to test, as dots: ● a quick check, ●●● drastic. */
+const dots = (f: Fix) => '●'.repeat(effortOf(f));
+
+/**
+ * Sam's method, as the controls: 1. gather context and 2. isolate & divide are questions to ask; 3. test the simplest
+ * fix is what to suggest, cheapest first. One thing at a time; they reply after a few office minutes.
+ */
 function troubleshoot(app: App, t: Ticket): HTMLElement {
   const { state } = app;
   const st = ticketState(state, t.id);
   const issue = issueOf(t);
   const busy = Boolean(st.caller);
   const known = isKnown(state, t);
-  const asks = issue.asks.filter((a) => !st.heard.includes(a.id));
-  // Alphabetical, so the right answer isn't always in the same spot; your tool and the console check first.
-  const [extra, usual] = [suggestions(state, t).filter((f) => f.id === 'tool' || f.id === 'console'), issue.fixes];
-  const options = [...extra, ...usual.filter((f) => !st.tried.includes(f.id)).sort((a, b) => a.label.localeCompare(b.label))];
+  const asks = issue.asks;
+  // Your tool and the console check, then every untried fix: simplest first, alphabetical within that.
+  const extra = suggestions(state, t).filter((f) => f.id === 'tool');
+  const fixes = issue.fixes.filter((f) => !st.tried.includes(f.id)).sort((a, b) => effortOf(a) - effortOf(b) || a.label.localeCompare(b.label));
   const hint = (id: string) => id === 'tool' ? 'Your tool'
-    : known && (id === fixFor(t) || id === issue.correctFix || id === 'console') ? 'Your note says this' : undefined;
-  const chip = (label: string, testid: string, onclick: () => void, tag?: string) => h('button', { class: `sn-chip${tag ? ' hinted' : ''}`, 'data-testid': testid, disabled: busy, onclick },
-    label, tag && h('span', { class: 'from-note-tag' }, tag));
+    : known && (id === fixFor(t) || id === issue.correctFix || id === 'console') ? 'Your notebook says this' : undefined;
+  const chip = (label: string | HTMLElement[], testid: string, onclick: () => void, tag?: string) => h('button', { class: `sn-chip${tag ? ' hinted' : ''}`, 'data-testid': testid, disabled: busy, onclick },
+    ...(Array.isArray(label) ? label : [label]), tag && h('span', { class: 'from-note-tag' }, tag));
+  const askGroup = (step: 'context' | 'isolate', title: string) => {
+    const these = asks.filter((a) => (a.step ?? 'context') === step);
+    return these.length > 0 && h('div', { role: 'group', 'aria-label': title },
+      h('p', { class: 'sn-chip-title' }, title),
+      // Asked ones stay, ticked, so the list never shifts under the pointer.
+      ...these.map((a) => st.heard.includes(a.id)
+        ? h('button', { class: 'sn-chip asked', 'data-testid': `asked-${a.id}`, disabled: true }, '✓ ', fill(t, a.text))
+        : chip(fill(t, a.text), `ask-${a.id}`, () => app.set(ask(state, t.id, a.id)))));
+  };
+  const consoleCheck = suggestions(state, t).find((f) => f.id === 'console');
   return h('div', { class: 'sn-troubleshoot', 'data-testid': 'troubleshoot' },
-    h('p', { class: 'sn-panel-title' }, `Troubleshoot with ${VILLAGERS[t.who].name}`),
+    h('p', { class: 'sn-panel-title' }, `Troubleshoot with ${VILLAGERS[t.who].name}`, duckButton(app, t)),
+    duckBubble(app, t),
     callerLine(app, t),
     st.caller?.doing !== 'confirmed' && h('div', { class: 'sn-chips' },
-      asks.length > 0 && h('div', { role: 'group', 'aria-label': 'Ask' },
-        h('p', { class: 'sn-chip-title' }, 'Ask'),
-        ...asks.map((a) => chip(fill(t, a.text), `ask-${a.id}`, () => app.set(ask(state, t.id, a.id))))),
-      h('div', { role: 'group', 'aria-label': 'Suggest' },
-        h('p', { class: 'sn-chip-title' }, 'Suggest'),
-        issue.console && h('button', { class: 'sn-btn', 'data-testid': 'open-registry', onclick: () => consoleFor(issue.console ?? 'unlock').open(app, t) },
+      askGroup('context', `1. ${SAMS_METHOD[0]}`),
+      askGroup('isolate', `2. ${SAMS_METHOD[1]}`),
+      h('div', { role: 'group', 'aria-label': SAMS_METHOD[2] },
+        h('p', { class: 'sn-chip-title' }, `3. ${SAMS_METHOD[2]}`),
+        issue.console && h('button', { class: 'sn-btn', 'data-testid': 'open-registry', onclick: () => { app.set(lookUp(app.state, t.id)); consoleFor(issue.console ?? 'unlock').open(app, t); } },
           `Open ${consoleFor(issue.console).name}`),
-        ...options.map((f) => chip(f.label, `fix-${f.id}`, () => app.set(suggest(state, t.id, f.id)), hint(f.id))))));
+        consoleCheck && chip(consoleCheck.label, 'fix-console', () => app.set(suggest(state, t.id, 'console')), hint('console')),
+        ...extra.map((f) => chip(f.label, `fix-${f.id}`, () => app.set(suggest(state, t.id, f.id)), hint(f.id))),
+        ...fixes.map((f) => chip([h('span', { class: 'effort', title: `Effort: ${effortOf(f)} of 3`, 'aria-label': `effort ${effortOf(f)} of 3` }, dots(f)), h('span', {}, f.label)],
+          `fix-${f.id}`, () => app.set(suggest(state, t.id, f.id)), hint(f.id))))));
 }
 
-/** What you know so far: what IT can see for itself, and what the caller has told you. */
-function whatYouKnow(s: GameState, t: Ticket, st: TicketState): HTMLElement | false {
-  const facts = t.details.filter((d) => !d.ask || st.heard.includes(d.ask));
-  return facts.length > 0 && h('div', { class: 'sn-investigation', 'data-testid': 'details' },
-    h('p', { class: 'sn-panel-title' }, 'What you know'),
-    h('dl', {}, ...facts.flatMap((d) => [h('dt', {}, d.label), h('dd', {}, liveFact(s, t, d.label) ?? d.text)])));
+/** The duck: ask it to talk it through, and it asks you a question back. Never the answer. */
+function duckButton(app: App, t: Ticket): HTMLElement {
+  return h('button', {
+    class: 'duck-btn', 'data-testid': 'duck', title: 'Talk it through with Sam’s duck',
+    onclick: () => {
+      const was = app.ui.duck?.ticket === t.id ? app.ui.duck.times + 1 : 0;
+      app.ui.duck = { ticket: t.id, times: was };
+      app.rerender();
+    },
+  }, h('span', { 'aria-hidden': 'true' }, '\u{1F986}'), ' Talk it through');
+}
+
+/** What the duck said, if it's said something about this ticket. In weeks 1 and 2 it pipes up once if you're stuck. */
+function duckBubble(app: App, t: Ticket): HTMLElement | false {
+  const { ui, state } = app;
+  const st = ticketState(state, t.id);
+  const stuck = st.slips >= 2 && !st.caller && weekOf(state.day) <= 2 && !duckMuted() && !(ui.duckSpoke ?? []).includes(issueOf(t).id);
+  if (stuck && ui.duck?.ticket !== t.id) {
+    ui.duck = { ticket: t.id, times: 0 };
+    ui.duckSpoke = [...(ui.duckSpoke ?? []), issueOf(t).id];
+  }
+  // Quiet while the caller is busy; afterwards the question follows where you are now, so it's never stale.
+  if (ui.duck?.ticket !== t.id || st.caller) return false;
+  return h('div', { class: 'duck-bubble', role: 'status', 'data-testid': 'duck-says' },
+    h('span', { class: 'duck-face', 'aria-hidden': 'true' }, '\u{1F986}'),
+    h('p', {}, duckLine(state, t, ui.duck.times)),
+    h('span', { class: 'duck-actions' },
+      h('button', { class: 'sn-link', onclick: () => { ui.duck = undefined; app.rerender(); } }, 'Thanks, duck'),
+      weekOf(state.day) <= 2 && h('button', { class: 'sn-link', 'data-testid': 'duck-mute', onclick: () => { muteDuck(); ui.duck = undefined; app.rerender(); } }, 'Got it, don’t pipe up')));
+}
+
+/** The duck only pipes up on its own until you tell it not to. Remembered in this browser. */
+const DUCK_KEY = 'pet-duck-quiet';
+function duckMuted(): boolean {
+  try { return localStorage.getItem(DUCK_KEY) === '1'; } catch { return false; }
+}
+function muteDuck(): void {
+  try { localStorage.setItem(DUCK_KEY, '1'); } catch { /* private window: it'll just pipe up again */ }
+}
+
+/**
+ * Your notebook page for this ticket: what it could be (suspects, ruled out as you learn), what you know (the clues),
+ * and, if you've seen this kind of problem before, your own entry from last time.
+ */
+function notebook(app: App, t: Ticket, st: TicketState): HTMLElement {
+  const { state, ui } = app;
+  const issue = issueOf(t);
+  const facts = knownDetails(t, st);
+  const unlooked = !st.looked && t.details.some((d) => !d.ask && LOOKED_UP.includes(d.label));
+  const crossed = st.crossed ?? [];
+  const last = state.clues?.[issue.id];
+  const seen = new Set(ui.stamped ?? []);
+  const confirmed = st.caller?.doing === 'confirmed' ? st.caller.id : undefined;
+  const card = (f: Fix) => {
+    const out = crossed.includes(f.id);
+    if (f.id === confirmed) {
+      return h('li', { class: 'suspect confirmed', 'data-testid': `suspect-${f.id}` },
+        h('span', {}, suspectText(f)), h('span', { class: 'it-was', 'aria-label': 'confirmed' }, 'IT WAS THIS'));
+    }
+    const key = `${t.id}:${f.id}`;
+    const fresh = out && !seen.has(key);
+    if (out) seen.add(key);
+    return h('li', { class: `suspect${out ? ' out' : ''}${fresh ? ' stamping' : ''}`, 'data-testid': `suspect-${f.id}` },
+      h('span', {}, suspectText(f)),
+      out && h('span', { class: 'ruled-out', 'aria-label': 'ruled out' }, 'RULED OUT'),
+      h('button', { class: 'sn-link', 'data-testid': `rule-out-${f.id}`, onclick: () => app.set(ruleOut(state, t.id, f.id)) }, out ? 'Put back' : 'Rule out'));
+  };
+  const suspects = suspectsOf(t);
+  const nodes = h('div', { class: 'sn-investigation notebook', 'data-testid': 'details' },
+    h('p', { class: 'sn-panel-title' }, 'Your notebook'),
+    last && h('p', { class: 'notebook-last', 'data-testid': 'notebook-last' }, h('strong', {}, 'Seen this before. '), `Last time: ${last.fix}. How you knew: ${last.clue}`),
+    suspects.length > 0 && h('div', {},
+      h('p', { class: 'sn-chip-title' }, 'What could it be?'),
+      h('ul', { class: 'suspects' }, ...[...suspects.filter((f) => !crossed.includes(f.id)), ...suspects.filter((f) => crossed.includes(f.id))].map(card))),
+    h('p', { class: 'sn-chip-title' }, 'What you know'),
+    facts.length ? h('dl', {}, ...facts.flatMap((d) => [h('dt', {}, d.label), h('dd', {}, liveFact(state, t, d.label) ?? d.text)]))
+      : h('p', { class: 'meta' }, 'Nothing yet. Sam would start by gathering context.'),
+    unlooked && issue.console && h('p', { class: 'meta', 'data-testid': 'look-it-up' }, `Some of this you can look up yourself: open ${consoleFor(issue.console).name}.`));
+  ui.stamped = [...seen];
+  return nodes;
 }
 
 /** The Notes tab: troubleshooting with the caller, what you know, and everything said so far. */
@@ -197,7 +293,6 @@ function notesTab(app: App, t: Ticket): HTMLElement {
   const reply1 = st.status === 'new' ? REPLIES.first : REPLIES.update;
   return h('div', { class: 'sn-tab-body' },
     troubleshoot(app, t),
-    whatYouKnow(state, t, st),
     h('div', { class: 'sn-compose' },
       h('label', { for: 'sn-comment' }, 'Additional comments (Customer visible)'),
       h('textarea', { id: 'sn-comment', rows: 1, readonly: true }, reply1),
@@ -268,7 +363,8 @@ export function ticketView(app: App, t: Ticket): HTMLElement {
           field('Description', h('p', { 'data-testid': 'opening' }, t.message), true)),
         h('div', { class: 'sn-tabs', role: 'tablist' }, tabButton('notes', 'Notes'), tabButton('resolution', 'Resolution Information')),
         tab === 'notes' ? notesTab(app, t) : resolutionTab(app, t)),
-      knowledge(state, t)));
+      // Your notebook alongside, so the suspects and stamps stay in view while you ask and test.
+      h('div', { class: 'sn-side' }, tab === 'notes' && notebook(app, t, st), knowledge(state, t))));
 }
 
 /** Which admin console a ticket's work is done in, and how to open it at the right place. */
@@ -305,13 +401,28 @@ export function outcomeCard(app: App, o: Outcome): HTMLElement {
       : `${v.name} has had enough of waiting and complains to ${MANAGER}. They still need it fixed, so it\u2019s still in your queue. Send updates so people know you haven\u2019t forgotten them.`,
   }[o.kind];
   const target = noteTarget(state, o);
-  const canNote = Boolean(target);
+  // "How did you know?": after a fix (not a tool's), pick the clue that proved it. That's your notebook entry.
+  const clues = o.kind === 'fix' && !o.tool ? cluesFor(t, ticketState(state, t.id)) : [];
+  const debrief = clues.length > 0 && !o.clue;
+  // Typing it up yourself: for a tool's new page, when there are no clues to pick, or as a bonus once you have.
+  const typing = Boolean(target) && (o.tool !== undefined || clues.length === 0 || (o.clue !== undefined && app.ui.ownWords === true));
+  const canNote = debrief || typing;
   return h('div', { class: 'overlay' },
     h('section', { class: `outcome ${o.kind}`, role: 'dialog', 'aria-labelledby': 'outcome-title', 'data-testid': 'outcome' },
       h('h2', { id: 'outcome-title' }, headline),
       o.xp > 0 && h('p', { class: 'xp' }, `+${o.xp} ${SKILL_NAMES[issue.skill]} XP`),
       h('p', {}, body),
-      target && h('form', {
+      o.stars && h('div', { class: 'method-stars', 'data-testid': 'stars' },
+        h('p', {}, h('strong', {}, 'Sam’s method: '), h('span', { class: 'stars', 'aria-label': `${o.stars.got} of ${o.stars.max} stars` },
+          '★'.repeat(o.stars.got), h('span', { class: 'dim' }, '☆'.repeat(o.stars.max - o.stars.got)))),
+        ...o.stars.missed.map((m) => h('p', { class: 'meta' }, m))),
+      debrief && h('div', { class: 'debrief', role: 'group', 'aria-labelledby': 'debrief-heading' },
+        h('h3', { id: 'debrief-heading' }, 'How did you know?'),
+        h('p', { class: 'meta' }, 'Pick the clue that proved it. It goes in your notebook, so next time you’ll know.'),
+        ...clues.map((c, i) => h('button', { class: 'clue', 'data-testid': `clue-${i}`, 'data-autofocus': i === 0, onclick: () => app.set(recordClue(state, c)) }, c))),
+      o.clue && h('p', { class: 'stamp', 'data-testid': 'noted' }, `✎ In your notebook: ${o.clue}`),
+      o.clue && target && !typing && !o.noted && h('p', {}, h('button', { class: 'sn-link', 'data-testid': 'own-words', onclick: () => { app.ui.ownWords = true; app.rerender(); } }, 'Put it in your own words too (+1 XP)')),
+      typing && target && h('form', {
         class: 'note-pick', 'aria-labelledby': 'note-heading',
         onsubmit: (e) => { e.preventDefault(); app.set(writeNote(state, app.ui.noteDraft ?? '')); },
       },
@@ -330,11 +441,11 @@ export function outcomeCard(app: App, o: Outcome): HTMLElement {
         }, app.ui.noteDraft ?? ''),
         o.noteMiss && h('p', { class: 'notice', role: 'alert', 'data-testid': 'note-miss' }, o.noteMiss),
         h('button', { class: 'btn primary', type: 'submit', 'data-testid': 'save-note' }, 'Save to runbook')),
-      o.noted && h('p', { class: 'stamp', 'data-testid': 'noted' }, '✎ Saved to your runbook.'),
+      o.noted && h('p', { class: 'stamp', 'data-testid': 'noted-words' }, '✎ Saved to your runbook, in your own words.'),
       h('button', {
         class: `btn${canNote ? '' : ' primary'}`, 'data-testid': 'next', 'data-autofocus': !canNote,
-        onclick: () => { app.ui.noteDraft = undefined; app.set(next(state)); },
-      }, canNote ? 'Skip the note' : 'Next')),
+        onclick: () => { app.ui.noteDraft = undefined; app.ui.ownWords = undefined; app.set(next(state)); },
+      }, debrief ? 'Skip' : canNote ? 'Skip the note' : 'Next')),
   );
 }
 

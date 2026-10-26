@@ -1,5 +1,5 @@
 import {
-  ACESFilmicToneMapping, AmbientLight, Box3, DirectionalLight, DoubleSide, Group, Mesh, PCFSoftShadowMap, PerspectiveCamera, Quaternion,
+  ACESFilmicToneMapping, AmbientLight, Box3, DirectionalLight, DoubleSide, Group, Mesh, MeshStandardMaterial, PCFSoftShadowMap, PerspectiveCamera, Quaternion,
   Raycaster, Scene, SRGBColorSpace, Vector2, Vector3, WebGLRenderer, type Material, type Object3D,
 } from 'three';
 import { CSS3DObject, CSS3DRenderer } from 'three/examples/jsm/renderers/CSS3DRenderer.js';
@@ -64,6 +64,8 @@ const v = {
   /** The phone's screen page, laid over its glass once it's up. The game draws the phone's screens into this. */
   phoneGlass: document.createElement('div'),
   drawerOut: 0,
+  /** What the CRT is doing: while it's off, the power button glows softly so you can find it. */
+  screenState: 'off' as ScreenState,
   reduced: matchMedia('(prefers-reduced-motion: reduce)').matches,
   css: undefined as CSS3DRenderer | undefined,
   cssScene: new Scene(),
@@ -149,6 +151,12 @@ function frame(): void {
     const grow = v.reduced ? 1 : Math.min(1, (performance.now() - ins.born) / 450);
     ins.item.scale.setScalar(1 - (1 - grow) ** 3);
     ins.renderer.render(ins.scene, ins.camera);
+  }
+  // A computer that's off: its power button breathes a warm glow, so you know where to press.
+  const power = v.room.pickables.get('power');
+  if (power instanceof Mesh && power.material instanceof MeshStandardMaterial) {
+    power.material.emissive.set('#ffc56b');
+    power.material.emissiveIntensity = v.screenState === 'off' ? 0.35 + 0.3 * Math.sin(now / 450) : 0;
   }
   const hold = v.hold;
   if (hold) {
@@ -256,6 +264,7 @@ export function setAtComputer(on: boolean): void {
 export function setScreen(state: ScreenState): void {
   const room = v.room;
   if (!room) return;
+  v.screenState = state;
   room.led.emissiveIntensity = state === 'off' ? 0 : state === 'asleep' ? 0.4 : 1.4;
   room.screenLight.intensity = state === 'off' ? 0 : state === 'asleep' ? 0.03 : 0.18;
 }

@@ -31,7 +31,13 @@ function list(app: App): HTMLElement {
     ...(Object.entries(TRIGGERS) as [Trigger, string][]).map(([id, label]) => h('option', { value: id }, label))) as HTMLSelectElement;
   const name = h('input', { name: 'name', placeholder: 'Name, e.g. New starters', autocomplete: 'off', 'aria-label': 'Flow name', 'data-testid': 'flow-name' }) as HTMLInputElement;
   const open = (f: Flow) => h('button', { class: 'okta-link', 'data-testid': `flow-open-${f.id}`, onclick: () => { ui.flowOpen = f.id; ui.flowTest = undefined; ui.flowSaid = undefined; app.rerender(); } }, f.name);
-  const remove = (f: Flow) => h('button', { class: 'okta-btn small', onclick: () => app.set(deleteFlow(state, f.id)) }, 'Delete');
+  // Deleting asks first: a flow and its history are gone for good.
+  const remove = (f: Flow) => (ui.flowDeleting === f.id
+    ? h('span', { class: 'okta-confirm', role: 'group', 'aria-label': `Delete ${f.name}?` },
+      h('span', {}, 'Delete it, and its history?'),
+      h('button', { class: 'okta-btn small danger', 'data-testid': `flow-delete-yes-${f.id}`, onclick: () => { ui.flowDeleting = undefined; app.set(deleteFlow(state, f.id)); } }, 'Yes, delete'),
+      h('button', { class: 'okta-btn small', 'data-autofocus': true, onclick: () => { ui.flowDeleting = undefined; app.rerender(); } }, 'No'))
+    : h('button', { class: 'okta-btn small', 'data-testid': `flow-delete-${f.id}`, onclick: () => { ui.flowDeleting = f.id; app.rerender(); } }, 'Delete'));
   const main = flows.filter((f) => f.trigger !== 'helper');
   const helpers = flows.filter((f) => f.trigger === 'helper');
   return h('div', { class: 'okta-page', 'data-testid': 'flows' },

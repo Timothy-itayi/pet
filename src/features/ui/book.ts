@@ -28,6 +28,7 @@ function insideCover(pages: RunbookPage[]): HTMLElement {
   return h('article', { class: 'sheet cover' },
     h('p', { class: 'typed' }, 'PROPERTY OF BURROW & CO. IT DEPT.'),
     h('p', { class: 'hand' }, 'If found, return to IT. (That’s you now.) – S'),
+    h('p', { class: 'hand method' }, 'Never guess. Every time: 1. Gather context. 2. Isolate & divide. 3. Test the simplest fix. Then write down how you knew. – S'),
     h('h3', { class: 'typed' }, 'CONTENTS'),
     h('ol', { class: 'contents typed' }, ...pages.map((p, i) => h('li', {}, h('span', {}, p.title), h('span', {}, String(i + 1))))),
   );

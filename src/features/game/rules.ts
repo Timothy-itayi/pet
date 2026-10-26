@@ -5,6 +5,7 @@ import {
 } from './data.ts';
 import { MINUTES_A_DAY, newAccounts, type Account } from './directory.ts';
 import { flowProblem, runToday, TASKS, TRIGGERS, upgradeFlow } from './flows.ts';
+import { cluesFor, crossedBy, firstTest, methodStars, suspectsOf, type Stars } from './notebook.ts';
 import { BREAK, breakPhone, newPhones, PHONES_DAY, replacedSince, replaceProblem, settleRequests, verifyProblem, type HardwareRequest, type Phone } from './phones.ts';
 import { awayLine, backAt, dayMood } from './people.ts';
 import { appsOf, CATALOG, hrOn, needsMfa, newOkta, type Okta } from './oktopus.ts';
@@ -44,6 +45,12 @@ export interface TicketState {
    * or done, having confirmed a suggestion works. Nothing: it's your move. One thing at a time, like a real call.
    */
   caller?: { doing: 'answer' | 'try'; id: string; until: number } | { doing: 'confirmed'; id: string };
+  /** Your notebook page for it: the suspects ruled out (fix ids), and how you went about your first test. */
+  crossed?: string[];
+  /** You've opened the console to look it up, so what it shows is now something you know. */
+  looked?: boolean;
+  /** How you started testing; `known` if it was already in your notebook then. */
+  first?: { fix: string; asked: number; crossed: number; simplest: boolean; known?: boolean };
 }
 
 export interface Outcome {
@@ -57,6 +64,9 @@ export interface Outcome {
   noteMiss?: string;
   /** Fixed with a tool from your desk: its runbook page is the note to write. */
   tool?: string;
+  /** Sam's method, scored: how you went about it. And the clue you picked as the one that proved it. */
+  stars?: Stars;
+  clue?: string;
 }
 
 export interface Today {
@@ -72,6 +82,9 @@ export interface Today {
   overtime: number;
   /** Who became a friend or nemesis today, or stopped being one. */
   bonds: { who: VillagerId; now: Relation }[];
+  /** Sam's method stars earned today, out of how many there were. */
+  stars?: number;
+  maxStars?: number;
 }
 
 export interface GameState {
@@ -98,12 +111,16 @@ export interface GameState {
   runbook: Record<string, PageStatus>;
   /** The runbook pages you've written, in your own words, by page. */
   written: Record<string, string>;
+  /** Your notebook: for each page, the clue that proved it and what you ruled out on the way. */
+  clues?: Record<string, { clue: string; ruledOut: string[]; fix: string }>;
   /** Tools on your desk. */
   tools: string[];
   /** Everyone's account in Active Directory, by login. */
   accounts: Record<string, Account>;
   /** How many Burrow Intranet posts you've read. */
   newsRead: number;
+  /** What colleagues have told you directly today (on their way over, a phone approved), to find again in Burrow Chat. */
+  pings: { day: number; at: number; from: string; text: string }[];
   /** Oktopus, from week 2: people, groups, rules and apps. */
   okta: Okta;
   /** Company phones, from week 4: in your desk drawer, in your hand, or given to someone. */
@@ -360,6 +377,7 @@ export function newGame(seed = Math.floor(Math.random() * 2 ** 31)): GameState {
     written: {},
     accounts: newAccounts(),
     newsRead: 0,
+    pings: [],
     okta: newOkta(),
     phones: [],
     requests: [],
@@ -382,6 +400,10 @@ export function newGame(seed = Math.floor(Math.random() * 2 ** 31)): GameState {
   startDay(s);
   return s;
 }
+
+/** A colleague messages you directly. Only today's are kept: yesterday's news is old news. */
+export const ping = (s: GameState, from: string, text: string): GameState =>
+  act(s, (d) => { d.pings = [...d.pings.filter((p) => p.day === d.day), { day: d.day, at: d.clock, from, text }]; });
 
 export const goTo = (s: GameState, phase: Phase) => act(s, (d) => { d.phase = phase; });
 
@@ -518,6 +540,20 @@ function oktaProblem(s: GameState, t: Ticket, fixBy: Exclude<NonNullable<Issue['
   }
 }
 
+/** Facts that come from a console: you only know them once you've looked. */
+export const LOOKED_UP = ['Active Directory', 'Oktopus', 'HR file'];
+
+/** What you know about a ticket so far: what they've told you, what IT can just see, and what you've looked up. */
+export const knownDetails = (t: Ticket, st: TicketState) =>
+  t.details.filter((d) => (d.ask ? st.heard.includes(d.ask) : !LOOKED_UP.includes(d.label) || st.looked === true));
+
+/** Open the console to look it up: gathering context, the admin way. */
+export function lookUp(s: GameState, id: string): GameState {
+  const t = workable(s, id);
+  if (!t || ticketState(s, id).looked) return s;
+  return act(s, (d) => { ticketState(d, id).looked = true; });
+}
+
 /**
  * What a console shows right now, for a fact on a ticket that comes from one: so "No user called Fern" doesn't stay
  * true after you've created her. Undefined for anything the caller told you, which doesn't change.
@@ -635,6 +671,7 @@ export function suggest(s: GameState, id: string, fixId: string): GameState {
   return act(s, (d) => {
     const st = ticketState(d, id);
     st.status = 'open';
+    st.first ??= firstTest(t, st, fixId, isKnown(d, t));
     const text = fixId === 'console' ? 'I\u2019ve made the change on my side. Could you check it\u2019s working now?' : `Suggested: ${f.label}.`;
     st.messages.push({ from: 'you', text, at: d.clock });
     st.caller = { doing: 'try', id: fixId, until: replyAt(d, t, callerMinutes(d, t, CALLER[t.priority][fixId === 'tool' ? 'tool' : 'tryIt'])) };
@@ -653,6 +690,7 @@ function hear(d: GameState, t: Ticket, c: { doing: 'answer' | 'try'; id: string;
   st.caller = undefined;
   if (c.doing === 'answer') {
     st.heard.push(c.id);
+    st.crossed = [...new Set([...(st.crossed ?? []), ...crossedBy(t, c.id)])];
     said(t.details.filter((x) => x.ask === c.id).map((x) => x.text).join(' ') || (issue.asks.find((a) => a.id === c.id)?.none ?? '\u2026'));
     return;
   }
@@ -664,8 +702,13 @@ function hear(d: GameState, t: Ticket, c: { doing: 'answer' | 'try'; id: string;
     said(f?.works ?? THANKS[st.mood]);
     return;
   }
-  // You can check again after more console work, so that one never gets used up.
-  if (c.id !== 'console') st.tried.push(c.id);
+  // You can check again after more console work, so that one never gets used up. Any other test that wasn't it,
+  // sensible or not, is one less suspect.
+  if (c.id !== 'console') {
+    st.tried.push(c.id);
+    // Except a harmful one: plugging in a stray USB stick proves nothing about whose it is.
+    if (!f?.grave) st.crossed = [...new Set([...(st.crossed ?? []), c.id])];
+  }
   if (f?.ruledOut || (c.id !== 'console' && c.id === issue.correctFix)) {
     said(f?.ruledOut ?? 'Tried that. Still not working.');
     return;
@@ -699,6 +742,11 @@ export function resolve(s: GameState, id: string): GameState {
     const card = d.outcomes.at(-1);
     const tool = c.id === 'tool' ? toolFor(d, t) : undefined;
     if (tool && card) card.tool = tool.id;
+    // Sam's method: how you went about it, for the card and the day's tally.
+    const stars = methodStars(t, ticketState(d, id));
+    if (card) card.stars = stars;
+    d.today.stars = (d.today.stars ?? 0) + stars.got;
+    d.today.maxStars = (d.today.maxStars ?? 0) + stars.max;
     advance(d, COST.resolve);
   });
 }
@@ -778,8 +826,48 @@ export function noteTarget(s: GameState, o: Outcome): { page: string; title: str
   const tool = TOOLS.find((x) => x.id === o.tool);
   if (tool && s.runbook[`tool:${tool.id}`] !== 'yours') return { page: `tool:${tool.id}`, title: tool.name, note: tool.note };
   const issue = issueOf(ticketById(o.ticketId));
-  if (s.runbook[issue.id] !== 'yours') return { page: issue.id, title: issue.title, note: issue.note };
+  // Not yours yet; or you've just picked the clue, and can put it in your own words too.
+  if (s.runbook[issue.id] !== 'yours' || o.clue) return { page: issue.id, title: issue.title, note: issue.note };
   return undefined;
+}
+
+/**
+ * "How did you know?" After a fix, pick the clue that proved it. That, the fix and what you ruled out on the way
+ * become your notebook entry for this kind of problem, and its runbook page is yours.
+ */
+export function recordClue(s: GameState, clue: string): GameState {
+  const o = s.outcomes[0];
+  if (o?.kind !== 'fix' || o.clue) return s;
+  const t = ticketById(o.ticketId);
+  const st = ticketState(s, t.id);
+  if (!cluesFor(t, st).includes(clue)) return s;
+  const issue = issueOf(t);
+  return act(s, (d) => {
+    const card = d.outcomes[0];
+    if (!card) return;
+    card.clue = clue;
+    const ruledOut = suspectsOf(t).filter((f) => (st.crossed ?? []).includes(f.id)).map((f) => f.suspect ?? f.label);
+    const fix = suggestions(d, t).find((x) => x.id === fixFor(t))?.label ?? issue.title;
+    d.clues = { ...d.clues, [issue.id]: { clue, ruledOut, fix } };
+    if (d.runbook[issue.id] === 'yours') return;
+    d.runbook[issue.id] = 'yours';
+    d.written[issue.id] = `${fix}. How I knew: ${clue}${/[.!?”"]$/.test(clue) ? '' : '.'}${ruledOut.length ? ` Ruled out: ${ruledOut.join('; ')}.` : ''}`;
+    d.xp[issue.skill] += XP.note;
+    d.today.xp += XP.note;
+    d.today.notes += 1;
+    card.xp += XP.note;
+  });
+}
+
+/** Rule a suspect out yourself, or put it back: your notebook, your call. Free; it's thinking, not doing. */
+export function ruleOut(s: GameState, id: string, fixId: string): GameState {
+  const t = workable(s, id);
+  if (!t || !suspectsOf(t).some((f) => f.id === fixId)) return s;
+  return act(s, (d) => {
+    const st = ticketState(d, id);
+    const crossed = st.crossed ?? [];
+    st.crossed = crossed.includes(fixId) ? crossed.filter((x) => x !== fixId) : [...crossed, fixId];
+  });
 }
 
 /** What's wrong with a typed note, in a sentence; undefined if it's a good one. */
@@ -801,7 +889,9 @@ export function writeNote(s: GameState, text: string): GameState {
     first.noteMiss = noteProblem(target.note, text);
     if (first.noteMiss) return;
     d.runbook[target.page] = 'yours';
-    d.written[target.page] = text.trim();
+    // On top of the entry your clue wrote, so it keeps its "How I knew".
+    const auto = first.clue ? d.written[target.page] : undefined;
+    d.written[target.page] = auto ? `${auto} In my words: ${text.trim()}` : text.trim();
     d.xp[issue.skill] += XP.note;
     d.today.xp += XP.note;
     d.today.notes += 1;
@@ -918,6 +1008,11 @@ export function parseSave(raw: string | null): GameState | undefined {
     // Saves from before company phones: none yet (they turn up at the start of day 16), nobody on Oktopus Verify.
     s.phones ??= [];
     s.requests ??= [];
+    // Saves from before Clover, Moss, Tansy and Hector joined: neutral with them, and a fresh account each.
+    for (const k of Object.keys(VILLAGERS)) if (s.bonds) s.bonds[k as VillagerId] ??= 0;
+    if (s.accounts) for (const [k, a] of Object.entries(newAccounts())) s.accounts[k] ??= a;
+    // Saves from before direct pings were kept: none yet.
+    s.pings ??= [];
     // Saves from before phones kept their place in the tray: the first six go back where they came from.
     for (const p of s.phones) if (p.slot === undefined && Number(p.id.slice(6)) <= 6) p.slot = Number(p.id.slice(6)) - 1;
     if (s.okta) { s.okta.verify ??= {}; s.okta.selfEnroll ??= false; }

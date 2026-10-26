@@ -1,4 +1,4 @@
-import { CLOSE, COMPANY, DAYS, TOOLS } from '../game/data.ts';
+import { CLOSE, COMPANY, DAYS, ISSUES, TOOLS } from '../game/data.ts';
 import { drawerSlots, handOver, held, phoneName, putDown, requestReplacement, takeBroken, takePhone, visitor } from '../game/phones.ts';
 import { whereIs } from '../game/people.ts';
 import { portrait } from './portrait.ts';
@@ -17,7 +17,10 @@ import { isMuted, setMuted } from './sound.ts';
 function describe(app: App, id: string): { label: string; says: string } | undefined {
   if (id === 'tool') {
     const tool = TOOLS.find((t) => app.state.tools.includes(t.id));
-    return tool && { label: tool.name, says: tool.gift };
+    if (!tool) return undefined;
+    // What it's for, not just who gave it: it turns up as a fix on that kind of ticket.
+    const issue = ISSUES.find((i) => i.id === tool.issue);
+    return { label: tool.name, says: `${tool.gift} What it’s for: ${tool.note.example}${issue ? ` It’s one of your fixes on “${issue.title}” tickets.` : ''}` };
   }
   const item = ROOM_ITEMS.find((i) => i.id === id);
   return item && { label: item.label, says: item.says(app.state.day) };
@@ -154,6 +157,30 @@ function soundChip(app: App): HTMLElement {
   }, off ? '\u{1F507}' : '\u{1F50A}');
 }
 
+/** Pause: the office clock stops, and a card covers everything until you resume. In the same corner wherever you are. */
+function pauseChip(app: App): HTMLElement {
+  return h('button', {
+    class: 'back-chip pause-chip', 'data-testid': 'pause', 'aria-label': 'Pause', title: 'Pause',
+    onclick: () => { app.ui.paused = performance.now(); app.rerender(); },
+  }, '⏸');
+}
+
+function pauseCard(app: App): HTMLElement | false {
+  const { ui } = app;
+  if (ui.paused === undefined) return false;
+  const resume = () => {
+    // The computer only counts the time you were really away, not the time you were paused.
+    if (ui.leftAt !== undefined && ui.paused !== undefined) ui.leftAt += performance.now() - ui.paused;
+    ui.paused = undefined;
+    app.rerender();
+  };
+  return h('div', { class: 'pause-overlay' },
+    h('section', { class: 'pause-card', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'pause-title', 'data-testid': 'paused' },
+      h('h2', { id: 'pause-title' }, 'Paused'),
+      h('p', {}, 'The office clock has stopped. Nobody will notice you’re gone.'),
+      h('button', { class: 'btn primary', 'data-testid': 'resume', 'data-autofocus': true, onclick: resume }, 'Resume')));
+}
+
 /**
  * The phone in your hand: a button to bring it up, and once it's up, ways to lower it, put it back in the drawer, or
  * give it to whoever it's set up for.
@@ -205,6 +232,8 @@ export function computerHud(app: App): HTMLElement {
   return h('main', { class: 'room-hud computer-hud' },
     h('button', { class: 'back-chip', 'data-testid': 'stand-up', 'aria-label': 'Stand up', title: 'Stand up', onclick: () => leaveComputer(app) }, '\u2190'),
     soundChip(app),
+    pauseChip(app),
+    pauseCard(app),
     visit && h('p', { class: 'visitor-waiting', role: 'status' }, `${app.state.okta.users[visit.login]?.name ?? visit.login} is coming to your desk. Stand up to see them.`),
     phoneChips(app));
 }
@@ -221,7 +250,7 @@ export function roomKeys(app: App, e: KeyboardEvent): void {
   }
   if (e.key === 'Escape') {
     if (ui.phoneUp) { ui.phoneUp = false; app.rerender(); } else if (isInspecting()) putBack(app);
-    else if (ui.shot !== 'overview') { ui.shot = 'overview'; app.rerender(); }
+    else if (ui.shot !== 'overview') { ui.shot = 'overview'; ui.note = undefined; app.rerender(); }
     return;
   }
   const turns: Record<string, [number, number]> = { ArrowLeft: [-0.3, 0], ArrowRight: [0.3, 0], ArrowUp: [0, -0.3], ArrowDown: [0, 0.3] };
@@ -248,6 +277,8 @@ export function roomHud(app: App): HTMLElement {
   const things = [...here, ...(state.tools.length && ui.shot === 'overview' ? [{ id: 'tool', label: describe(app, 'tool')?.label ?? 'Tool' }] : [])];
   return h('main', { class: 'room-hud', 'data-testid': 'room' },
     soundChip(app),
+    pauseChip(app),
+    pauseCard(app),
     phoneChips(app),
     visitorCard(app),
     h('header', { class: 'room-top' },
@@ -264,12 +295,19 @@ export function roomHud(app: App): HTMLElement {
         class: 'btn primary', 'data-testid': 'open-book', 'data-autofocus': true, onclick: () => { ui.book = 0; app.rerender(); },
       }, 'Open it'),
       h('button', { class: 'back-chip', 'data-testid': 'put-back', 'data-autofocus': true, 'aria-label': 'Put it back', onclick: () => putBack(app) }, '\u2190')),
-    !held && ui.shot !== 'overview' && h('button', {
+    !held && ui.shot !== 'overview' && ui.shot !== 'drawer' && h('button', {
       class: 'back-chip corner', 'data-testid': 'step-back', 'aria-label': 'Step back', onclick: () => { ui.shot = 'overview'; app.rerender(); },
     }, '\u2190'),
     !held && h('section', { class: 'room-bottom' },
       h('p', { class: 'hover-label', 'aria-hidden': 'true', 'data-hover': true }),
       h('p', { class: 'caption', 'aria-live': 'polite', 'data-testid': 'caption' }, intro),
+      // In the drawer: say plainly what to do, and how to shut it again.
+      ui.shot === 'drawer' && h('div', { class: 'room-actions' },
+        state.phones.length > 0 && h('p', { class: 'drawer-hint' }, 'Click a phone to pick it up.'),
+        h('button', {
+          class: 'btn primary', 'data-testid': 'close-drawer', title: 'Close the drawer (Esc)',
+          onclick: () => { ui.shot = 'overview'; ui.note = undefined; app.rerender(); },
+        }, 'Close the drawer')),
       state.phase === 'desk' && state.clock >= CLOSE && h('div', { class: 'room-actions' }, h('button', {
         class: 'btn primary', 'data-testid': 'clock-out', disabled: !canClockOut(state), onclick: () => app.set(clockOut(state)),
       }, 'Go home'))),

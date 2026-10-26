@@ -16,6 +16,7 @@ export function dayEndScreen(app: App): HTMLElement {
       // Anything not finished comes back first thing tomorrow; say so, so it's no surprise.
       h('dt', {}, 'Still open (back tomorrow)'), h('dd', { 'data-testid': 'still-open' }, state.queue.length + state.chats.length),
       h('dt', {}, 'Fixes that didn’t work'), h('dd', {}, today.wrongFixes),
+      (today.maxStars ?? 0) > 0 && h('dt', {}, 'Sam’s method'), (today.maxStars ?? 0) > 0 && h('dd', { 'data-testid': 'day-stars' }, `${today.stars ?? 0} of ${today.maxStars ?? 0} \u2605`),
       h('dt', {}, 'Runbook pages you wrote'), h('dd', {}, today.notes),
       h('dt', {}, 'Complaints to Grisby'), h('dd', { 'data-testid': 'complaints' }, today.complaints),
       h('dt', {}, 'Experience earned'), h('dd', {}, `+${today.xp} XP`),

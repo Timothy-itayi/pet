@@ -4,7 +4,7 @@ import { newsFor } from '../game/news.ts';
 import { OKTOPUS_DAY } from '../game/oktopus.ts';
 import { canClockOut, clockOut, isWeekOver, readNews, scriptFor, ticketById, weekday, weekOf, type GameState } from '../game/rules.ts';
 import type { App, AppId, Toast, Win } from './app.ts';
-import { browserTitle } from './browser.ts';
+import { browserTitle, logo } from './browser.ts';
 import { chatApp } from './chat.ts';
 import { openIncident, outcomeCard, serviceDesk } from './desk.ts';
 import { clockText, h } from './dom.ts';
@@ -174,7 +174,9 @@ function dismiss(app: App, id: number): void {
 function openToast(app: App, t: Toast): void {
   app.ui.toasts = app.ui.toasts.filter((x) => x.id !== t.id);
   if (t.ticket && t.app === 'desk') { openIncident(app, t.ticket); return; }
-  if (t.ticket && t.app === 'chat') { app.ui.chat = t.ticket; app.ui.channel = undefined; }
+  if (t.ticket && t.app === 'chat') { app.ui.chat = t.ticket; app.ui.channel = undefined; app.ui.ping = undefined; }
+  if (t.channel) { app.ui.channel = t.channel; app.ui.ping = undefined; }
+  if (t.dm) { app.ui.ping = t.dm; app.ui.channel = undefined; app.ui.chat = undefined; }
   openApp(app, t.app);
 }
 
@@ -283,7 +285,7 @@ function taskbar(app: App): HTMLElement {
     h('button', {
       class: `start${ui.startOpen ? ' on' : ''}`, 'aria-expanded': ui.startOpen ? 'true' : 'false', 'data-testid': 'start',
       onclick: () => { ui.startOpen = !ui.startOpen; app.rerender(); },
-    }, h('span', { class: 'start-logo' }), 'Start'),
+    }, h('span', { class: 'start-logo' }, logo(12)), 'Start'),
     h('div', { class: 'task-buttons' }, ...ui.windows.map((w) => h('button', {
       class: `task${front(app) === w && !w.min ? ' on' : ''}`, 'data-testid': `task-${w.id}`, onclick: taskClick(w),
     }, h('span', { 'aria-hidden': 'true' }, glyph(w.id)), APPS[w.id].label))),

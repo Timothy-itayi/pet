@@ -634,5 +634,53 @@
     "kind": "loop",
     "usd": 0.36,
     "at": "2026-10-26T00:13:48.825Z"
+  },
+  {
+    "id": "face-clover",
+    "kind": "image",
+    "usd": 0.036,
+    "at": "2026-10-26T03:40:50.181Z"
+  },
+  {
+    "id": "face-clover",
+    "kind": "upscale",
+    "usd": 0.01,
+    "at": "2026-10-26T03:42:09.338Z"
+  },
+  {
+    "id": "face-moss",
+    "kind": "image",
+    "usd": 0.036,
+    "at": "2026-10-26T03:42:12.954Z"
+  },
+  {
+    "id": "face-moss",
+    "kind": "upscale",
+    "usd": 0.01,
+    "at": "2026-10-26T03:43:32.514Z"
+  },
+  {
+    "id": "face-tansy",
+    "kind": "image",
+    "usd": 0.036,
+    "at": "2026-10-26T03:43:38.394Z"
+  },
+  {
+    "id": "face-tansy",
+    "kind": "upscale",
+    "usd": 0.01,
+    "at": "2026-10-26T03:44:49.458Z"
+  },
+  {
+    "id": "face-hector",
+    "kind": "image",
+    "usd": 0.036,
+    "at": "2026-10-26T03:44:54.953Z"
+  },
+  {
+    "id": "face-hector",
+    "kind": "upscale",
+    "usd": 0.01,
+    "at": "2026-10-26T03:46:13.061Z"
   }
 ]

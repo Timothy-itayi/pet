@@ -8,6 +8,7 @@ import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeom
 import { mess } from './mess.ts';
 import { COMPUTER_Z, computerSet } from './computer.ts';
 import { desk, wood } from './desk.ts';
+import { duckInto } from './phone.ts';
 import { cardboardBox, filingCabinet, officeChair, snakePlant, wasteBin } from './furniture.ts';
 import { deskLamp } from './lamp.ts';
 import { mug } from './mug.ts';
@@ -333,6 +334,12 @@ export async function buildRoom(): Promise<Room> {
   mugObj.position.set(0.41, top, -0.38);
   mugObj.rotation.y = -0.35;
   add('mug', mugObj);
+  // Sam's rubber duck, between the keyboard and the runbook, looking at you: easy to see and pick up. Talk to it.
+  const duck = new Group();
+  duck.position.set(-0.33, top, -0.15);
+  duck.rotation.y = 0.35;
+  duckInto(duck);
+  add('duck', duck);
   const trayObj = tray();
   trayObj.position.set(0.6, top, -0.22);
   add('tray', trayObj);

@@ -1,6 +1,6 @@
+import { CHANNEL_INFO, CHANNELS, personName, stampOf, unreadCount, visiblePosts, type Channel, type TalkChannel } from '../game/channels.ts';
 import { VILLAGERS } from '../game/data.ts';
-import { newsFor } from '../game/news.ts';
-import { askForTicket, moodName, ticketById, ticketState, type GameState } from '../game/rules.ts';
+import { askForTicket, clockTime, moodName, ticketById, ticketState, type GameState } from '../game/rules.ts';
 import type { Ticket } from '../game/types.ts';
 import { portrait } from './portrait.ts';
 import type { App } from './app.ts';
@@ -9,7 +9,8 @@ import { clockText, h } from './dom.ts';
 
 /**
  * Burrow Chat, the company's chat app. #service-desk announces every new ticket; #general has the company news;
- * and people who'd rather not log a ticket message you directly.
+ * the department channels and #random are where the office talks (see channels.ts); and people who'd rather not
+ * log a ticket, or have something to tell you, message you directly.
  */
 
 /** Today's tickets, in the order they turned up: what the Service Desk bot has posted in #service-desk. */
@@ -38,7 +39,33 @@ function serviceDeskChannel(app: App): HTMLElement[] {
   });
 }
 
-const generalChannel = (app: App) => newsFor(app.state.day).reverse().map((p) => post(p.from, `Day ${p.day}`, h('p', {}, h('strong', {}, p.title)), h('p', {}, p.body)));
+/** Yesterday's posts and today's so far, newest at the bottom, with a divider where the day changes. */
+function talkChannel(app: App, channel: TalkChannel): HTMLElement[] {
+  const { day, clock } = app.state;
+  const posts = visiblePosts(day, clock, channel);
+  if (!posts.length) return [h('p', { class: 'chat-empty' }, 'Quiet in here so far.')];
+  return posts.flatMap((p, i) => [
+    ...(p.day !== posts[i - 1]?.day && (p.day < day || i > 0) ? [h('li', { class: 'chat-divider' }, h('span', {}, p.day < day ? 'Yesterday' : 'Today'))] : []),
+    post(personName(p.from), clockText(clockTime(p.at)), ...(p.title ? [h('p', {}, h('strong', {}, p.title))] : []), h('p', {}, p.text)),
+  ]);
+}
+
+/** What a colleague has told you directly today. */
+function pingView(app: App, name: string): HTMLElement {
+  const { state } = app;
+  return h('article', { class: 'chat-dm', 'aria-label': `Chat with ${name}` },
+    h('header', { class: 'chat-head' },
+      h('figure', { class: 'chat-face' }, portrait(name, 96)),
+      h('div', {}, h('h2', {}, name), h('p', { class: 'meta' }, 'Direct message. Not a ticket.'))),
+    h('ol', { class: 'chat-feed', 'data-testid': 'conversation', 'data-scroll-key': `dm:${name}` }, ...state.pings
+      .filter((p) => p.day === state.day && p.from === name)
+      .map((p) => post(name, clockText(p.at), h('p', {}, p.text)))));
+}
+
+const badge = (n: number) => h('span', { class: 'unread', 'aria-label': `${n} unread` }, String(n));
+
+/** The last conversation drawn, so opening a different one starts at the bottom, where the newest is. */
+let shownView = '';
 
 /** Where a conversation stands once you've answered it. */
 function after(app: App, t: Ticket): HTMLElement | false {
@@ -93,29 +120,51 @@ export function chatApp(app: App): HTMLElement {
   const { state, ui } = app;
   const people = conversations(state);
   if (ui.chat && !people.some((t) => t.id === ui.chat)) ui.chat = undefined;
-  const dm = ui.channel ? undefined : ui.chat ?? state.chats[0];
-  const channel = dm ? undefined : ui.channel ?? 'service-desk';
-  const go = (to: { channel?: 'general' | 'service-desk'; chat?: string }) => () => { ui.channel = to.channel; ui.chat = to.chat; app.rerender(); };
+  const pingers = [...new Set(state.pings.filter((p) => p.day === state.day).map((p) => p.from))];
+  if (ui.ping && !pingers.includes(ui.ping)) ui.ping = undefined;
+  const ping = ui.channel ? undefined : ui.ping;
+  const dm = ui.channel || ping ? undefined : ui.chat ?? state.chats[0];
+  const channel = dm || ping ? undefined : ui.channel ?? 'service-desk';
+  // Looking at a conversation (not just having it open behind another window) reads it.
+  const front = ui.windows.at(-1);
+  const view = channel ?? (ping ? `dm:${ping}` : `ticket:${dm}`);
+  if (front?.id === 'chat' && !front.min && (channel || ping)) (ui.seen ??= {})[view] = stampOf(state.day, state.clock);
+  const since = (key: string) => ui.seen?.[key];
+  const go = (to: { channel?: Channel; chat?: string; ping?: string }) => () => { ui.channel = to.channel; ui.chat = to.chat; ui.ping = to.ping; app.rerender(); };
   const link = (label: string, on: boolean, onclick: () => void, testid: string, extra?: HTMLElement | false) =>
     h('button', { class: `chat-link${on ? ' on' : ''}`, 'aria-current': on ? 'true' : 'false', 'data-testid': testid, onclick }, label, extra ?? false);
-  return h('div', { class: 'chat-app', 'data-testid': 'chat-app' },
+  const channelLink = (c: Channel) => {
+    const n = c === 'service-desk' ? 0 : unreadCount(state.day, state.clock, c, since(c));
+    return link(`# ${c}`, c === channel, go({ channel: c }), `channel-${c}`, n > 0 && badge(n));
+  };
+  const pinged = (name: string) => {
+    const n = state.pings.filter((p) => p.day === state.day && p.from === name && stampOf(p.day, p.at) > (since(`dm:${name}`) ?? stampOf(state.day, 0))).length;
+    return link(`\u25CB ${name}`, name === ping, go({ ping: name }), `ping-${name}`, n > 0 && badge(n));
+  };
+  const root = h('div', { class: 'chat-app', 'data-testid': 'chat-app' },
     h('nav', { class: 'chat-side', 'aria-label': 'Channels and messages' },
       h('p', { class: 'chat-workspace' }, 'Burrow & Co.'),
       h('p', { class: 'chat-section' }, 'Channels'),
-      link('# general', channel === 'general', go({ channel: 'general' }), 'channel-general'),
-      link('# service-desk', channel === 'service-desk', go({ channel: 'service-desk' }), 'channel-service-desk'),
+      ...CHANNELS.map(channelLink),
       h('p', { class: 'chat-section' }, 'Direct messages'),
-      ...(people.length
-        ? people.map((t) => {
+      ...(people.length || pingers.length
+        ? [...people.map((t) => {
           const waiting = state.chats.includes(t.id);
-          return link(`${waiting ? '\u25CF' : '\u25CB'} ${VILLAGERS[t.who].name}`, t.id === dm, go({ chat: t.id }), `chat-${t.id}`,
-            waiting && h('span', { class: 'unread' }, '1'));
-        })
+          return link(`${waiting ? '\u25CF' : '\u25CB'} ${VILLAGERS[t.who].name}`, t.id === dm, go({ chat: t.id }), `chat-${t.id}`, waiting && badge(1));
+        }), ...pingers.map(pinged)]
         : [h('p', { class: 'chat-empty' }, 'Nobody. Suspiciously quiet.')])),
-    dm ? chatView(app, ticketById(dm))
-      : h('section', { class: 'chat-channel', 'aria-label': `#${channel}` },
-        h('header', { class: 'chat-channel-head' }, h('strong', {}, `# ${channel}`),
-          h('span', { class: 'meta' }, channel === 'general' ? 'Company news and announcements' : 'New tickets, posted by the Service Desk bot')),
-        h('ol', { class: 'chat-feed' }, ...(channel === 'general' ? generalChannel(app) : serviceDeskChannel(app)))),
+    ping ? pingView(app, ping)
+      : dm ? chatView(app, ticketById(dm))
+        : h('section', { class: 'chat-channel', 'aria-label': `#${channel}` },
+          h('header', { class: 'chat-channel-head' }, h('strong', {}, `# ${channel}`), h('span', { class: 'meta' }, CHANNEL_INFO[channel ?? 'service-desk'])),
+          h('ol', { class: 'chat-feed', 'data-scroll-key': view }, ...(channel && channel !== 'service-desk' ? talkChannel(app, channel) : serviceDeskChannel(app)))),
   );
+  // Like real chat, a conversation opens at the bottom. shortcut: a feed scrolled to the very top snaps down on a redraw too; fine for a few dozen posts.
+  const fresh = view !== shownView;
+  shownView = view;
+  requestAnimationFrame(() => {
+    const feed = root.querySelector('.chat-feed');
+    if (feed && (fresh || !feed.scrollTop)) feed.scrollTop = feed.scrollHeight;
+  });
+  return root;
 }

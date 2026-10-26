@@ -15,6 +15,7 @@ export const SAM_NOTE = [
   'Hi. I’m Sam. I kept this place running for six years. I quit. Sorry.',
   'Password is “password”. Nobody ever changed it.',
   'The runbook is mostly wrong. Fix it as you go.',
+  'Why people liked me: I never guessed. Three things, every time. 1. Gather context. 2. Isolate & divide. 3. Test the simplest fix. Talk it through with the duck.',
   'Send people updates, or they will come and find you.',
   'Grisby will say you’ll get paid. Get it in writing.',
   'Be nice to Dot. Good luck.',
@@ -35,7 +36,8 @@ export const ROOM_ITEMS: RoomItem[] = [
   { id: 'plant', label: 'Plant', kind: 'sway', says: () => 'The leaves bob about. Mostly alive. Sam watered it on Fridays.' },
   { id: 'phone', label: 'Where the phone was', kind: 'look', says: (day) => (day >= 16 ? 'A clean rectangle in the dust where a phone used to be. The new ones are in the top drawer.' : 'A clean rectangle in the dust where a phone used to be. Budget cuts.') },
   { id: 'binders', label: 'Sam’s old binders', kind: 'look', says: () => 'Sam’s binders: \u201CPrinters 2016\u201D, \u201CPrinters 2017\u201D, \u201CPrinters (other)\u201D.' },
-  { id: 'drawer', label: 'Top drawer', kind: 'drawer', says: (day) => (day >= 16 ? 'The box of company phones, in their cardboard tray. Pick one up.' : 'Sam\u2019s drawer: a takeaway menu and some rubber bands. Not much else.') },
+  { id: 'duck', label: 'Sam\u2019s rubber duck', kind: 'pickup', says: () => 'Sam\u2019s rubber duck. Sam explained every problem to it out loud, and half the time heard the answer halfway through. On a ticket, \u201CTalk it through\u201D asks it for help. It only ever asks you questions back.' },
+  { id: 'drawer', label: 'Open the top drawer', kind: 'drawer', says: (day) => (day >= 16 ? 'The box of company phones, in their cardboard tray. Pick one up.' : 'Sam\u2019s drawer: a takeaway menu and some rubber bands. Not much else.') },
   { id: 'chair', label: 'Sam’s chair', kind: 'spin', says: () => 'It squeaks round. It still leans slightly to the left.' },
 ];
 

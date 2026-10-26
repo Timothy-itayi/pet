@@ -1,4 +1,4 @@
-import { Box3, CanvasTexture, Color, Group, Mesh, MeshStandardMaterial, PlaneGeometry, SRGBColorSpace, type Object3D } from 'three';
+import { Box3, CanvasTexture, Vector3, Color, Group, Mesh, MeshStandardMaterial, PlaneGeometry, SRGBColorSpace, type Object3D } from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 
@@ -88,4 +88,19 @@ export function fillDrawer(inside: Object3D, phones: { id: string; slot: number;
     inside.add(holder);
     pickables.set(id, holder);
   }
+}
+
+/** Sam's rubber duck: a real model, loaded once, scaled to about 9 cm tall, sitting on its base. */
+export function duckInto(spot: Object3D): void {
+  void new GLTFLoader().loadAsync(`${import.meta.env.BASE_URL}models/duck.glb`).then((gltf) => {
+    const duck = gltf.scene;
+    const size = new Box3().setFromObject(duck).getSize(new Vector3());
+    duck.scale.setScalar(0.09 / (size.y || 1));
+    const box = new Box3().setFromObject(duck);
+    duck.position.y -= box.min.y;
+    duck.position.x -= (box.min.x + box.max.x) / 2;
+    duck.position.z -= (box.min.z + box.max.z) / 2;
+    duck.traverse((o) => { if (o instanceof Mesh) { o.castShadow = true; o.receiveShadow = true; } });
+    spot.add(duck);
+  });
 }

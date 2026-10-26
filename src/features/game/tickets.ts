@@ -1,3 +1,5 @@
+import { NEW_STAFF_TICKETS } from './newStaff.ts';
+import { REASONING } from './reasoning.ts';
 import type { Issue, Ticket } from './types.ts';
 
 export const ISSUES: Issue[] = [
@@ -739,22 +741,22 @@ export const ISSUES: Issue[] = [
     skill: 'networks',
     page: { status: 'missing', text: '(No page.)' },
     asks: [
-      { id: 'message', text: 'Is there an error message anywhere?', none: 'The printer’s screen says something about a conflict.' },
+      { id: 'message', text: 'Is there an error message anywhere?', none: 'Its screen says something about a conflict.' },
       { id: 'when', text: 'When does it drop out?', none: 'Randomly. It works, then it doesn’t, then it does.' },
-      { id: 'set', text: 'How did the printer get its address?', none: 'Sam typed one in, years ago. On a sticky note somewhere.' },
+      { id: 'set', text: 'How did it get its address?', none: 'Someone typed one in. On a sticky note somewhere.' },
     ],
     fixes: [
-      { id: 'offon', label: 'Turn the printer off and on again', ruledOut: 'It comes back, works for ten minutes, then drops out again.' },
-      { id: 'reserve', label: 'Give the printer an address that’s reserved for it, outside the pool the router hands out' },
-      { id: 'new', label: 'Order a new printer', fail: 'The budget is back, but not for this. And the new one would do the same.' },
-      { id: 'cable', label: 'Replace the printer’s network cable', fail: 'New cable. Same conflict.' },
+      { id: 'offon', label: 'Turn it off and on again', ruledOut: 'It comes back, works for ten minutes, then drops out again.' },
+      { id: 'reserve', label: 'Give it an address of its own, set aside in the router' },
+      { id: 'new', label: 'Order a new one', fail: 'The budget is back, but not for this. And the new one would do the same.' },
+      { id: 'cable', label: 'Replace its network cable', fail: 'New cable. Same conflict.' },
     ],
     correctFix: 'reserve',
     note: {
       example: 'Address conflict: a fixed address inside the router’s pool. Reserve one for the printer, outside the pool.',
       keys: ['reserve', 'conflict', 'outside the pool', 'same address', 'reservation', 'static'],
     },
-    why: 'Sam gave the printer a fixed address years ago. With the bigger pool, the router started handing that same address to a laptop, and the two fight over it. Printers should have an address reserved just for them, outside the range the router gives out.',
+    why: 'Someone typed a fixed address into it by hand. The router hands out addresses from a pool, and when it gives that same address to another device, the two fight over it. Printers, screens and anything else that needs a fixed address should have one reserved just for them, outside the range the router gives out.',
   },
   {
     id: 'switch-port',
@@ -936,7 +938,7 @@ export const ISSUES: Issue[] = [
 export const TICKETS: Ticket[] = [
   // Day 1
   {
-    id: 't101', day: 1, at: '9:05', who: 'dot', via: 'walkup', where: 'Finance corner', priority: 'normal', issue: 'paper-jam', mood: 1,
+    id: 't101', day: 1, at: '9:05', who: 'dot', via: 'tray', priority: 'normal', issue: 'paper-jam', mood: 1,
     title: 'The printer is broken',
     message: 'The printer’s out of ink. I pressed print three times and nothing!',
     details: [
@@ -946,7 +948,7 @@ export const TICKETS: Ticket[] = [
     workaround: 'Send it to the printer upstairs for now',
   },
   {
-    id: 't102', day: 1, at: '9:50', who: 'juniper', via: 'tray', priority: 'high', issue: 'airplane-mode', mood: 2,
+    id: 't102', day: 1, at: '9:45', who: 'juniper', via: 'tray', priority: 'high', issue: 'airplane-mode', mood: 2,
     title: 'The internet is down!!',
     message: 'Internet down for the WHOLE office. Please fix ASAP.',
     details: [
@@ -956,7 +958,7 @@ export const TICKETS: Ticket[] = [
     workaround: 'Let her use the hot-desk PC for now',
   },
   {
-    id: 'f101', day: 1, at: '11:30', who: 'biscuit', via: 'floor', where: 'Kitchen', priority: 'normal', issue: 'mouse-battery', mood: 0,
+    id: 'f101', day: 1, at: '10:25', who: 'biscuit', via: 'floor', where: 'Kitchen', priority: 'normal', issue: 'mouse-battery', mood: 0,
     title: 'Mouse stopped working',
     message: 'Oh! You’re here! Can you look at my mouse real quick? It just stopped.',
     details: [
@@ -981,10 +983,10 @@ export const TICKETS: Ticket[] = [
     title: 'Battery dead, won’t charge',
     message: 'Battery is broken, charging all day and still at 3%. Need a new battery!',
     details: [
-      { label: 'Charger on his desk', text: 'USB-C phone charger, 20W', ask: 'charger' },
+      { label: 'Charger on her desk', text: 'USB-C phone charger, 20W', ask: 'charger' },
       { label: 'Laptop sticker', text: 'Use a 65W or higher USB-C charger.', ask: 'sticker' },
     ],
-    workaround: 'Lend him your own charger for the day',
+    workaround: 'Lend her your own charger for the day',
   },
   {
     id: 't203', day: 2, at: '13:30', who: 'pip', via: 'tray', priority: 'low', issue: 'paper-jam', mood: 0,
@@ -1028,7 +1030,7 @@ export const TICKETS: Ticket[] = [
     workaround: 'Copy the files he needs onto a USB stick',
   },
   {
-    id: 't303', day: 3, at: '11:30', who: 'juniper', via: 'walkup', where: 'Open office', priority: 'normal', issue: 'monitor-input', mood: 2,
+    id: 't303', day: 3, at: '14:45', who: 'juniper', via: 'walkup', where: 'Open office', priority: 'normal', issue: 'monitor-input', mood: 2,
     title: 'My second screen is broken',
     message: 'The new screen just says no signal. I think it’s broken!',
     details: [
@@ -1078,7 +1080,7 @@ export const TICKETS: Ticket[] = [
     workaround: 'Tell him to use the web version of the spreadsheet for now',
   },
   {
-    id: 't403', day: 4, at: '11:00', who: 'otis', via: 'walkup', where: 'Meeting room', priority: 'high', issue: 'airplane-mode', mood: 1,
+    id: 't403', day: 4, at: '14:45', who: 'otis', via: 'walkup', where: 'Meeting room', priority: 'high', issue: 'airplane-mode', mood: 1,
     title: 'No internet on my laptop',
     message: 'I flew to my sister’s at the weekend. Now nothing loads. Hoo.',
     details: [
@@ -1127,7 +1129,7 @@ export const TICKETS: Ticket[] = [
     workaround: 'Read his emails out to him from his phone',
   },
   {
-    id: 't503', day: 5, at: '11:15', who: 'biscuit', via: 'tray', priority: 'normal', issue: 'guest-wifi', mood: 0,
+    id: 't503', day: 5, at: '15:35', who: 'biscuit', via: 'tray', priority: 'normal', issue: 'guest-wifi', mood: 0,
     title: 'Can’t open the team folder',
     message: 'The team folder says it doesn’t exist! But it does! I saw it yesterday!',
     details: [
@@ -1232,10 +1234,10 @@ export const TICKETS: Ticket[] = [
     title: 'Laptop stuck at 4%',
     message: 'It’s charging but it’s not CHARGING. 4% all morning. Is it hungry?',
     details: [
-      { label: 'Charger on his desk', text: 'USB-C, 18W. Says “phone” on it.', ask: 'charger' },
+      { label: 'Charger on her desk', text: 'USB-C, 18W. Says “phone” on it.', ask: 'charger' },
       { label: 'Laptop sticker', text: 'Use a 65W or higher USB-C charger.', ask: 'sticker' },
     ],
-    workaround: 'Lend him your own charger for the afternoon',
+    workaround: 'Lend her your own charger for the afternoon',
   },
   {
     id: 't407', day: 4, at: '15:50', who: 'marlo', via: 'tray', priority: 'high', issue: 'cable-unplugged', mood: 1,
@@ -1245,10 +1247,10 @@ export const TICKETS: Ticket[] = [
       { label: 'PC screen', text: 'Network cable unplugged.', ask: 'screen' },
       { label: 'Under his desk', text: 'Neat coils of cable, all zip-tied. One blue cable plugged into nothing.', ask: 'under' },
     ],
-    workaround: 'Let him work from the hot-desk PC',
+    workaround: 'Let her work from the hot-desk PC',
   },
   {
-    id: 't505', day: 5, at: '11:50', who: 'otis', via: 'walkup', where: 'Meeting room', priority: 'normal', issue: 'default-printer', mood: 1,
+    id: 't505', day: 5, at: '11:10', who: 'otis', via: 'walkup', where: 'Meeting room', priority: 'normal', issue: 'default-printer', mood: 1,
     title: 'My prints go upstairs',
     message: 'Every time I print, it comes out on the floor above. I have climbed those stairs six times today. Hoo.',
     details: [
@@ -1315,7 +1317,7 @@ export const TICKETS: Ticket[] = [
     workaround: 'Send it to the printer upstairs',
   },
   {
-    id: 't604', day: 6, at: '11:40', who: 'biscuit', via: 'walkup', where: 'Kitchen', priority: 'normal', issue: 'airplane-mode', mood: 1,
+    id: 't604', day: 6, at: '13:55', who: 'biscuit', via: 'walkup', where: 'Kitchen', priority: 'normal', issue: 'airplane-mode', mood: 1,
     title: 'No internet in the kitchen',
     message: 'The internet works everywhere except my laptop! Is the kitchen cursed?',
     details: [{ label: 'Biscuit’s laptop', text: 'Airplane mode: ON', ask: 'settings' }],
@@ -1349,7 +1351,7 @@ export const TICKETS: Ticket[] = [
     workaround: 'Pitch from his laptop screen',
   },
   {
-    id: 't703', day: 7, at: '11:50', who: 'otis', via: 'tray', priority: 'normal', issue: 'forgot-password', mood: 1,
+    id: 't703', day: 7, at: '13:05', who: 'otis', via: 'tray', priority: 'normal', issue: 'forgot-password', mood: 1,
     title: 'Password forgotten after a long weekend',
     message: 'A restful weekend has erased my password entirely. Hoo.',
     details: [
@@ -1390,7 +1392,7 @@ export const TICKETS: Ticket[] = [
     workaround: 'Close everything he isn’t using',
   },
   {
-    id: 't803', day: 8, at: '11:30', who: 'juniper', via: 'walkup', where: 'Open office', priority: 'normal', issue: 'caps-lock', mood: 1,
+    id: 't803', day: 8, at: '13:55', who: 'juniper', via: 'walkup', where: 'Open office', priority: 'normal', issue: 'caps-lock', mood: 1,
     title: 'Password wrong, apparently',
     message: 'My password says it’s wrong. It is NOT wrong. I have been typing it for three years.',
     details: [{ label: 'Juniper’s keyboard', text: 'The Caps Lock light is on.', ask: 'keyboard' }],
@@ -1442,7 +1444,7 @@ export const TICKETS: Ticket[] = [
     workaround: 'Unplug the server overnight',
   },
   {
-    id: 't903', day: 9, at: '11:20', who: 'biscuit', via: 'tray', priority: 'normal', issue: 'locked-out', mood: 1,
+    id: 't903', day: 9, at: '13:05', who: 'biscuit', via: 'tray', priority: 'normal', issue: 'locked-out', mood: 1,
     title: 'Locked out (oops)',
     message: 'I may have tried my password eleven times. In a row. Now it says locked. Sorry!!',
     details: [{ label: 'Login screen', text: 'This account has been locked out. Contact your administrator.', ask: 'error' }],
@@ -1500,7 +1502,7 @@ export const TICKETS: Ticket[] = [
     workaround: 'Let her use the hot-desk PC',
   },
   {
-    id: 't1004', day: 10, at: '11:50', who: 'marlo', via: 'walkup', where: 'Meeting room', priority: 'normal', issue: 'monitor-input', mood: 1,
+    id: 't1004', day: 10, at: '11:10', who: 'marlo', via: 'walkup', where: 'Meeting room', priority: 'normal', issue: 'monitor-input', mood: 1,
     title: 'Big screen blank before the board',
     message: 'The board meeting is in five minutes and the big screen is blank. Again. I’m starting to take it personally.',
     details: [
@@ -1545,7 +1547,7 @@ export const TICKETS: Ticket[] = [
     message: 'The investors loved Marketing on Oktopus. Now they want everyone on it. Everyone. Even Otis. Today, please. Honk.',
     details: [
       { label: 'Oktopus', text: 'Marketing only.' },
-      { label: 'HR file', text: 'Ten people across six departments, including you.' },
+      { label: 'HR file', text: 'Fourteen people across six departments, including you.' },
       { label: 'Who', text: 'Everyone in the HR file. Yes, you too.', ask: 'who' },
       { label: 'Teams', text: 'Every department gets its own group, so apps can go to teams later.', ask: 'groups' },
     ],
@@ -1572,7 +1574,7 @@ export const TICKETS: Ticket[] = [
     workaround: 'Print the minutes for him',
   },
   {
-    id: 't1104', day: 11, at: '11:30', who: 'marlo', via: 'tray', priority: 'high', issue: 'locked-out', mood: 1,
+    id: 't1104', day: 11, at: '13:05', who: 'marlo', via: 'tray', priority: 'high', issue: 'locked-out', mood: 1,
     title: 'Locked out, mid-deal',
     message: 'Locked out of my laptop. I am closing a deal. The deal cannot wait. I typed my new password perfectly, many times.',
     details: [
@@ -1624,7 +1626,7 @@ export const TICKETS: Ticket[] = [
     workaround: 'Say you’ll “look into it”',
   },
   {
-    id: 't1203', day: 12, at: '11:40', who: 'juniper', via: 'tray', priority: 'normal', issue: 'slow-laptop', mood: 1,
+    id: 't1203', day: 12, at: '13:05', who: 'juniper', via: 'tray', priority: 'normal', issue: 'slow-laptop', mood: 1,
     title: 'Laptop running on hope',
     message: 'My laptop is SO slow. I clicked on Hootsweet and made a coffee and it’s still thinking. The coffee is gone. Help!',
     details: [
@@ -1688,7 +1690,7 @@ export const TICKETS: Ticket[] = [
     workaround: 'Tell Basil to use the free trial',
   },
   {
-    id: 't1303', day: 13, at: '11:40', who: 'juniper', via: 'walkup', where: 'Open office', priority: 'normal', issue: 'admin-request', mood: 1,
+    id: 't1303', day: 13, at: '15:45', who: 'juniper', via: 'walkup', where: 'Open office', priority: 'normal', issue: 'admin-request', mood: 1,
     title: 'Need admin for a font',
     message: 'Can I have admin rights for like two minutes? I need to install a font for the campaign. It’s a very important font.',
     details: [
@@ -1760,7 +1762,7 @@ export const TICKETS: Ticket[] = [
     workaround: 'Let her use the hot-desk PC',
   },
   {
-    id: 't1403', day: 14, at: '11:30', who: 'juniper', via: 'tray', priority: 'normal', issue: 'monitor-input', mood: 1,
+    id: 't1403', day: 14, at: '14:45', who: 'juniper', via: 'tray', priority: 'normal', issue: 'monitor-input', mood: 1,
     title: 'Projector says no',
     message: 'The meeting room screen says “No signal” and I have a whole presentation and Basil is LOOKING at me.',
     details: [
@@ -1836,7 +1838,7 @@ export const TICKETS: Ticket[] = [
     workaround: 'Let him use the hot-desk PC',
   },
   {
-    id: 't1503', day: 15, at: '11:00', who: 'biscuit', via: 'walkup', where: 'Kitchen', priority: 'normal', issue: 'caps-lock', mood: 0,
+    id: 't1503', day: 15, at: '16:25', who: 'biscuit', via: 'walkup', where: 'Kitchen', priority: 'normal', issue: 'caps-lock', mood: 0,
     title: 'Password not working!!',
     message: 'MY PASSWORD ISN’T WORKING!! I’m typing it right!! Why is everyone looking at me!!',
     details: [
@@ -1910,7 +1912,7 @@ export const TICKETS: Ticket[] = [
     workaround: 'Tell her to ignore it',
   },
   {
-    id: 't1603', day: 16, at: '10:40', who: 'biscuit', via: 'walkup', where: 'Kitchen', priority: 'normal', issue: 'monitor-input', mood: 0,
+    id: 't1603', day: 16, at: '10:30', who: 'biscuit', via: 'walkup', where: 'Kitchen', priority: 'normal', issue: 'monitor-input', mood: 0,
     title: 'Kitchen telly has gone blue!!',
     message: 'The kitchen screen for the menu just says “No signal”!! Everyone’s asking what soup it is!!',
     details: [
@@ -1920,7 +1922,7 @@ export const TICKETS: Ticket[] = [
     workaround: 'Write the soup on a piece of paper',
   },
   {
-    id: 't1604', day: 16, at: '11:30', who: 'marlo', via: 'tray', priority: 'normal', issue: 'password-expired', mood: 1,
+    id: 't1604', day: 16, at: '13:05', who: 'marlo', via: 'tray', priority: 'normal', issue: 'password-expired', mood: 1,
     title: 'Email wants a new password',
     message: 'My email says my password is out of date. My password is in its prime.',
     details: [
@@ -2036,7 +2038,7 @@ export const TICKETS: Ticket[] = [
     workaround: 'Tell her not to worry about it',
   },
   {
-    id: 't1803', day: 18, at: '11:40', who: 'grisby', via: 'tray', priority: 'normal', issue: 'slow-laptop', mood: 1,
+    id: 't1803', day: 18, at: '15:35', who: 'grisby', via: 'tray', priority: 'normal', issue: 'slow-laptop', mood: 1,
     title: 'Laptop slower than the auditors',
     message: 'My laptop is slower than the auditors. And the auditors read every receipt aloud.',
     details: [
@@ -2098,7 +2100,7 @@ export const TICKETS: Ticket[] = [
     workaround: 'Tell him to ignore it',
   },
   {
-    id: 't1903', day: 19, at: '11:30', who: 'pip', via: 'tray', priority: 'normal', issue: 'monitor-input', mood: 1,
+    id: 't1903', day: 19, at: '16:25', who: 'pip', via: 'tray', priority: 'normal', issue: 'monitor-input', mood: 1,
     title: 'Finance screen won’t wake',
     message: 'The second screen at my Finance desk says “No signal”. Finance screens are moody. Ribbit.',
     details: [
@@ -2162,7 +2164,7 @@ export const TICKETS: Ticket[] = [
     workaround: 'Tell her to skip the last question',
   },
   {
-    id: 't2003', day: 20, at: '11:00', who: 'dot', via: 'tray', priority: 'normal', issue: 'slow-laptop', mood: 1,
+    id: 't2003', day: 20, at: '13:05', who: 'dot', via: 'tray', priority: 'normal', issue: 'slow-laptop', mood: 1,
     title: 'Laptop slow at year-end',
     message: 'My laptop has slowed to the speed of a quarterly review. I have numbers to finish.',
     details: [
@@ -2288,7 +2290,7 @@ export const TICKETS: Ticket[] = [
     workaround: 'Use the Wi-Fi for now',
   },
   {
-    id: 't2203', day: 22, at: '11:30', who: 'grisby', via: 'tray', priority: 'normal', issue: 'airplane-mode', mood: 1,
+    id: 't2203', day: 22, at: '13:05', who: 'grisby', via: 'tray', priority: 'normal', issue: 'airplane-mode', mood: 1,
     title: 'No internet in my new office',
     message: 'My new office upstairs has a view and no internet. I don’t know which I’m happier about.',
     details: [
@@ -2350,7 +2352,7 @@ export const TICKETS: Ticket[] = [
     workaround: 'Print their slides',
   },
   {
-    id: 't2303', day: 23, at: '11:40', who: 'marlo', via: 'tray', priority: 'normal', issue: 'slow-laptop', mood: 1,
+    id: 't2303', day: 23, at: '13:55', who: 'marlo', via: 'tray', priority: 'normal', issue: 'slow-laptop', mood: 1,
     title: 'Laptop slower than Rowan',
     message: 'My laptop is slower than Rowan finding the toilets. Which took forty minutes.',
     details: [
@@ -2412,7 +2414,7 @@ export const TICKETS: Ticket[] = [
     workaround: 'Print the minutes from someone else’s laptop',
   },
   {
-    id: 't2403', day: 24, at: '11:30', who: 'biscuit', via: 'walkup', where: 'Kitchen', priority: 'normal', issue: 'monitor-input', mood: 0,
+    id: 't2403', day: 24, at: '13:55', who: 'biscuit', via: 'walkup', where: 'Kitchen', priority: 'normal', issue: 'monitor-input', mood: 0,
     title: 'Menu screen upstairs is blue!!',
     message: 'The NEW kitchen upstairs has a menu screen and it’s blue and says no signal!! Two kitchens, both blue!!',
     details: [
@@ -2474,7 +2476,7 @@ export const TICKETS: Ticket[] = [
     workaround: 'Lend her the hot-desk PC',
   },
   {
-    id: 't2503', day: 25, at: '11:30', who: 'biscuit', via: 'tray', priority: 'normal', issue: 'paper-jam', mood: 0,
+    id: 't2503', day: 25, at: '16:25', who: 'biscuit', via: 'tray', priority: 'normal', issue: 'paper-jam', mood: 0,
     title: 'Printer ate the party invites!!',
     message: 'I was printing invitations for the new-floor party and the printer ATE them!! It’s not even invited!!',
     details: [
@@ -2629,4 +2631,14 @@ export const TICKETS: Ticket[] = [
     ],
     workaround: 'Type the list out by hand for Otis',
   },
+  // Clover, Moss, Tansy and Hector's everyday problems, and a few more from the old hands, to fill the mornings.
+  ...NEW_STAFF_TICKETS,
 ];
+
+// Sam's method, written into every kind of problem (see reasoning.ts).
+for (const issue of ISSUES) {
+  const r = REASONING[issue.id];
+  if (!r) continue;
+  for (const a of issue.asks) Object.assign(a, r.asks[a.id]);
+  for (const f of issue.fixes) Object.assign(f, r.fixes[f.id]);
+}
