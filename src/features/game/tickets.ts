@@ -740,22 +740,22 @@ export const ISSUES: Issue[] = [
     skill: 'networks',
     page: { status: 'missing', text: '(No page.)' },
     asks: [
-      { id: 'message', text: 'Is there an error message anywhere?', none: 'The printer’s screen says something about a conflict.' },
+      { id: 'message', text: 'Is there an error message anywhere?', none: 'Its screen says something about a conflict.' },
       { id: 'when', text: 'When does it drop out?', none: 'Randomly. It works, then it doesn’t, then it does.' },
-      { id: 'set', text: 'How did the printer get its address?', none: 'Sam typed one in, years ago. On a sticky note somewhere.' },
+      { id: 'set', text: 'How did it get its address?', none: 'Someone typed one in. On a sticky note somewhere.' },
     ],
     fixes: [
-      { id: 'offon', label: 'Turn the printer off and on again', ruledOut: 'It comes back, works for ten minutes, then drops out again.' },
-      { id: 'reserve', label: 'Give the printer an address that’s reserved for it, outside the pool the router hands out' },
-      { id: 'new', label: 'Order a new printer', fail: 'The budget is back, but not for this. And the new one would do the same.' },
-      { id: 'cable', label: 'Replace the printer’s network cable', fail: 'New cable. Same conflict.' },
+      { id: 'offon', label: 'Turn it off and on again', ruledOut: 'It comes back, works for ten minutes, then drops out again.' },
+      { id: 'reserve', label: 'Give it an address of its own, set aside in the router' },
+      { id: 'new', label: 'Order a new one', fail: 'The budget is back, but not for this. And the new one would do the same.' },
+      { id: 'cable', label: 'Replace its network cable', fail: 'New cable. Same conflict.' },
     ],
     correctFix: 'reserve',
     note: {
       example: 'Address conflict: a fixed address inside the router’s pool. Reserve one for the printer, outside the pool.',
       keys: ['reserve', 'conflict', 'outside the pool', 'same address', 'reservation', 'static'],
     },
-    why: 'Sam gave the printer a fixed address years ago. With the bigger pool, the router started handing that same address to a laptop, and the two fight over it. Printers should have an address reserved just for them, outside the range the router gives out.',
+    why: 'Someone typed a fixed address into it by hand. The router hands out addresses from a pool, and when it gives that same address to another device, the two fight over it. Printers, screens and anything else that needs a fixed address should have one reserved just for them, outside the range the router gives out.',
   },
   {
     id: 'switch-port',
@@ -982,10 +982,10 @@ export const TICKETS: Ticket[] = [
     title: 'Battery dead, won’t charge',
     message: 'Battery is broken, charging all day and still at 3%. Need a new battery!',
     details: [
-      { label: 'Charger on his desk', text: 'USB-C phone charger, 20W', ask: 'charger' },
+      { label: 'Charger on her desk', text: 'USB-C phone charger, 20W', ask: 'charger' },
       { label: 'Laptop sticker', text: 'Use a 65W or higher USB-C charger.', ask: 'sticker' },
     ],
-    workaround: 'Lend him your own charger for the day',
+    workaround: 'Lend her your own charger for the day',
   },
   {
     id: 't203', day: 2, at: '13:30', who: 'pip', via: 'tray', priority: 'low', issue: 'paper-jam', mood: 0,
@@ -1233,10 +1233,10 @@ export const TICKETS: Ticket[] = [
     title: 'Laptop stuck at 4%',
     message: 'It’s charging but it’s not CHARGING. 4% all morning. Is it hungry?',
     details: [
-      { label: 'Charger on his desk', text: 'USB-C, 18W. Says “phone” on it.', ask: 'charger' },
+      { label: 'Charger on her desk', text: 'USB-C, 18W. Says “phone” on it.', ask: 'charger' },
       { label: 'Laptop sticker', text: 'Use a 65W or higher USB-C charger.', ask: 'sticker' },
     ],
-    workaround: 'Lend him your own charger for the afternoon',
+    workaround: 'Lend her your own charger for the afternoon',
   },
   {
     id: 't407', day: 4, at: '15:50', who: 'marlo', via: 'tray', priority: 'high', issue: 'cable-unplugged', mood: 1,
@@ -1246,7 +1246,7 @@ export const TICKETS: Ticket[] = [
       { label: 'PC screen', text: 'Network cable unplugged.', ask: 'screen' },
       { label: 'Under his desk', text: 'Neat coils of cable, all zip-tied. One blue cable plugged into nothing.', ask: 'under' },
     ],
-    workaround: 'Let him work from the hot-desk PC',
+    workaround: 'Let her work from the hot-desk PC',
   },
   {
     id: 't505', day: 5, at: '11:50', who: 'otis', via: 'walkup', where: 'Meeting room', priority: 'normal', issue: 'default-printer', mood: 1,

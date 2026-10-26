@@ -47,7 +47,10 @@ export interface TicketState {
   caller?: { doing: 'answer' | 'try'; id: string; until: number } | { doing: 'confirmed'; id: string };
   /** Your notebook page for it: the suspects ruled out (fix ids), and how you went about your first test. */
   crossed?: string[];
-  first?: { fix: string; asked: number; crossed: number; simplest: boolean };
+  /** You've opened the console to look it up, so what it shows is now something you know. */
+  looked?: boolean;
+  /** How you started testing; `known` if it was already in your notebook then. */
+  first?: { fix: string; asked: number; crossed: number; simplest: boolean; known?: boolean };
 }
 
 export interface Outcome {
@@ -530,6 +533,20 @@ function oktaProblem(s: GameState, t: Ticket, fixBy: Exclude<NonNullable<Issue['
   }
 }
 
+/** Facts that come from a console: you only know them once you've looked. */
+export const LOOKED_UP = ['Active Directory', 'Oktopus', 'HR file'];
+
+/** What you know about a ticket so far: what they've told you, what IT can just see, and what you've looked up. */
+export const knownDetails = (t: Ticket, st: TicketState) =>
+  t.details.filter((d) => (d.ask ? st.heard.includes(d.ask) : !LOOKED_UP.includes(d.label) || st.looked === true));
+
+/** Open the console to look it up: gathering context, the admin way. */
+export function lookUp(s: GameState, id: string): GameState {
+  const t = workable(s, id);
+  if (!t || ticketState(s, id).looked) return s;
+  return act(s, (d) => { ticketState(d, id).looked = true; });
+}
+
 /**
  * What a console shows right now, for a fact on a ticket that comes from one: so "No user called Fern" doesn't stay
  * true after you've created her. Undefined for anything the caller told you, which doesn't change.
@@ -647,7 +664,7 @@ export function suggest(s: GameState, id: string, fixId: string): GameState {
   return act(s, (d) => {
     const st = ticketState(d, id);
     st.status = 'open';
-    st.first ??= firstTest(t, st, fixId);
+    st.first ??= firstTest(t, st, fixId, isKnown(d, t));
     const text = fixId === 'console' ? 'I\u2019ve made the change on my side. Could you check it\u2019s working now?' : `Suggested: ${f.label}.`;
     st.messages.push({ from: 'you', text, at: d.clock });
     st.caller = { doing: 'try', id: fixId, until: replyAt(d, t, callerMinutes(d, t, CALLER[t.priority][fixId === 'tool' ? 'tool' : 'tryIt'])) };
@@ -682,7 +699,8 @@ function hear(d: GameState, t: Ticket, c: { doing: 'answer' | 'try'; id: string;
   // sensible or not, is one less suspect.
   if (c.id !== 'console') {
     st.tried.push(c.id);
-    st.crossed = [...new Set([...(st.crossed ?? []), c.id])];
+    // Except a harmful one: plugging in a stray USB stick proves nothing about whose it is.
+    if (!f?.grave) st.crossed = [...new Set([...(st.crossed ?? []), c.id])];
   }
   if (f?.ruledOut || (c.id !== 'console' && c.id === issue.correctFix)) {
     said(f?.ruledOut ?? 'Tried that. Still not working.');
@@ -864,7 +882,9 @@ export function writeNote(s: GameState, text: string): GameState {
     first.noteMiss = noteProblem(target.note, text);
     if (first.noteMiss) return;
     d.runbook[target.page] = 'yours';
-    d.written[target.page] = text.trim();
+    // On top of the entry your clue wrote, so it keeps its "How I knew".
+    const auto = first.clue ? d.written[target.page] : undefined;
+    d.written[target.page] = auto ? `${auto} In my words: ${text.trim()}` : text.trim();
     d.xp[issue.skill] += XP.note;
     d.today.xp += XP.note;
     d.today.notes += 1;

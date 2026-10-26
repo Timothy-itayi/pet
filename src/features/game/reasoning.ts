@@ -118,7 +118,7 @@ export const REASONING: Record<string, { asks: Asks; fixes: Fixes }> = {
   },
   'ip-conflict': {
     asks: { message: out(C, 'new', 'cable'), when: I, set: C },
-    fixes: { offon: { suspect: 'The printer just needs a restart', effort: 1 }, reserve: { suspect: 'Two devices share one address', effort: 2 }, new: { suspect: 'The printer’s dying', effort: 3 }, cable: { suspect: 'A bad network cable', effort: 2 } },
+    fixes: { offon: RESTART, reserve: { suspect: 'Two devices share one address', effort: 2 }, new: { suspect: 'It’s dying', effort: 3 }, cable: { suspect: 'A bad network cable', effort: 2 } },
   },
   'switch-port': {
     asks: { lights: C, other: out(I, 'reinstall'), icon: C },

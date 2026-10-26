@@ -3,7 +3,7 @@ import { MINUTES_A_DAY } from '../game/directory.ts';
 import { OKTOPUS_DAY } from '../game/oktopus.ts';
 import { sayNow, statusText } from '../game/people.ts';
 import {
-  ask, canPush, canWorkaround, clockTime, fixFor, isKnown, issueOf, fill, liveFact, moodName, next, noteTarget, pushBack, relation, reply, resolve,
+  ask, canPush, canWorkaround, clockTime, fixFor, isKnown, issueOf, fill, knownDetails, liveFact, lookUp, LOOKED_UP, moodName, next, noteTarget, pushBack, relation, reply, resolve,
   recordClue, ruleOut, scriptFor, suggest, suggestions, ticketById, ticketState, weekOf, workaround, writeNote, type GameState, type Outcome, type Status, type TicketState,
 } from '../game/rules.ts';
 import { cluesFor, duckLine, effortOf, SAMS_METHOD, suspectsOf, suspectText } from '../game/notebook.ts';
@@ -168,7 +168,7 @@ function troubleshoot(app: App, t: Ticket): HTMLElement {
   const issue = issueOf(t);
   const busy = Boolean(st.caller);
   const known = isKnown(state, t);
-  const asks = issue.asks.filter((a) => !st.heard.includes(a.id));
+  const asks = issue.asks;
   // Your tool and the console check, then every untried fix: simplest first, alphabetical within that.
   const extra = suggestions(state, t).filter((f) => f.id === 'tool');
   const fixes = issue.fixes.filter((f) => !st.tried.includes(f.id)).sort((a, b) => effortOf(a) - effortOf(b) || a.label.localeCompare(b.label));
@@ -180,7 +180,10 @@ function troubleshoot(app: App, t: Ticket): HTMLElement {
     const these = asks.filter((a) => (a.step ?? 'context') === step);
     return these.length > 0 && h('div', { role: 'group', 'aria-label': title },
       h('p', { class: 'sn-chip-title' }, title),
-      ...these.map((a) => chip(fill(t, a.text), `ask-${a.id}`, () => app.set(ask(state, t.id, a.id)))));
+      // Asked ones stay, ticked, so the list never shifts under the pointer.
+      ...these.map((a) => st.heard.includes(a.id)
+        ? h('button', { class: 'sn-chip asked', 'data-testid': `asked-${a.id}`, disabled: true }, '✓ ', fill(t, a.text))
+        : chip(fill(t, a.text), `ask-${a.id}`, () => app.set(ask(state, t.id, a.id)))));
   };
   const consoleCheck = suggestions(state, t).find((f) => f.id === 'console');
   return h('div', { class: 'sn-troubleshoot', 'data-testid': 'troubleshoot' },
@@ -192,7 +195,7 @@ function troubleshoot(app: App, t: Ticket): HTMLElement {
       askGroup('isolate', `2. ${SAMS_METHOD[1]}`),
       h('div', { role: 'group', 'aria-label': SAMS_METHOD[2] },
         h('p', { class: 'sn-chip-title' }, `3. ${SAMS_METHOD[2]}`),
-        issue.console && h('button', { class: 'sn-btn', 'data-testid': 'open-registry', onclick: () => consoleFor(issue.console ?? 'unlock').open(app, t) },
+        issue.console && h('button', { class: 'sn-btn', 'data-testid': 'open-registry', onclick: () => { app.set(lookUp(app.state, t.id)); consoleFor(issue.console ?? 'unlock').open(app, t); } },
           `Open ${consoleFor(issue.console).name}`),
         consoleCheck && chip(consoleCheck.label, 'fix-console', () => app.set(suggest(state, t.id, 'console')), hint('console')),
         ...extra.map((f) => chip(f.label, `fix-${f.id}`, () => app.set(suggest(state, t.id, f.id)), hint(f.id))),
@@ -247,12 +250,18 @@ function muteDuck(): void {
 function notebook(app: App, t: Ticket, st: TicketState): HTMLElement {
   const { state, ui } = app;
   const issue = issueOf(t);
-  const facts = t.details.filter((d) => !d.ask || st.heard.includes(d.ask));
+  const facts = knownDetails(t, st);
+  const unlooked = !st.looked && t.details.some((d) => !d.ask && LOOKED_UP.includes(d.label));
   const crossed = st.crossed ?? [];
   const last = state.clues?.[issue.id];
   const seen = new Set(ui.stamped ?? []);
+  const confirmed = st.caller?.doing === 'confirmed' ? st.caller.id : undefined;
   const card = (f: Fix) => {
     const out = crossed.includes(f.id);
+    if (f.id === confirmed) {
+      return h('li', { class: 'suspect confirmed', 'data-testid': `suspect-${f.id}` },
+        h('span', {}, suspectText(f)), h('span', { class: 'it-was', 'aria-label': 'confirmed' }, 'IT WAS THIS'));
+    }
     const key = `${t.id}:${f.id}`;
     const fresh = out && !seen.has(key);
     if (out) seen.add(key);
@@ -270,7 +279,8 @@ function notebook(app: App, t: Ticket, st: TicketState): HTMLElement {
       h('ul', { class: 'suspects' }, ...[...suspects.filter((f) => !crossed.includes(f.id)), ...suspects.filter((f) => crossed.includes(f.id))].map(card))),
     h('p', { class: 'sn-chip-title' }, 'What you know'),
     facts.length ? h('dl', {}, ...facts.flatMap((d) => [h('dt', {}, d.label), h('dd', {}, liveFact(state, t, d.label) ?? d.text)]))
-      : h('p', { class: 'meta' }, 'Nothing yet. Sam would start by gathering context.'));
+      : h('p', { class: 'meta' }, 'Nothing yet. Sam would start by gathering context.'),
+    unlooked && issue.console && h('p', { class: 'meta', 'data-testid': 'look-it-up' }, `Some of this you can look up yourself: open ${consoleFor(issue.console).name}.`));
   ui.stamped = [...seen];
   return nodes;
 }
@@ -283,7 +293,6 @@ function notesTab(app: App, t: Ticket): HTMLElement {
   const reply1 = st.status === 'new' ? REPLIES.first : REPLIES.update;
   return h('div', { class: 'sn-tab-body' },
     troubleshoot(app, t),
-    notebook(app, t, st),
     h('div', { class: 'sn-compose' },
       h('label', { for: 'sn-comment' }, 'Additional comments (Customer visible)'),
       h('textarea', { id: 'sn-comment', rows: 1, readonly: true }, reply1),
@@ -354,7 +363,8 @@ export function ticketView(app: App, t: Ticket): HTMLElement {
           field('Description', h('p', { 'data-testid': 'opening' }, t.message), true)),
         h('div', { class: 'sn-tabs', role: 'tablist' }, tabButton('notes', 'Notes'), tabButton('resolution', 'Resolution Information')),
         tab === 'notes' ? notesTab(app, t) : resolutionTab(app, t)),
-      knowledge(state, t)));
+      // Your notebook alongside, so the suspects and stamps stay in view while you ask and test.
+      h('div', { class: 'sn-side' }, tab === 'notes' && notebook(app, t, st), knowledge(state, t))));
 }
 
 /** Which admin console a ticket's work is done in, and how to open it at the right place. */

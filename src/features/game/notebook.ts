@@ -5,7 +5,7 @@
  * proved it, and that's your notebook entry for next time.
  */
 import type { Fix, Ticket } from './types.ts';
-import { fixFor, issueOf, type GameState, type TicketState } from './rules.ts';
+import { fill, fixFor, issueOf, knownDetails, type GameState, type TicketState } from './rules.ts';
 
 export type Step = 'context' | 'isolate';
 
@@ -15,7 +15,8 @@ export const SAMS_METHOD = ['Gather context', 'Isolate & divide', 'Test the simp
 /** What it could be: one suspect per possible fix, in plain words. */
 export const suspectsOf = (t: Ticket): Fix[] => issueOf(t).fixes;
 export const suspectText = (f: Fix) => f.suspect ?? f.label;
-export const effortOf = (f: Fix) => f.effort ?? 2;
+/** A fix that does harm is never the cheap test, however quick it is. */
+export const effortOf = (f: Fix) => (f.grave ? 3 : f.effort ?? 2);
 
 /**
  * The suspects an answer rules out: only when the caller actually had something to tell you (a vague "no idea"
@@ -34,12 +35,12 @@ export const standing = (t: Ticket, st: TicketState) => suspectsOf(t).filter((f)
  * Remember how you started testing, the first time you suggest something: how many questions you'd asked, how many
  * suspects you'd ruled out, and whether it was the simplest test left (or simply the right one).
  */
-export function firstTest(t: Ticket, st: TicketState, fixId: string): NonNullable<TicketState['first']> {
+export function firstTest(t: Ticket, st: TicketState, fixId: string, known = false): NonNullable<TicketState['first']> {
   const left = standing(t, st);
   const cheapest = Math.min(...left.map(effortOf), 3);
   const chosen = suspectsOf(t).find((f) => f.id === fixId);
-  const simplest = fixId === fixFor(t) || fixId === 'console' || fixId === 'tool' || (chosen !== undefined && effortOf(chosen) <= cheapest);
-  return { fix: fixId, asked: st.heard.length, crossed: (st.crossed ?? []).length, simplest };
+  const simplest = fixId === fixFor(t) || fixId === 'console' || fixId === 'tool' || (chosen !== undefined && !chosen.grave && effortOf(chosen) <= cheapest);
+  return { fix: fixId, asked: st.heard.length + (st.looked ? 1 : 0), crossed: (st.crossed ?? []).length, simplest, known };
 }
 
 export interface Stars { got: number; max: number; missed: string[] }
@@ -48,6 +49,12 @@ export interface Stars { got: number; max: number; missed: string[] }
 export function methodStars(t: Ticket, st: TicketState): Stars {
   const first = st.first;
   const missed: string[] = [];
+  // Seen it before: your notebook is the shortcut, but Sam still checked the clue before reaching for last time's fix.
+  if (first?.known) {
+    if (first.asked === 0) missed.push('You went straight to last time’s fix. Check the clue in your notebook first: it might not be the same problem.');
+    if (!first.simplest) missed.push('Your first test wasn’t the simplest one left. Cheap checks first.');
+    return { got: 2 - missed.length, max: 2, missed };
+  }
   const narrowing = suspectsOf(t).length >= 2;
   if (!first || first.asked === 0) missed.push('You tested before asking anything. Sam always gathered context first.');
   if (narrowing && (!first || first.crossed === 0)) missed.push('Nothing was ruled out before your first test. Ask the question that cuts it in half.');
@@ -58,7 +65,7 @@ export function methodStars(t: Ticket, st: TicketState): Stars {
 
 /** The clues you could pick as the one that proved it: what you heard, plus anything IT could already see. */
 export function cluesFor(t: Ticket, st: TicketState): string[] {
-  return t.details.filter((d) => !d.ask || st.heard.includes(d.ask)).map((d) => `${d.label}: ${d.text}`);
+  return knownDetails(t, st).map((d) => `${d.label}: ${d.text}`);
 }
 
 /**
@@ -71,13 +78,21 @@ export function duckLine(s: GameState, t: Ticket, times: number): string {
   const issue = issueOf(t);
   const unasked = (step: Step) => issue.asks.find((a) => a.step === step && !st.heard.includes(a.id));
   const left = standing(t, st).filter((f) => !st.tried.includes(f.id));
+  // A request (set someone up, add an app) has no suspects: nothing's broken, so the questions are what and for whom.
+  const request = suspectsOf(t).length === 0;
   if (!st.heard.length) {
     const q = unasked('context');
-    return times === 0 || !q ? 'Quack. What do you actually know so far? What changed since it last worked?' : `Quack. Sam would start with something like: “${q.text}”`;
+    const opener = request ? 'Quack. What exactly are they asking for, and for whom?' : 'Quack. What do you actually know so far? What changed since it last worked?';
+    return times === 0 || !q ? opener : `Quack. Sam would start with something like: “${fill(t, q.text)}”`;
   }
-  if ((st.crossed ?? []).length === 0 && suspectsOf(t).length >= 2) {
+  const isolated = issue.asks.some((a) => a.step === 'isolate' && st.heard.includes(a.id));
+  if (!isolated && (st.crossed ?? []).length === 0 && suspectsOf(t).length >= 2) {
     const q = unasked('isolate');
-    return times === 0 || !q ? 'Quack. What would cut this in half? One person, or everyone? This device, or all of them?' : `Quack. What about: “${q.text}”`;
+    return times === 0 || !q ? 'Quack. What would cut this in half? One person, or everyone? This device, or all of them?' : `Quack. What about: “${fill(t, q.text)}”`;
+  }
+  if (request) {
+    const q = unasked('context') ?? unasked('isolate');
+    return times === 0 || !q ? 'Quack. Where would you look to know for sure? Check it before you change anything.' : `Quack. Have you asked: “${fill(t, q.text)}”`;
   }
   if (left.length > 1) {
     const cheapest = [...left].sort((a, b) => effortOf(a) - effortOf(b))[0];

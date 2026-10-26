@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { duckLine, methodStars, standing } from './notebook.ts';
+import day8 from '../../../scripts/saves/day8.json?raw';
+import day16 from '../../../scripts/saves/day16.json?raw';
+import { cluesFor, duckLine, effortOf, firstTest, methodStars, standing } from './notebook.ts';
 import { ISSUES, LOCKUP, TICKETS } from './data.ts';
 import { crossedBy } from './notebook.ts';
 import { REASONING } from './reasoning.ts';
-import { ask, clockTime, goTo, newGame, next, recordClue, resolve, ruleOut, suggest, tick, ticketById, ticketState, type GameState } from './rules.ts';
+import { ask, clockTime, goTo, knownDetails, lookUp, newGame, next, recordClue, resolve, ruleOut, suggest, tick, ticketById, ticketState, writeNote, parseSave, type GameState, type TicketState } from './rules.ts';
 
 /** Day 1, Juniper's "the internet is down" ticket just in (9:50): it's airplane mode on her laptop. */
 function juniper(): GameState {
@@ -17,6 +19,13 @@ function wait(s: GameState, id: string): GameState {
   return s;
 }
 const T = 't102';
+/** The start of a later day, from the saves the test scripts keep (each one played properly up to then). */
+function dayAt(day: 8 | 16, at: string): GameState {
+  const saved = parseSave(day === 8 ? day8 : day16);
+  if (!saved) throw new Error(`No save for day ${day}`);
+  const s = goTo(saved, 'desk');
+  return tick(s, clockTime(at) - s.clock);
+}
 const t = ticketById(T);
 
 describe('Sam’s method and the notebook', () => {
@@ -75,6 +84,44 @@ describe('Sam’s method and the notebook', () => {
     s = wait(ask(s, T, 'others'), T);
     expect(duckLine(s, t, 0)).toMatch(/quickest to check/);
     for (const n of [0, 1]) expect(duckLine(s, t, n)).not.toMatch(/Airplane mode is on/);
+  });
+
+  it('seen it before: the notebook is the shortcut, but checking the clue first still earns the star', () => {
+    const known = (s: GameState) => { const d = structuredClone(s); d.runbook['airplane-mode'] = 'yours'; return d; };
+    let s = wait(suggest(known(juniper()), T, 'airplane'), T);
+    expect(methodStars(t, ticketState(s, T))).toEqual({ got: 1, max: 2, missed: [expect.stringMatching(/Check the clue/)] });
+    s = wait(ask(known(juniper()), T, 'settings'), T);
+    s = wait(suggest(s, T, 'airplane'), T);
+    expect(methodStars(t, ticketState(s, T))).toEqual({ got: 2, max: 2, missed: [] });
+  });
+
+  it('a harmful test is never the cheap one, and doing it rules nothing out', () => {
+    const usb = ticketById('t1801');
+    const look = usb && ISSUES.find((i) => i.id === 'usb-stick')?.fixes.find((f) => f.id === 'look');
+    expect(look && effortOf(look)).toBe(3);
+    expect(firstTest(usb, { heard: [], tried: [], crossed: [] } as unknown as TicketState, 'look').simplest).toBe(false);
+    // Opening a phishing link "to see" proves nothing about it.
+    const s = wait(suggest(dayAt(16, '9:51'), 't1602', 'open'), 't1602');
+    expect(ticketState(s, 't1602').tried).toContain('open');
+    expect(ticketState(s, 't1602').crossed ?? []).not.toContain('open');
+  });
+
+  it('what a console shows is only known once you look it up, and looking counts as gathering context', () => {
+    let s = dayAt(8, '9:31');
+    const mover = ticketById('t801');
+    expect(knownDetails(mover, ticketState(s, 't801'))).toEqual([]);
+    expect(duckLine(s, mover, 0)).toMatch(/What exactly are they asking for/);
+    s = lookUp(s, 't801');
+    expect(cluesFor(mover, ticketState(s, 't801')).map((c) => c.split(':')[0])).toEqual(['HR file', 'Oktopus']);
+    expect(firstTest(mover, ticketState(s, 't801'), 'console').asked).toBe(1);
+  });
+
+  it('your own words go on top of the entry your clue wrote', () => {
+    let s = wait(ask(juniper(), T, 'settings'), T);
+    s = resolve(wait(suggest(s, T, 'airplane'), T), T);
+    while (s.outcomes[0]?.ticketId !== T) s = next(s);
+    s = writeNote(recordClue(s, 'Juniper’s laptop: Airplane mode: ON'), 'It was airplane mode, so I turned it off.');
+    expect(s.written['airplane-mode']).toMatch(/How I knew: .* In my words: It was airplane mode/);
   });
 
   it('every kind of problem is written up for Sam\u2019s method, and no answer ever rules out the real cause', () => {
