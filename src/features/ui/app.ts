@@ -96,6 +96,13 @@ export interface Ui {
   flowOpened?: string[];
   /** A flow you've asked to delete, waiting for "Are you sure?". */
   flowDeleting?: string;
+  /** Sam's duck: which ticket it's talking about and how many times you've asked; issues it's piped up on itself. */
+  duck?: { ticket: string; times: number };
+  duckSpoke?: string[];
+  /** Notebook suspects already stamped RULED OUT, so the stamp only thunks down once. */
+  stamped?: string[];
+  /** On the lesson card: you've chosen to put your notebook entry in your own words too. */
+  ownWords?: boolean;
   /** The phone in your hand is held up to your face; which of its screens is open; what it said last; a passcode being typed. */
   phoneUp?: boolean;
   phoneScreen?: PhoneScreen;

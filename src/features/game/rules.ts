@@ -824,7 +824,7 @@ export function recordClue(s: GameState, clue: string): GameState {
     d.clues = { ...d.clues, [issue.id]: { clue, ruledOut, fix } };
     if (d.runbook[issue.id] === 'yours') return;
     d.runbook[issue.id] = 'yours';
-    d.written[issue.id] = `${fix}. How I knew: ${clue}${ruledOut.length ? ` Ruled out: ${ruledOut.join('; ')}.` : ''}`;
+    d.written[issue.id] = `${fix}. How I knew: ${clue}${/[.!?”"]$/.test(clue) ? '' : '.'}${ruledOut.length ? ` Ruled out: ${ruledOut.join('; ')}.` : ''}`;
     d.xp[issue.skill] += XP.note;
     d.today.xp += XP.note;
     d.today.notes += 1;
