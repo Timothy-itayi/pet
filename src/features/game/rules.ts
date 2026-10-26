@@ -678,11 +678,13 @@ function hear(d: GameState, t: Ticket, c: { doing: 'answer' | 'try'; id: string;
     said(f?.works ?? THANKS[st.mood]);
     return;
   }
-  // You can check again after more console work, so that one never gets used up.
-  if (c.id !== 'console') st.tried.push(c.id);
-  if (f?.ruledOut || (c.id !== 'console' && c.id === issue.correctFix)) {
-    // A sensible test that wasn't it: one less suspect.
+  // You can check again after more console work, so that one never gets used up. Any other test that wasn't it,
+  // sensible or not, is one less suspect.
+  if (c.id !== 'console') {
+    st.tried.push(c.id);
     st.crossed = [...new Set([...(st.crossed ?? []), c.id])];
+  }
+  if (f?.ruledOut || (c.id !== 'console' && c.id === issue.correctFix)) {
     said(f?.ruledOut ?? 'Tried that. Still not working.');
     return;
   }

@@ -46,6 +46,7 @@ describe('Sam’s method and the notebook', () => {
 
   it('jumping straight to the drastic fix loses the stars, each with a reason', () => {
     let s = wait(suggest(juniper(), T, 'router'), T);
+    expect(ticketState(s, T).crossed).toEqual(['router']); // tested and it wasn't that: stamped, even though it was a bad call
     s = wait(suggest(s, T, 'airplane'), T);
     const stars = methodStars(t, ticketState(s, T));
     expect(stars.got).toBe(0);

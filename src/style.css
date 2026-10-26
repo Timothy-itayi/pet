@@ -1424,7 +1424,7 @@ button.profile-face:hover, button.profile-face:focus-visible { box-shadow: 0 0 0
 .method-stars { margin: 6px 0; }
 .method-stars p { margin: 2px 0; }
 .method-stars .stars { color: #d49a00; font-size: 18px; letter-spacing: 2px; }
-.method-stars .dim { color: #c9bfa5; }
+.method-stars .dim { color: #8f8468; }
 .debrief { display: grid; gap: 6px; margin: 8px 0; }
 .debrief h3 { margin: 0; }
 .debrief .clue { text-align: left; padding: 7px 10px; border: 1px solid #c9bfa5; border-radius: 6px; background: #fffdf4; cursor: pointer; font: inherit; }
