@@ -94,6 +94,8 @@ export interface Ui {
   flowTyping?: string;
   /** People opened (▸) into their fields, as card:output. */
   flowOpened?: string[];
+  /** A flow you've asked to delete, waiting for "Are you sure?". */
+  flowDeleting?: string;
   /** The phone in your hand is held up to your face; which of its screens is open; what it said last; a passcode being typed. */
   phoneUp?: boolean;
   phoneScreen?: PhoneScreen;

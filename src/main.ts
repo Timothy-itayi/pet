@@ -120,6 +120,9 @@ const app: App = {
   },
 };
 
+/** How much faster the clock runs while there's nothing to do. */
+const QUIET_SPEEDUP = 2;
+
 /** Long enough for the camera to pull back and to read the caption. */
 const WIND_DOWN_MS = 3200;
 
@@ -160,7 +163,10 @@ setInterval(() => {
   const power = powerAway(ui.power, ui.leftAt, performance.now());
   if (power !== ui.power) { ui.power = power; app.rerender(); }
   if (!ui.booted || ui.inspecting || document.hidden) return;
-  const next = tick(app.state, GAME_MINUTES_PER_SECOND);
+  // Nothing waiting on you, nobody at your desk: quiet time passes twice as fast, so you're not sat watching the clock.
+  const s = app.state;
+  const quiet = !s.queue.length && !s.chats.length && !s.outcomes.length && !deskVisitor(s);
+  const next = tick(s, GAME_MINUTES_PER_SECOND * (quiet ? QUIET_SPEEDUP : 1));
   if (next === app.state) return;
   const before = app.state;
   if (bigChange(before, next)) { announce(app, before, next); app.set(next); }
@@ -189,6 +195,18 @@ function phoneNews(before: GameState, after: GameState): void {
 
 addEventListener('keydown', (e) => roomKeys(app, e));
 addEventListener('keydown', wake);
+// At the computer, Tab stays inside the window in front: it never wanders into windows behind it, or off the screen.
+addEventListener('keydown', (e) => {
+  if (e.key !== 'Tab' || app.ui.view !== 'computer' || app.ui.flying) return;
+  const win = screenElement().querySelector<HTMLElement>('.win.front:not([hidden])');
+  if (!win) return;
+  const stops = [...win.querySelectorAll<HTMLElement>('button, [href], input, select, textarea, summary, [tabindex]:not([tabindex="-1"])')]
+    .filter((x) => !x.matches(':disabled') && x.offsetParent !== null);
+  if (!stops.length) return;
+  const at = stops.indexOf(document.activeElement as HTMLElement);
+  const next = at < 0 ? stops[e.shiftKey ? stops.length - 1 : 0] : e.shiftKey && at === 0 ? stops.at(-1) : !e.shiftKey && at === stops.length - 1 ? stops[0] : undefined;
+  if (next) { e.preventDefault(); next.focus({ preventScroll: true }); }
+});
 // At the computer, the first Tab goes into the screen, not to the "stand up" arrow beside it.
 addEventListener('keydown', (e) => {
   if (e.key !== 'Tab' || e.shiftKey || app.ui.view !== 'computer' || app.ui.flying || document.activeElement !== document.body) return;

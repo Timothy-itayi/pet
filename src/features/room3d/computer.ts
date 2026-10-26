@@ -8,7 +8,7 @@ import { monitorNote as samsNote } from './notes.ts';
 /** The CRT's glass: where the game's computer screen shows through. Width and height in metres. */
 export const GLASS = { w: 0.32, h: 0.24 } as const;
 /** How far back from its old spot the computer sits, to leave room for the keyboard. */
-export const COMPUTER_Z = -0.07;
+export const COMPUTER_Z = -0.12;
 
 const BEIGE = '#d8cdb3';
 const SHADE = '#c4b99e';

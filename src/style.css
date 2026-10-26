@@ -1391,3 +1391,7 @@ button.profile-face:hover, button.profile-face:focus-visible { box-shadow: 0 0 0
 @keyframes visitor-in { from { transform: translateX(-30px); opacity: 0; } }
 .visitor-waiting { position: fixed; left: 50%; bottom: 14px; transform: translateX(-50%); z-index: 5; margin: 0; padding: 6px 12px; background: #fff8e8; color: #2a1d10; border-radius: 8px; box-shadow: 0 4px 12px #0007; }
 .phone-request { margin: 0; padding: 6px 10px; background: #fff8e8; color: #2a1d10; border-radius: 6px; }
+
+/* "Are you sure?" before deleting a flow. */
+.okta-confirm { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: #b3261e; }
+.okta-btn.danger { background: #b3261e; border-color: #b3261e; color: #fff; }
