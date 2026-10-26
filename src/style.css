@@ -790,6 +790,10 @@ body:has(.book) .inspect-canvas { visibility: hidden; }
 .chat-who { display: flex; gap: 8px; align-items: baseline; }
 .chat-avatar { width: 34px; height: 34px; border-radius: 4px; background: #e8912d; color: #fff; display: grid; place-items: center; font-weight: bold; }
 .chat-feed .chat-empty { color: var(--os-mid); }
+/* A channel's posts scroll inside the window, newest at the bottom; a divider marks where the day changes. */
+.chat-channel .chat-feed { flex: 1; min-height: 0; }
+.chat-divider { display: flex; align-items: center; gap: 8px; color: var(--os-mid); font-size: 12px; }
+.chat-divider::before, .chat-divider::after { content: ''; flex: 1; border-top: 1px solid #ddd; }
 
 /* Ridge: the browser, open on the intranet's news start page. */
 .ridge { display: flex; flex-direction: column; font: 13px 'Segoe UI', var(--read); color: #1b1a19; background: #f3f3f3; }

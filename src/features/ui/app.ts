@@ -1,3 +1,4 @@
+import type { Channel } from '../game/channels.ts';
 import type { FlowRun } from '../game/flows.ts';
 import type { Department } from '../game/directory.ts';
 import type { GameState } from '../game/rules.ts';
@@ -20,13 +21,15 @@ export interface Win {
   max?: boolean;
 }
 
-/** A notification in the corner of the screen. Clicking it opens `app`, on `ticket` if there is one. */
+/** A notification in the corner of the screen. Clicking it opens `app`, on `ticket`, `channel` or the direct message from `dm` if there is one. */
 export interface Toast {
   id: number;
   app: AppId;
   from: string;
   text: string;
   ticket?: string;
+  channel?: Channel;
+  dm?: string;
   /** Already on screen: it slid in once and shouldn't slide in again on every redraw. */
   shown?: boolean;
 }
@@ -117,8 +120,11 @@ export interface Ui {
   flowScrollTo?: number;
   oktaApp?: string;
   oktaVerify?: string;
-  /** Burrow Chat: a channel you're reading, or a direct message (ui.chat) when unset. */
-  channel?: 'general' | 'service-desk';
+  /** Burrow Chat: a channel you're reading, or a direct message (ui.ping from a colleague, ui.chat about a ticket) when unset. */
+  channel?: Channel;
+  ping?: string;
+  /** When (stampOf) you last looked at each channel or direct message, for the unread counts. */
+  seen?: Record<string, number>;
   /** The mail you're reading, by day (the newest when unset). */
   mailDay?: number;
   /** Ridge: open tabs (each with its own back/forward history), the one in front, and announcements you've liked. */

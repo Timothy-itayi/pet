@@ -174,7 +174,9 @@ function dismiss(app: App, id: number): void {
 function openToast(app: App, t: Toast): void {
   app.ui.toasts = app.ui.toasts.filter((x) => x.id !== t.id);
   if (t.ticket && t.app === 'desk') { openIncident(app, t.ticket); return; }
-  if (t.ticket && t.app === 'chat') { app.ui.chat = t.ticket; app.ui.channel = undefined; }
+  if (t.ticket && t.app === 'chat') { app.ui.chat = t.ticket; app.ui.channel = undefined; app.ui.ping = undefined; }
+  if (t.channel) { app.ui.channel = t.channel; app.ui.ping = undefined; }
+  if (t.dm) { app.ui.ping = t.dm; app.ui.channel = undefined; app.ui.chat = undefined; }
   openApp(app, t.app);
 }
 
