@@ -11,6 +11,20 @@ import { oktopus } from './oktopus.ts';
 
 export const SKILL_NAMES: Record<Skill, string> = { devices: 'Devices', networks: 'Networks', access: 'Access' };
 /** Burrow Mail: Mr. Grisby's memo each morning, newest first. At the end of the week, his offer. */
+/** Sam's goodbye email, at the bottom of the inbox: why people liked Sam, and how Sam went about every problem. */
+export const SAMS_MAIL = -1;
+const samsMail = () => h('div', { class: 'sams-mail' },
+  h('p', { class: 'meta' }, 'From: Sam · Subject: Read this first'),
+  h('p', {}, 'Hi. If you’re reading this, you’re me now. Sorry.'),
+  h('p', {}, 'People here will tell you I was good at computers. I wasn’t, especially. What I was good at was not guessing. Everyone else guesses: they restart the router, order a new laptop, blame the internet. I asked three things, every time:'),
+  h('ol', {},
+    h('li', {}, h('strong', {}, 'Gather context. '), 'What exactly does it say? What changed? When did it last work?'),
+    h('li', {}, h('strong', {}, 'Isolate & divide. '), 'One person, or everyone? This laptop, or all of them? Each answer cuts the problem in half.'),
+    h('li', {}, h('strong', {}, 'Test the simplest fix. '), 'The cheapest thing that’s still possible. Not the most dramatic.')),
+  h('p', {}, 'Then write down how you knew. The runbook’s mostly wrong, so make your own. Next time it’ll take you a minute.'),
+  h('p', {}, 'And talk to the duck. Seriously. Say the problem out loud to it and half the time you’ll hear the answer yourself. It’s on the desk.'),
+  h('p', {}, '– S'));
+
 function mail(app: App): HTMLElement {
   const { state, ui } = app;
   const weekOver = isWeekOver(state);
@@ -23,9 +37,13 @@ function mail(app: App): HTMLElement {
   return h('div', { class: 'mail', 'data-testid': 'mail' },
     h('nav', { class: 'mail-list', 'aria-label': 'Inbox' },
       weekOver && item(0, 'The Conversation'),
-      ...days.map((d) => item(d, `Day ${d}`))),
+      ...days.map((d) => item(d, `Day ${d}`)),
+      h('button', {
+        class: `mail-item${open === SAMS_MAIL ? ' on' : ''}`, 'data-testid': 'mail-sam', onclick: () => { ui.mailDay = SAMS_MAIL; app.rerender(); },
+      }, h('strong', {}, 'Sam'), h('span', {}, 'Read this first'))),
     h('article', { class: 'mail-read' },
-      open === 0
+      open === SAMS_MAIL ? samsMail()
+      : open === 0
         ? h('div', {},
           h('p', { class: 'meta' }, `From: ${MANAGER} \u00b7 Subject: The Conversation`),
           h('p', {}, 'Great news! I can offer you a PAID position. Minimum wage. Same desk. Still no phone.'),

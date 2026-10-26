@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { duckLine, methodStars, standing } from './notebook.ts';
-import { LOCKUP } from './data.ts';
+import { ISSUES, LOCKUP, TICKETS } from './data.ts';
+import { crossedBy } from './notebook.ts';
+import { REASONING } from './reasoning.ts';
 import { ask, clockTime, goTo, newGame, next, recordClue, resolve, ruleOut, suggest, tick, ticketById, ticketState, type GameState } from './rules.ts';
 
 /** Day 1, Juniper's "the internet is down" ticket just in (9:50): it's airplane mode on her laptop. */
@@ -72,5 +74,24 @@ describe('Sam’s method and the notebook', () => {
     s = wait(ask(s, T, 'others'), T);
     expect(duckLine(s, t, 0)).toMatch(/quickest to check/);
     for (const n of [0, 1]) expect(duckLine(s, t, n)).not.toMatch(/Airplane mode is on/);
+  });
+
+  it('every kind of problem is written up for Sam\u2019s method, and no answer ever rules out the real cause', () => {
+    expect(Object.keys(REASONING).sort()).toEqual(ISSUES.map((i) => i.id).sort());
+    for (const issue of ISSUES) {
+      for (const a of issue.asks) {
+        expect(a.step, `${issue.id}: ${a.id}`).toBeDefined();
+        for (const id of a.rulesOut ?? []) {
+          expect(issue.fixes.map((f) => f.id), `${issue.id}: ${a.id} rules out ${id}`).toContain(id);
+          expect(id, `${issue.id}: ${a.id} rules out the real fix`).not.toBe(issue.correctFix);
+        }
+      }
+      for (const f of issue.fixes) expect([f.suspect, f.effort], `${issue.id}: ${f.id}`).not.toContain(undefined);
+    }
+    for (const ticket of TICKETS) {
+      for (const a of ISSUES.find((i) => i.id === ticket.issue)?.asks ?? []) {
+        expect(crossedBy(ticket, a.id)).not.toContain(ticket.fixedBy ?? '-');
+      }
+    }
   });
 });

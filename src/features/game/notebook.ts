@@ -17,8 +17,12 @@ export const suspectsOf = (t: Ticket): Fix[] => issueOf(t).fixes;
 export const suspectText = (f: Fix) => f.suspect ?? f.label;
 export const effortOf = (f: Fix) => f.effort ?? 2;
 
-/** The suspects an answer rules out. Never the real cause of this ticket, whatever the issue usually is. */
+/**
+ * The suspects an answer rules out: only when the caller actually had something to tell you (a vague "no idea"
+ * rules nothing out), and never the real cause of this ticket, whatever the issue usually is.
+ */
 export function crossedBy(t: Ticket, askId: string): string[] {
+  if (!t.details.some((d) => d.ask === askId)) return [];
   const ask = issueOf(t).asks.find((a) => a.id === askId);
   return (ask?.rulesOut ?? []).filter((id) => id !== fixFor(t));
 }

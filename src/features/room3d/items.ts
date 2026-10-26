@@ -15,6 +15,7 @@ export const SAM_NOTE = [
   'Hi. I’m Sam. I kept this place running for six years. I quit. Sorry.',
   'Password is “password”. Nobody ever changed it.',
   'The runbook is mostly wrong. Fix it as you go.',
+  'Why people liked me: I never guessed. Three things, every time. 1. Gather context. 2. Isolate & divide. 3. Test the simplest fix. Talk it through with the duck.',
   'Send people updates, or they will come and find you.',
   'Grisby will say you’ll get paid. Get it in writing.',
   'Be nice to Dot. Good luck.',

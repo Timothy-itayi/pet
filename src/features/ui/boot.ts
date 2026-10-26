@@ -1,6 +1,7 @@
 import { COMPANY, DAYS } from '../game/data.ts';
 import { goTo, isWeekOver, newGame, weekday, weekOf } from '../game/rules.ts';
 import type { App } from './app.ts';
+import { SAMS_MAIL } from './panels.ts';
 import { morningNotes, openApp } from './desktop.ts';
 import { h } from './dom.ts';
 
@@ -83,6 +84,8 @@ export function computerScreen(app: App): HTMLElement {
     app.set(s);
     // The last Saturday: Mr. Grisby's email about The Conversation is waiting, open, so nobody misses the ending.
     if (isWeekOver(s) && s.phase === 'desktop') openApp(app, 'mail');
+    // Your first morning: Sam's email is waiting, open. It's how Sam went about every problem, and the duck.
+    if (starting && s.day === 1) { ui.mailDay = SAMS_MAIL; openApp(app, 'mail'); }
   };
   login.addEventListener('submit', (e) => { e.preventDefault(); enter(); });
 
