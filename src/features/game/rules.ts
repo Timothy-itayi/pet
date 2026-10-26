@@ -116,6 +116,8 @@ export interface GameState {
   accounts: Record<string, Account>;
   /** How many Burrow Intranet posts you've read. */
   newsRead: number;
+  /** What colleagues have told you directly today (on their way over, a phone approved), to find again in Burrow Chat. */
+  pings: { day: number; at: number; from: string; text: string }[];
   /** Oktopus, from week 2: people, groups, rules and apps. */
   okta: Okta;
   /** Company phones, from week 4: in your desk drawer, in your hand, or given to someone. */
@@ -372,6 +374,7 @@ export function newGame(seed = Math.floor(Math.random() * 2 ** 31)): GameState {
     written: {},
     accounts: newAccounts(),
     newsRead: 0,
+    pings: [],
     okta: newOkta(),
     phones: [],
     requests: [],
@@ -394,6 +397,10 @@ export function newGame(seed = Math.floor(Math.random() * 2 ** 31)): GameState {
   startDay(s);
   return s;
 }
+
+/** A colleague messages you directly. Only today's are kept: yesterday's news is old news. */
+export const ping = (s: GameState, from: string, text: string): GameState =>
+  act(s, (d) => { d.pings = [...d.pings.filter((p) => p.day === d.day), { day: d.day, at: d.clock, from, text }]; });
 
 export const goTo = (s: GameState, phase: Phase) => act(s, (d) => { d.phase = phase; });
 
@@ -981,6 +988,8 @@ export function parseSave(raw: string | null): GameState | undefined {
     // Saves from before company phones: none yet (they turn up at the start of day 16), nobody on Oktopus Verify.
     s.phones ??= [];
     s.requests ??= [];
+    // Saves from before direct pings were kept: none yet.
+    s.pings ??= [];
     // Saves from before phones kept their place in the tray: the first six go back where they came from.
     for (const p of s.phones) if (p.slot === undefined && Number(p.id.slice(6)) <= 6) p.slot = Number(p.id.slice(6)) - 1;
     if (s.okta) { s.okta.verify ??= {}; s.okta.selfEnroll ??= false; }

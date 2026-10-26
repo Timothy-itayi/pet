@@ -1,10 +1,11 @@
 import './style.css';
-import { CLOSE, CLOSING_SOON, COMPANY, GAME_MINUTES_PER_SECOND, LOCKUP, VILLAGERS } from './features/game/data.ts';
-import { newGame, SELF, tick, type GameState } from './features/game/rules.ts';
+import { CLOSE, CLOSING_SOON, COMPANY, GAME_MINUTES_PER_SECOND, LOCKUP } from './features/game/data.ts';
+import { newPosts, personName } from './features/game/channels.ts';
+import { newGame, ping, SELF, tick, type GameState } from './features/game/rules.ts';
 import { ROOM_ITEMS, SIPS } from './features/room3d/items.ts';
 import { goTo, holdPhone, lowerPhone, mountRoom, openDrawer, phoneGlassElement, screenElement, setAtComputer, setLamp, setMug, setPhones, setScreen, setTools, showRoom, snapTo } from './features/room3d/view.ts';
 import { drawerSlots, held, needsPush, onMyWay, phoneName, roguePending } from './features/game/phones.ts';
-import { atBurrow, dayMood, PEOPLE, sayNow, whereIs } from './features/game/people.ts';
+import { dayMood } from './features/game/people.ts';
 import { phoneScreen } from './features/ui/phone.ts';
 import { loadGame, saveGame } from './features/save/save.ts';
 import type { App } from './features/ui/app.ts';
@@ -173,20 +174,17 @@ setInterval(() => {
   else { app.state = next; saveGame(next); app.refreshTimes(); }
   closingTime(before, next);
   phoneNews(before, next);
-  if (quiet) quietChat(before, next);
+  channelChat(before, next, quiet);
 }, 1000);
 
-/** How often, in game minutes, someone says something while it's quiet in the first week. */
-const CHAT_EVERY = 40;
-
-/** The first week, nothing on: every so often a colleague says something about their day, so quiet time isn't dead air. */
-function quietChat(before: GameState, after: GameState): void {
-  if (after.day > 5 || after.clock >= CLOSE || Math.floor(before.clock / CHAT_EVERY) === Math.floor(after.clock / CHAT_EVERY)) return;
-  const here = Object.keys(PEOPLE).filter((p) => p !== SELF && atBurrow(p, after.day) && !['home', 'leaving'].includes(whereIs(p, after.day, after.clock).doing));
-  const login = here[Math.floor(after.clock / CHAT_EVERY + after.day) % here.length];
-  const text = login && sayNow(login, after);
-  if (!login || !text) return;
-  notify(app, { app: 'chat', from: VILLAGERS[login as keyof typeof VILLAGERS]?.name ?? login, text });
+/**
+ * Colleagues chatting (see channels.ts): when the clock passes a post's time and nothing is waiting on you, it pops
+ * up and opens its channel when clicked. Otherwise it just waits in the channel as unread.
+ */
+function channelChat(before: GameState, after: GameState, quiet: boolean): void {
+  const fresh = before.day === after.day ? newPosts(after.day, before.clock, after.clock) : [];
+  if (!fresh.length) return;
+  if (quiet) for (const p of fresh) notify(app, { app: 'chat', from: `Burrow Chat \u00b7 #${p.channel}`, text: `${personName(p.from)}: ${p.text}`, channel: p.channel });
   app.rerender();
 }
 
@@ -202,10 +200,12 @@ function phoneNews(before: GameState, after: GameState): void {
   if (approvals(after) > approvals(before)) lines.push(['Mr. Grisby', 'Approved. The replacement phone is in your top drawer. Try not to let anyone put it on a car roof.']);
   for (const [from, text] of lines) {
     chime();
-    notify(app, { app: 'chat', from, text });
+    // Kept as a direct message too, so it can be found again in Burrow Chat.
+    app.state = ping(app.state, from, text);
+    notify(app, { app: 'chat', from: `Burrow Chat \u00b7 ${from}`, text, dm: from });
     if (app.ui.view !== 'computer') app.ui.note = `${from}: \u201C${text}\u201D`;
   }
-  if (lines.length) app.rerender();
+  if (lines.length) { saveGame(app.state); app.rerender(); }
 }
 
 addEventListener('keydown', (e) => roomKeys(app, e));
