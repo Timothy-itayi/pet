@@ -28,6 +28,10 @@ const LOOKS: Record<string, Look> = {
   Biscuit: { skin: '#f0c6a0', hair: 'curly', hairColour: '#c98d52', shirt: '#e0a33a' },
   Pip: { skin: '#5e3b26', hair: 'short', hairColour: '#120c08', shirt: '#4e8a3a', glasses: true },
   Fern: { skin: '#f6dcc4', hair: 'bob', hairColour: '#b5452b', shirt: '#2f8a6b' },
+  Clover: { skin: '#b9794f', hair: 'bun', hairColour: '#6b3a1e', shirt: '#c06a2b' },
+  Moss: { skin: '#e6b88f', hair: 'curly', hairColour: '#4a3a24', shirt: '#6a7f3a', beard: true },
+  Tansy: { skin: '#7a4a30', hair: 'bob', hairColour: '#1a1210', shirt: '#b3265a' },
+  Hector: { skin: '#f1cfae', hair: 'short', hairColour: '#8a8a8a', shirt: '#44546a', glasses: true },
   Sam: { skin: '#d9a77f', hair: 'short', hairColour: '#5a3a22', shirt: '#555', beard: true },
   IT: { skin: '#e9bf98', hair: 'short', hairColour: '#3a2a1e', shirt: '#3a6ea5' },
 };

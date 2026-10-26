@@ -31,6 +31,10 @@ const STAFF: Record<string, Pick<Account, 'name' | 'dept' | 'title'>> = {
   marlo: { name: 'Marlo', dept: 'Sales', title: 'Sales Lead' },
   biscuit: { name: 'Biscuit', dept: 'Operations', title: 'Office Assistant' },
   pip: { name: 'Pip', dept: 'Operations', title: 'Operations Assistant' },
+  clover: { name: 'Clover', dept: 'Operations', title: 'Warehouse Supervisor' },
+  moss: { name: 'Moss', dept: 'Operations', title: 'Delivery Driver' },
+  tansy: { name: 'Tansy', dept: 'Sales', title: 'Account Manager' },
+  hector: { name: 'Hector', dept: 'Finance', title: 'Payroll Officer' },
   sam: { name: 'Sam', dept: 'IT', title: 'IT Administrator' },
   intern: { name: 'Intern (you)', dept: 'IT', title: 'IT Intern' },
 };

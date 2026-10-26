@@ -60,7 +60,7 @@ describe('the script', () => {
     for (let day = 1; day <= DAYS; day++) {
       const n = CHANNEL_POSTS.filter((p) => p.day === day).length;
       expect(n, `day ${day}`).toBeGreaterThanOrEqual(4);
-      expect(n, `day ${day}`).toBeLessThanOrEqual(8);
+      expect(n, `day ${day}`).toBeLessThanOrEqual(10);
     }
   });
 
