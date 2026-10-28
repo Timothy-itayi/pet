@@ -24,7 +24,7 @@ export const AWAY: readonly Doing[] = ['meeting', 'lunch', 'out'];
 
 export const PEOPLE: Record<string, Person> = {
   grisby: {
-    about: 'Founded Burrow & Co. in a garden shed in 1987 and has been managing it, loudly, ever since. Believes in growth, investors and unpaid internships, in that order. Honks when stressed. Has a meeting about The Conversation most weeks.',
+    about: 'Founded Burrow & Co. in a garden shed in 1987 and has been managing it, loudly, ever since. Believes in growth, investors and unpaid internships, in that order. Harrumphs when stressed. Has a meeting about The Conversation most weeks.',
     routine: [
       { at: '9:40', doing: 'arriving', where: 'Car park (his space)' },
       { at: '9:50', doing: 'desk', where: 'His office' },
@@ -44,9 +44,9 @@ export const PEOPLE: Record<string, Person> = {
       meeting: ['Do not disturb. Unless it’s the investors. Or lunch.', 'In a meeting about the meeting about The Conversation.'],
       out: ['Lunching with an investor. It’s work. The pudding is work.', 'Out of office. Back when the bill arrives.'],
       leaving: ['Early start tomorrow. For me, 9:40 is an early start.', 'Off to the golf club. Networking. With a putter.'],
-      bright: ['What a day to be Managing Director! Of something!', 'Splendid. The share price is up and so is morale. Mine, anyway.', 'Honk! That was a happy honk.', 'I feel a pay rise coming on. Not for you. Generally.'],
+      bright: ['What a day to be Managing Director! Of something!', 'Splendid. The share price is up and so is morale. Mine, anyway.', 'Ha! That was a happy harrumph.', 'I feel a pay rise coming on. Not for you. Generally.'],
       usual: ['Keep those tickets moving, intern. Like sharks. Sharks with tickets.', 'Steady as she goes. She being the company. Going being… steady.', 'Remember: there’s no I in team. There is an I in intern, though. Make of that what you will.', 'Five tickets a day keeps the board away.'],
-      low: ['Honk. That was not a happy honk.', 'Don’t talk to me about budgets. Or rain. Or auditors. Or anything.', 'Some days I wish I’d stayed in the shed.', 'If one more thing breaks I am cancelling Christmas. Pre-emptively.'],
+      low: ['Harrumph. That was not a happy harrumph.', 'Don’t talk to me about budgets. Or rain. Or auditors. Or anything.', 'Some days I wish I’d stayed in the shed.', 'If one more thing breaks I am cancelling Christmas. Pre-emptively.'],
     },
   },
   dot: {
@@ -77,7 +77,7 @@ export const PEOPLE: Record<string, Person> = {
     },
   },
   otis: {
-    about: 'Company Secretary, keeper of the rules, the minutes and the fire exits. Speaks slowly and mostly in “hoo”. Remembers every meeting since 1994. Unexpectedly kind to anyone who reads a policy before asking about it.',
+    about: 'Company Secretary, keeper of the rules, the minutes and the fire exits. Speaks slowly, in full sentences, with pauses you are not to fill. Remembers every meeting since 1994. Unexpectedly kind to anyone who reads a policy before asking about it.',
     routine: [
       { at: '9:00', doing: 'arriving', where: 'Front door' },
       { at: '9:05', doing: 'desk', where: 'Finance corner, by the window' },
@@ -92,15 +92,15 @@ export const PEOPLE: Record<string, Person> = {
     likes: ['rain', 'auditors', 'fire-drill', 'monday'],
     dislikes: ['drinks', 'birthday', 'all-hands', 'friday'],
     says: {
-      arriving: ['Hoo. Good morning.', 'The front door was unlocked overnight. I have made a note. Hoo.'],
-      desk: ['Taking the minutes. Of nothing in particular. Practice. Hoo.', 'Policy 4, subsection B. Very good subsection.', 'Reading. Quietly. As one should.'],
-      out: ['Checking the fire exits. Someone has put a bicycle in one. Again.', 'On my rounds. Hoo.'],
+      arriving: ['Good morning.', 'The front door was unlocked overnight. I have made a note.'],
+      desk: ['Taking the minutes. Of nothing in particular. Practice.', 'Policy 4, subsection B. Very good subsection.', 'Reading. Quietly. As one should.'],
+      out: ['Checking the fire exits. Someone has put a bicycle in one. Again.', 'On my rounds.'],
       lunch: ['On the bench outside. Rain or shine. Mostly rain.', 'Lunch. A plain biscuit. Not Biscuit. A biscuit.'],
-      meeting: ['Going through the accounts with Dot. Line by line. Hoo.', 'In session. Please wait outside. There is a chair.'],
-      leaving: ['Locking up the filing cabinets. All of them. Twice.', 'Goodnight. Hoo.'],
-      bright: ['A splendid day for procedure. Hoo!', 'The auditors and I understand each other.', 'Rain on the windows, a policy in hand. Perfect.', 'Everything is in order. I checked. Hoo.'],
-      usual: ['Hoo. Carry on.', 'Read the policy. Then ask me. In that order.', 'Every rule is there because someone, once, did something.', 'Measure twice, minute once.'],
-      low: ['Too much noise in this office today. Hoo.', 'Cake in the kitchen again. The crumbs. The crumbs.', 'Friday. Everyone in a hurry. Nobody reads anything on a Friday.', 'Hoo. Not now.'],
+      meeting: ['Going through the accounts with Dot. Line by line.', 'In session. Please wait outside. There is a chair.'],
+      leaving: ['Locking up the filing cabinets. All of them. Twice.', 'Goodnight.'],
+      bright: ['A splendid day for procedure.', 'The auditors and I understand each other.', 'Rain on the windows, a policy in hand. Perfect.', 'Everything is in order. I checked.'],
+      usual: ['Carry on.', 'Read the policy. Then ask me. In that order.', 'Every rule is there because someone, once, did something.', 'Measure twice, minute once.'],
+      low: ['Too much noise in this office today.', 'Cake in the kitchen again. The crumbs. The crumbs.', 'Friday. Everyone in a hurry. Nobody reads anything on a Friday.', 'Not now.'],
     },
   },
   juniper: {
@@ -236,7 +236,7 @@ export const PEOPLE: Record<string, Person> = {
     },
   },
   pip: {
-    about: 'Operations Assistant. Knows where every cable, box and stapler in the building is, and will tell you, at length. Loves rain, hates bright light, and says “ribbit” in a way nobody has ever questioned. Still looking for the blue stapler.',
+    about: 'Operations Assistant. Knows where every cable, box and stapler in the building is, and will tell you, at length. Loves rain, hates bright light, Still looking for the blue stapler.',
     routine: [
       { at: '9:00', doing: 'arriving', where: 'Back door, by the bins' },
       { at: '9:05', doing: 'desk', where: 'Operations, the cupboard-adjacent bit' },
@@ -250,14 +250,14 @@ export const PEOPLE: Record<string, Person> = {
     likes: ['rain', 'fire-drill', 'oktopus', 'auditors'],
     dislikes: ['sun', 'all-hands', 'drinks', 'friday'],
     says: {
-      arriving: ['Ribbit. Morning.', 'Came in the back. The front is too bright.'],
-      desk: ['Counting staplers. One is missing. It’s always the blue one.', 'Logistics. Ribbit.', 'If you need a cable, I have a cable. I have every cable.'],
+      arriving: ['Morning.', 'Came in the back. The front is too bright.'],
+      desk: ['Counting staplers. One is missing. It’s always the blue one.', 'Logistics.', 'If you need a cable, I have a cable. I have every cable.'],
       out: ['In the supply cupboard. It’s nice in here. Dark.', 'Checking the delivery. Twelve boxes of A4. Thirteen expected. Suspicious.'],
-      lunch: ['At the pond. Don’t ask.', 'Lunch. Outside. Near water. Ribbit.'],
+      lunch: ['In the park. Don’t ask.', 'Lunch. Outside. Somewhere shady.'],
       leaving: ['Off home. It might rain later. Fingers crossed.'],
-      bright: ['RAIN. Ribbit!', 'Fire drill! I know exactly where to stand. I painted the spot.', 'Found three cables I didn’t know about. Wonderful day.', 'Want to see something cool? It’s a box. Inside the box is another box.'],
-      usual: ['Ribbit.', 'Have you seen a blue stapler? Asking for me.', 'Everything is where it should be. Except the stapler.', 'Fine. Damp. Content.'],
-      low: ['Too sunny. Squinting. Ribbit.', 'All-hands. Everyone in one room. Breathing. Ugh.', 'Someone reorganised the cupboard “helpfully”.', 'Not a ribbit day.'],
+      bright: ['RAIN. Finally.', 'Fire drill! I know exactly where to stand. I painted the spot.', 'Found three cables I didn’t know about. Wonderful day.', 'Want to see something cool? It’s a box. Inside the box is another box.'],
+      usual: ['Morning.', 'Have you seen a blue stapler? Asking for me.', 'Everything is where it should be. Except the stapler.', 'Fine. Damp. Content.'],
+      low: ['Too sunny. Squinting.', 'All-hands. Everyone in one room. Breathing. Ugh.', 'Someone reorganised the cupboard “helpfully”.', 'Not a good day.'],
     },
   },
   fern: {

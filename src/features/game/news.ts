@@ -24,7 +24,7 @@ export const NEWS: NewsPost[] = [
     day: 1, title: 'Farewell, Sam', from: 'Otis', scene: '\u{1F4E6}\u{1F44B}\u{1F5A5}', tone: '#7a5a3a',
     shows: 'A cardboard box of desk belongings on an empty desk: a small cactus, tangled cables, a framed photo lying face down, an old computer beside it',
     moves: 'Static camera. The desk lamp flickers and dust drifts through its light.',
-    body: 'After six years keeping our computers alive (and building most of them out of spare parts), Sam has left us. The card is in the kitchen. Please sign it. Hoo.',
+    body: 'After six years keeping our computers alive (and building most of them out of spare parts), Sam has left us. The card is in the kitchen. Please sign it.',
   },
   {
     day: 2, title: 'Budget freeze', from: 'Mr. Grisby', scene: '\u{1F9CA}\u{1F4B7}', tone: '#4f7d9c',
@@ -102,7 +102,7 @@ export const NEWS: NewsPost[] = [
     day: 14, title: 'Pip joins Finance', from: 'Otis', scene: '\u{1F4CA}\u{1F438}', tone: '#065f46',
     shows: 'A cardboard box of desk things being carried from a cluttered supply cupboard towards a tidy finance office, a stapler on top',
     moves: 'Static camera. The supply cupboard door swings gently shut.',
-    body: 'Pip moves from Operations to Finance today. Operations will miss Pip\u2019s encyclopaedic knowledge of cables. Finance will gain it. Hoo.',
+    body: 'Pip moves from Operations to Finance today. Operations will miss Pip\u2019s encyclopaedic knowledge of cables. Finance will gain it.',
   },
   {
     day: 15, title: 'A short goodbye', from: 'Dot', scene: '\u{1F44B}\u{1F9EE}', tone: '#7c2d12',
@@ -120,7 +120,7 @@ export const NEWS: NewsPost[] = [
     day: 16, title: 'The auditors\u2019 findings', from: 'Otis', scene: '\u{1F50E}\u{1F4CB}', tone: '#334155',
     shows: 'A thick report on a meeting room table with coloured flags sticking out of it, a red pen beside it, blinds half drawn',
     moves: 'Static camera. The report\u2019s flags flutter slightly in the air-conditioning and the light through the blinds shifts.',
-    body: 'The auditors\u2019 report is in. Three findings: leavers who can still sign in, passwords on their own, and a shared login at reception. IT is on it. IT is one intern. Hoo.',
+    body: 'The auditors\u2019 report is in. Three findings: leavers who can still sign in, passwords on their own, and a shared login at reception. IT is on it. IT is one intern.',
   },
   {
     day: 17, title: 'Sign in with your phone', from: 'Mr. Grisby', scene: '\u{1F4F1}\u{1F510}', tone: '#1e3a8a',
@@ -144,7 +144,7 @@ export const NEWS: NewsPost[] = [
     day: 20, title: 'Goodbye, auditors', from: 'Otis', scene: '\u{1F44B}\u{1F4CB}', tone: '#3f6212',
     shows: 'An empty meeting room after a long stay, a neat stack of returned folders, a single half-eaten biscuit on a plate',
     moves: 'Static camera. The door slowly swings shut on its own.',
-    body: 'The auditors leave us today. Two of three findings are closed, and the third is a shared login that Biscuit misses. They said we had \u201Cimproved markedly\u201D. I have framed it. Hoo.',
+    body: 'The auditors leave us today. Two of three findings are closed, and the third is a shared login that Biscuit misses. They said we had \u201Cimproved markedly\u201D. I have framed it.',
   },
   {
     day: 21, title: 'Welcome to the new floor!', from: 'Mr. Grisby', scene: '\u{1F3E2}\u2728', tone: '#0e7490',
@@ -168,7 +168,7 @@ export const NEWS: NewsPost[] = [
     day: 24, title: 'The budget is frozen. Again.', from: 'Otis', scene: '\u{1F9CA}\u{1F4B8}', tone: '#334155',
     shows: 'A small metal cash box on an office desk, a padlock on it and a thin layer of frost across the lid, a tidy ledger beside it',
     moves: 'Static camera. A little frost creeps across the lid of the cash box.',
-    body: 'Hoo. Between the new floor, the investors\u2019 lunch and six telephones, we have spent the year\u2019s budget in a fortnight. It is frozen again. IT: use what we have. That includes the drawer.',
+    body: 'Between the new floor, the investors\u2019 lunch and six telephones, we have spent the year\u2019s budget in a fortnight. It is frozen again. IT: use what we have. That includes the drawer.',
   },
   {
     day: 24, title: 'Wi-Fi by the window', from: 'Juniper', scene: '\u{1F4F6}\u{1FA9F}', tone: '#047857',

@@ -307,11 +307,11 @@ const ON_MY_WAY: Record<string, Partial<Record<Feeling, string>>> = {
     broken: 'I’m bringing you the pieces now. I’m so sorry. I’ve put them in an envelope. Some of them.',
   },
   otis: {
-    bright: 'Hoo. A phone, set up by IT, in good time. On my way to witness it.',
-    usual: 'Hoo. I’m on my way for the phone.',
+    bright: 'A phone, set up by IT, in good time. On my way to witness it.',
+    usual: 'I’m on my way for the phone.',
     low: 'On my way. I trust it does not require me to make a face at it.',
-    late: 'Hoo. On my way. I had begun minuting its absence.',
-    broken: 'Hoo. I am on my way with what was a phone. I would rather not discuss it.',
+    late: 'On my way. I had begun minuting its absence.',
+    broken: 'I am on my way with what was a phone. I would rather not discuss it.',
   },
   grisby: {
     bright: 'On my way! Company phones! Very modern. Very investor.',
@@ -342,8 +342,8 @@ const ON_MY_WAY: Record<string, Partial<Record<Feeling, string>>> = {
     broken: 'Coming over. It went in the dishwasher. I was cleaning it. It’s very clean now.',
   },
   pip: {
-    bright: 'On my way. Ribbit. Excited about the phone.',
-    usual: 'On my way for the phone. Ribbit.',
+    bright: 'On my way. Excited about the phone.',
+    usual: 'On my way for the phone.',
     low: 'Coming over. Quietly.',
     late: 'On my way. Was starting to think it was a myth.',
     broken: 'Bringing it over. It went in the pond. Don’t ask why I was at the pond.',
