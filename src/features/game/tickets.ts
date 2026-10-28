@@ -64,7 +64,7 @@ export const ISSUES: Issue[] = [
     ],
     fixes: [
       { id: 'restart', label: 'Restart it and install the waiting updates' },
-      { id: 'new', label: 'Order a new laptop', fail: 'Budget freeze. Mr. Grisby honks at the order form.' },
+      { id: 'new', label: 'Order a new laptop', fail: 'Budget freeze. Mr. Grisby harrumphs at the order form.' },
       { id: 'delete', label: 'Delete files to free up space', fail: 'Their holiday photos are gone. Still slow.' },
     ],
     correctFix: 'restart',
@@ -991,7 +991,7 @@ export const TICKETS: Ticket[] = [
   {
     id: 't203', day: 2, at: '13:30', who: 'pip', via: 'tray', priority: 'low', issue: 'paper-jam', mood: 0,
     title: 'Printer just blinks at me',
-    message: 'The printer blinks orange and won’t print. Is it angry? Ribbit.',
+    message: 'The printer blinks orange and won’t print. Is it angry?',
     details: [
       { label: 'Printer screen', text: 'PAPER JAM – TRAY 1', ask: 'screen' },
       { label: 'Tray 1', text: 'A crumpled sheet is wedged at the back.', ask: 'tray' },
@@ -1001,7 +1001,7 @@ export const TICKETS: Ticket[] = [
   {
     id: 'f201', day: 2, at: '14:40', who: 'otis', via: 'floor', where: 'Meeting room', priority: 'normal', issue: 'monitor-input', mood: 1,
     title: 'Projector shows nothing',
-    message: 'My meeting starts in five minutes and the projector just says no signal. Hoo.',
+    message: 'My meeting starts in five minutes and the projector just says no signal.',
     details: [
       { label: 'Projector', text: 'No signal – HDMI 1', ask: 'screen' },
       { label: 'Wall plate', text: 'His laptop cable is plugged into the socket marked HDMI 2.', ask: 'cable' },
@@ -1022,7 +1022,7 @@ export const TICKETS: Ticket[] = [
   {
     id: 't302', day: 3, at: '10:20', who: 'otis', via: 'tray', priority: 'low', issue: 'guest-wifi', mood: 0,
     title: 'Wi-Fi works but shared drive doesn’t',
-    message: 'Internet works fine but the shared drive says “not found”. Hoo.',
+    message: 'Internet works fine but the shared drive says “not found”.',
     details: [
       { label: 'Otis’s Wi-Fi', text: 'Connected to: Burrow-Guest', ask: 'network' },
       { label: 'Sticky note', text: 'Forgot staff Wi-Fi password. Used the easy one.', ask: 'password' },
@@ -1082,7 +1082,7 @@ export const TICKETS: Ticket[] = [
   {
     id: 't403', day: 4, at: '14:45', who: 'otis', via: 'walkup', where: 'Meeting room', priority: 'high', issue: 'airplane-mode', mood: 1,
     title: 'No internet on my laptop',
-    message: 'I flew to my sister’s at the weekend. Now nothing loads. Hoo.',
+    message: 'I flew to my sister’s at the weekend. Now nothing loads.',
     details: [
       { label: 'Otis’s laptop', text: 'Airplane mode: ON (since Saturday)', ask: 'settings' },
       { label: 'Around the office', text: 'Everyone else is online.', ask: 'others' },
@@ -1161,7 +1161,7 @@ export const TICKETS: Ticket[] = [
   {
     id: 't105', day: 1, at: '13:30', who: 'pip', via: 'tray', priority: 'normal', issue: 'caps-lock', mood: 1,
     title: 'Locked out of my own laptop',
-    message: 'My password is wrong. It’s never wrong. I am typing it VERY carefully. Ribbit.',
+    message: 'My password is wrong. It’s never wrong. I am typing it VERY carefully.',
     details: [
       { label: 'Pip’s keyboard', text: 'The Caps Lock light is on. There’s a crumb wedged next to the key.', ask: 'keyboard' },
       { label: 'Login screen', text: 'Password incorrect. 2 tries left.', ask: 'error' },
@@ -1202,7 +1202,7 @@ export const TICKETS: Ticket[] = [
   {
     id: 't305', day: 3, at: '12:40', who: 'grisby', via: 'tray', priority: 'high', issue: 'slow-laptop', mood: 1,
     title: 'Order me the most expensive computer',
-    message: 'My computer is SLOW. Order me the most expensive one. Budget freeze doesn’t apply to me. Honk.',
+    message: 'My computer is SLOW. Order me the most expensive one. Budget freeze doesn’t apply to me.',
     details: [
       { label: 'Laptop info', text: 'Last restarted: 63 days ago. 19 updates waiting.', ask: 'uptime' },
       { label: 'On his desk', text: 'A framed photo of himself next to a bigger framed photo of himself.' },
@@ -1212,7 +1212,7 @@ export const TICKETS: Ticket[] = [
   {
     id: 't306', day: 3, at: '15:40', who: 'otis', via: 'tray', priority: 'normal', issue: 'locked-out', mood: 1,
     title: 'Account locked',
-    message: 'I changed my password on Monday. Now it says my account is locked. I know my password perfectly well. Hoo.',
+    message: 'I changed my password on Monday. Now it says my account is locked. I know my password perfectly well.',
     details: [
       { label: 'Login screen', text: 'This account has been locked out. Contact your administrator.', ask: 'error' },
       { label: 'His phone', text: 'The email app has been trying his OLD password every five minutes since Monday.', ask: 'devices' },
@@ -1222,7 +1222,7 @@ export const TICKETS: Ticket[] = [
   {
     id: 't405', day: 4, at: '9:50', who: 'pip', via: 'tray', priority: 'normal', issue: 'locked-out', mood: 2,
     title: 'Now it says LOCKED',
-    message: 'My password was wrong so I kept trying it. Very carefully. Lots of times. Now it says locked. Ribbit.',
+    message: 'My password was wrong so I kept trying it. Very carefully. Lots of times. Now it says locked.',
     details: [
       { label: 'Pip’s keyboard', text: 'The Caps Lock light is on. Again.', ask: 'keyboard' },
       { label: 'Login screen', text: 'This account has been locked out. Contact your administrator.', ask: 'error' },
@@ -1252,7 +1252,7 @@ export const TICKETS: Ticket[] = [
   {
     id: 't505', day: 5, at: '11:10', who: 'otis', via: 'walkup', where: 'Meeting room', priority: 'normal', issue: 'default-printer', mood: 1,
     title: 'My prints go upstairs',
-    message: 'Every time I print, it comes out on the floor above. I have climbed those stairs six times today. Hoo.',
+    message: 'Every time I print, it comes out on the floor above. I have climbed those stairs six times today.',
     details: [
       { label: 'Print settings', text: 'Default printer: FINANCE-Floor2', ask: 'settings' },
     ],
@@ -1281,7 +1281,7 @@ export const TICKETS: Ticket[] = [
   {
     id: 't508', day: 5, at: '16:10', who: 'pip', via: 'walkup', where: 'Open office', priority: 'high', issue: 'guest-wifi', mood: 1,
     title: 'Shared drive vanished',
-    message: 'The shared drive is GONE. All the files. Gone. Ribbit ribbit ribbit.',
+    message: 'The shared drive is GONE. All the files. Gone. Every single one.',
     details: [
       { label: 'Pip’s Wi-Fi', text: 'Connected to: Burrow-Guest', ask: 'network' },
       { label: 'Sticky note on his laptop', text: 'Guest Wi-Fi password: biscuits123', ask: 'password' },
@@ -1292,7 +1292,7 @@ export const TICKETS: Ticket[] = [
   {
     id: 't601', day: 6, at: '9:20', who: 'grisby', via: 'tray', priority: 'high', issue: 'okta-setup', mood: 1, team: ['Marketing'],
     title: 'Get Marketing onto Oktopus',
-    message: 'Oktopus is paid for. Marketing go first. Get them in it. The investors are watching. Honk.',
+    message: 'Oktopus is paid for. Marketing go first. Get them in it. The investors are watching.',
     details: [
       { label: 'Oktopus', text: 'A brand-new org. Nobody in it yet.' },
       { label: 'HR file', text: 'Marketing: Juniper, Wren, Basil.' },
@@ -1326,7 +1326,7 @@ export const TICKETS: Ticket[] = [
   {
     id: 't605', day: 6, at: '15:30', who: 'pip', via: 'tray', priority: 'normal', issue: 'locked-out', mood: 1,
     title: 'Locked out after the weekend',
-    message: 'I tried my password a few times this morning. Well. Several. Now it’s locked. Ribbit.',
+    message: 'I tried my password a few times this morning. Well. Several. Now it’s locked.',
     details: [{ label: 'Login screen', text: 'This account has been locked out. Contact your administrator.', ask: 'error' }],
     workaround: 'Let him use the hot-desk PC',
   },
@@ -1353,7 +1353,7 @@ export const TICKETS: Ticket[] = [
   {
     id: 't703', day: 7, at: '13:05', who: 'otis', via: 'tray', priority: 'normal', issue: 'forgot-password', mood: 1,
     title: 'Password forgotten after a long weekend',
-    message: 'A restful weekend has erased my password entirely. Hoo.',
+    message: 'A restful weekend has erased my password entirely.',
     details: [
       { label: 'Login screen', text: 'The user name or password is incorrect.', ask: 'error' },
       { label: 'Active Directory', text: 'Account: otis. Not locked out.' },
@@ -1387,7 +1387,7 @@ export const TICKETS: Ticket[] = [
   {
     id: 't802', day: 8, at: '10:40', who: 'pip', via: 'tray', priority: 'low', issue: 'slow-laptop', mood: 0,
     title: 'Laptop slower than me',
-    message: 'My laptop is slower than me, and I’m not fast. Ribbit.',
+    message: 'My laptop is slower than me, and I’m not fast.',
     details: [{ label: 'Laptop info', text: 'Last restarted: 33 days ago. 14 updates waiting.', ask: 'uptime' }],
     workaround: 'Close everything he isn’t using',
   },
@@ -1415,7 +1415,7 @@ export const TICKETS: Ticket[] = [
   {
     id: 't806', day: 8, at: '16:00', who: 'otis', via: 'walkup', where: 'Meeting room', priority: 'normal', issue: 'wrong-charger', mood: 1,
     title: 'Laptop won’t charge past 6%',
-    message: 'My laptop has been charging all afternoon and is at 6%. I fear it is broken. Hoo.',
+    message: 'My laptop has been charging all afternoon and is at 6%. I fear it is broken.',
     details: [
       { label: 'Charger', text: 'USB-C, 20W. A phone charger.', ask: 'charger' },
       { label: 'Laptop sticker', text: 'Use a 65W or higher USB-C charger.', ask: 'sticker' },
@@ -1425,7 +1425,7 @@ export const TICKETS: Ticket[] = [
   {
     id: 't901', day: 9, at: '9:10', who: 'otis', via: 'tray', priority: 'high', issue: 'leaver', mood: 1, subject: 'wren',
     title: 'Wren has left: please remove access',
-    message: 'Wren’s last day was yesterday. HR have done their part. Please make sure she can’t get into anything now. The auditors are asking. Hoo.',
+    message: 'Wren’s last day was yesterday. HR have done their part. Please make sure she can’t get into anything now. The auditors are asking.',
     details: [
       { label: 'HR file', text: 'Wren: status terminated.' },
       { label: 'Oktopus', text: 'Wren: active. Hootsweet: yes.' },
@@ -1460,7 +1460,7 @@ export const TICKETS: Ticket[] = [
   {
     id: 't905', day: 9, at: '15:00', who: 'pip', via: 'tray', priority: 'normal', issue: 'cable-unplugged', mood: 1,
     title: 'Desk PC offline again',
-    message: 'My PC has no internet. The cleaners were here. I see a pattern. Ribbit.',
+    message: 'My PC has no internet. The cleaners were here. I see a pattern.',
     details: [{ label: 'Under the desk', text: 'The network cable is lying on the floor.', ask: 'under' }],
     workaround: 'Let him use the hot-desk PC',
   },
@@ -1524,17 +1524,17 @@ export const TICKETS: Ticket[] = [
   {
     id: 't1006', day: 10, at: '14:45', who: 'pip', via: 'walkup', where: 'Open office', priority: 'normal', issue: 'airplane-mode', mood: 1,
     title: 'Internet gone after a flight',
-    message: 'I went to a pond conference. Flew there. Flew back. Now no internet. Ribbit.',
+    message: 'I went to a logistics conference. Flew there. Flew back. Now no internet.',
     details: [{ label: 'Pip’s laptop', text: 'Airplane mode: ON (since Wednesday)', ask: 'settings' }],
     workaround: 'Let him use the hot-desk PC',
   },
   {
     id: 't1007', day: 10, at: '16:00', who: 'otis', via: 'tray', priority: 'low', issue: 'mouse-battery', mood: 0,
     title: 'Mouse has gone quiet',
-    message: 'My mouse no longer responds. Neither does my stapler, but that is a separate matter. Hoo.',
+    message: 'My mouse no longer responds. Neither does my stapler, but that is a separate matter.',
     details: [
       { label: 'Mouse', text: 'Wireless. The light underneath is off.', ask: 'kind' },
-      { label: 'Mouse history', text: 'Biscuit sat on it at the Friday meeting. Hoo.', ask: 'dropped' },
+      { label: 'Mouse history', text: 'Biscuit sat on it at the Friday meeting.', ask: 'dropped' },
     ],
     workaround: 'Lend him the spare wired mouse',
     fixedBy: 'spare',
@@ -1544,7 +1544,7 @@ export const TICKETS: Ticket[] = [
     id: 't1101', day: 11, at: '9:20', who: 'grisby', via: 'tray', priority: 'high', issue: 'okta-rollout', mood: 1,
     team: ['Management', 'Finance', 'Sales', 'Operations', 'IT'],
     title: 'Everyone on Oktopus. Today.',
-    message: 'The investors loved Marketing on Oktopus. Now they want everyone on it. Everyone. Even Otis. Today, please. Honk.',
+    message: 'The investors loved Marketing on Oktopus. Now they want everyone on it. Everyone. Even Otis. Today, please.',
     details: [
       { label: 'Oktopus', text: 'Marketing only.' },
       { label: 'HR file', text: 'Fourteen people across six departments, including you.' },
@@ -1566,7 +1566,7 @@ export const TICKETS: Ticket[] = [
   {
     id: 't1103', day: 11, at: '10:40', who: 'otis', via: 'walkup', where: 'Finance corner', priority: 'normal', issue: 'guest-wifi', mood: 1,
     title: 'Tablet cannot find the minutes',
-    message: 'Hoo. My new tablet shows the internet, but not the shared drive where the minutes live. The minutes must be read.',
+    message: 'My new tablet shows the internet, but not the shared drive where the minutes live. The minutes must be read.',
     details: [
       { label: 'Wi-Fi', text: 'Burrow-Guest. (“It said Guest. I felt like one.”)', ask: 'network' },
       { label: 'Shared drive', text: 'Shared drive: not found', ask: 'drive' },
@@ -1586,7 +1586,7 @@ export const TICKETS: Ticket[] = [
   {
     id: 't1105', day: 11, at: '14:10', who: 'pip', via: 'tray', priority: 'normal', issue: 'monitor-input', mood: 1,
     title: 'Second screen is blue and sad',
-    message: 'My second screen just says “No signal”. It’s blue. I like blue, but not like this. Ribbit.',
+    message: 'My second screen just says “No signal”. It’s blue. I like blue, but not like this.',
     details: [
       { label: 'Screen', text: 'No signal – HDMI 1', ask: 'screen' },
       { label: 'Cable', text: 'Plugged into the socket marked HDMI 2. (New desk since Friday.)', ask: 'cable' },
@@ -1658,7 +1658,7 @@ export const TICKETS: Ticket[] = [
   {
     id: 't1206', day: 12, at: '16:10', who: 'pip', via: 'tray', priority: 'normal', issue: 'cable-unplugged', mood: 1,
     title: 'No internet at the cupboard desk',
-    message: 'No internet. I was moving boxes. A box may have moved something. Ribbit.',
+    message: 'No internet. I was moving boxes. A box may have moved something.',
     details: [
       { label: 'Network icon', text: 'Network cable unplugged', ask: 'screen' },
       { label: 'Under the desk', text: 'The network cable is on the floor, next to a box of A4.', ask: 'under' },
@@ -1702,7 +1702,7 @@ export const TICKETS: Ticket[] = [
   {
     id: 't1304', day: 13, at: '13:50', who: 'otis', via: 'tray', priority: 'normal', issue: 'password-expired', mood: 1,
     title: 'Email refuses me',
-    message: 'Hoo. My email will not open. It says something about my password having lived its full life.',
+    message: 'My email will not open. It says something about my password having lived its full life.',
     details: [
       { label: 'Message', text: 'Your password has expired. Change it to continue.', ask: 'error' },
       { label: 'Last changed', text: 'Ninety-one days ago. (Same as before, plus a 2.)', ask: 'changed' },
@@ -1732,7 +1732,7 @@ export const TICKETS: Ticket[] = [
   {
     id: 't1307', day: 13, at: '16:20', who: 'pip', via: 'tray', priority: 'low', issue: 'printer-driver', mood: 0,
     title: 'Label printer driver CD',
-    message: 'New label printer. It came with a CD. I have nothing that eats CDs. Ribbit.',
+    message: 'New label printer. It came with a CD. I have nothing that eats CDs.',
     details: [
       { label: 'Ports', text: 'Two small oval ports. No disc drive.', ask: 'ports' },
       { label: 'How', text: 'With the CD that came in the box.', ask: 'how' },
@@ -1742,7 +1742,7 @@ export const TICKETS: Ticket[] = [
   {
     id: 't1401', day: 14, at: '9:30', who: 'otis', via: 'tray', priority: 'normal', issue: 'mover', mood: 1, subject: 'pip', automate: true,
     title: 'Has Pip moved in Oktopus?',
-    message: 'Hoo. Pip moved to Finance this morning, as a Finance Assistant. HR has done the paperwork. Twice. Has Oktopus caught up?',
+    message: 'Pip moved to Finance this morning, as a Finance Assistant. HR has done the paperwork. Twice. Has Oktopus caught up?',
     details: [
       { label: 'Team', text: 'Finance, from Operations.', ask: 'team' },
       { label: 'Old apps', text: 'Operations never had any apps. Finance has Voyago.', ask: 'apps' },
@@ -1804,7 +1804,7 @@ export const TICKETS: Ticket[] = [
   {
     id: 't1407', day: 14, at: '16:30', who: 'otis', via: 'tray', priority: 'low', issue: 'mouse-battery', mood: 0,
     title: 'Mouse not moving',
-    message: 'My mouse is still. I am also still, but I am thinking. The mouse is not. Hoo.',
+    message: 'My mouse is still. I am also still, but I am thinking. The mouse is not.',
     details: [
       { label: 'Mouse', text: 'Wireless. No light.', ask: 'kind' },
       { label: 'Dropped', text: 'Not that I know of.', ask: 'dropped' },
@@ -1850,7 +1850,7 @@ export const TICKETS: Ticket[] = [
   {
     id: 't1504', day: 15, at: '12:15', who: 'pip', via: 'tray', priority: 'normal', issue: 'airplane-mode', mood: 1,
     title: 'No internet in Finance',
-    message: 'New desk in Finance. No internet. Everyone else in Finance has internet. I feel left out. Ribbit.',
+    message: 'New desk in Finance. No internet. Everyone else in Finance has internet. I feel left out.',
     details: [
       { label: 'Settings', text: 'Airplane mode: ON', ask: 'settings' },
       { label: 'Changed', text: 'Turned something on to make the laptop quieter during the move.', ask: 'changed' },
@@ -1860,7 +1860,7 @@ export const TICKETS: Ticket[] = [
   {
     id: 't1505', day: 15, at: '13:30', who: 'otis', via: 'tray', priority: 'normal', issue: 'default-printer', mood: 1,
     title: 'Minutes printing elsewhere',
-    message: 'Hoo. I have printed the minutes. They have not appeared. Somewhere, someone is reading my minutes.',
+    message: 'I have printed the minutes. They have not appeared. Somewhere, someone is reading my minutes.',
     details: [
       { label: 'Default printer', text: 'Ticked: Sales-Downstairs.', ask: 'settings' },
       { label: 'Near him', text: 'Nothing from the Finance printer.', ask: 'near' },
@@ -1891,7 +1891,7 @@ export const TICKETS: Ticket[] = [
   {
     id: 't1601', day: 16, at: '9:10', who: 'otis', via: 'tray', priority: 'high', issue: 'stale-accounts', mood: 1, subjects: ['wren', 'sam'],
     title: 'Auditors: leavers can still sign in',
-    message: 'Hoo. The auditors’ report has arrived. Finding 1: people who have left the company can still sign in to the network. They have underlined it. Twice.',
+    message: 'The auditors’ report has arrived. Finding 1: people who have left the company can still sign in to the network. They have underlined it. Twice.',
     details: [
       { label: 'Report', text: 'Finding 1: leavers’ accounts still enabled in Active Directory: Wren, Sam.', ask: 'who' },
       { label: 'Where', text: 'Active Directory. (Oktopus was fine, the report notes, “for once”.)', ask: 'where' },
@@ -1934,7 +1934,7 @@ export const TICKETS: Ticket[] = [
   {
     id: 't1605', day: 16, at: '14:00', who: 'pip', via: 'tray', priority: 'normal', issue: 'default-printer', mood: 1,
     title: 'Printing to Operations still',
-    message: 'I am in Finance now but my printing is still in Operations. It misses me. Ribbit.',
+    message: 'I am in Finance now but my printing is still in Operations. It misses me.',
     details: [
       { label: 'Default printer', text: 'Ticked: Operations-Cupboard.', ask: 'settings' },
       { label: 'Near him', text: 'Nothing from the Finance printer.', ask: 'near' },
@@ -1977,7 +1977,7 @@ export const TICKETS: Ticket[] = [
   {
     id: 't1703', day: 17, at: '11:20', who: 'otis', via: 'tray', priority: 'normal', issue: 'cable-unplugged', mood: 1,
     title: 'Network departed',
-    message: 'Hoo. The network has left my computer. The auditors moved my desk to sit at it.',
+    message: 'The network has left my computer. The auditors moved my desk to sit at it.',
     details: [
       { label: 'Network icon', text: 'Network cable unplugged', ask: 'screen' },
       { label: 'Under the desk', text: 'The cable is lying loose. The desk is two feet from where it was.', ask: 'under' },
@@ -2017,7 +2017,7 @@ export const TICKETS: Ticket[] = [
   {
     id: 't1801', day: 18, at: '9:15', who: 'pip', via: 'walkup', where: 'Open office', priority: 'normal', issue: 'usb-stick', mood: 0,
     title: 'Found a USB stick',
-    message: 'Found this in the car park. It says “Salaries”. I didn’t plug it in. I wanted to. Ribbit.',
+    message: 'Found this in the car park. It says “Salaries”. I didn’t plug it in. I wanted to.',
     details: [
       { label: 'Where', text: 'In the car park, next to the space marked MARLO.', ask: 'where' },
       { label: 'Label', text: '“Salaries 2026 – CONFIDENTIAL”, in very neat handwriting.', ask: 'label' },
@@ -2060,7 +2060,7 @@ export const TICKETS: Ticket[] = [
   {
     id: 't1805', day: 18, at: '14:50', who: 'otis', via: 'tray', priority: 'normal', issue: 'locked-out', mood: 1,
     title: 'Locked out by my own diligence',
-    message: 'Hoo. I have been locked out. I tried my password many times, carefully. The computer was not impressed.',
+    message: 'I have been locked out. I tried my password many times, carefully. The computer was not impressed.',
     details: [
       { label: 'Login screen', text: 'This account has been locked.', ask: 'error' },
       { label: 'Devices', text: 'Nothing else. Just very careful typing.', ask: 'devices' },
@@ -2102,7 +2102,7 @@ export const TICKETS: Ticket[] = [
   {
     id: 't1903', day: 19, at: '16:25', who: 'pip', via: 'tray', priority: 'normal', issue: 'monitor-input', mood: 1,
     title: 'Finance screen won’t wake',
-    message: 'The second screen at my Finance desk says “No signal”. Finance screens are moody. Ribbit.',
+    message: 'The second screen at my Finance desk says “No signal”. Finance screens are moody.',
     details: [
       { label: 'Screen', text: 'No signal – DisplayPort', ask: 'screen' },
       { label: 'Cable', text: 'Plugged into HDMI. The screen is looking at DisplayPort.', ask: 'cable' },
@@ -2142,7 +2142,7 @@ export const TICKETS: Ticket[] = [
   {
     id: 't2001', day: 20, at: '9:05', who: 'otis', via: 'tray', priority: 'high', issue: 'mfa', mood: 1,
     title: 'Phone lost to the auditors’ farewell',
-    message: 'Hoo. I attended the auditors’ farewell drinks. I did not return with my phone. Oktopus now asks my phone for a code, and my phone is elsewhere.',
+    message: 'I attended the auditors’ farewell drinks. I did not return with my phone. Oktopus now asks my phone for a code, and my phone is elsewhere.',
     details: [
       { label: 'Old phone', text: 'His company phone. Left at the pub. Possibly behind the dartboard.', ask: 'phone' },
       { label: 'Spares', text: 'There should still be spares in your drawer.' },
@@ -2186,7 +2186,7 @@ export const TICKETS: Ticket[] = [
   {
     id: 't2005', day: 20, at: '14:00', who: 'pip', via: 'tray', priority: 'low', issue: 'mouse-battery', mood: 0,
     title: 'Mouse stopped counting',
-    message: 'My mouse stopped. I was in the middle of counting. Now I’ve lost count. Ribbit.',
+    message: 'My mouse stopped. I was in the middle of counting. Now I’ve lost count.',
     details: [
       { label: 'Mouse', text: 'Wireless. The little light underneath is off.', ask: 'kind' },
       { label: 'Keyboard', text: 'Typing works fine.', ask: 'keyboard' },
@@ -2238,7 +2238,7 @@ export const TICKETS: Ticket[] = [
   {
     id: 't2104', day: 21, at: '13:30', who: 'otis', via: 'tray', priority: 'normal', issue: 'locked-out', mood: 1,
     title: 'Locked out after the move',
-    message: 'Hoo. Locked out. My tablet came upstairs with the old password and has been trying it all morning.',
+    message: 'Locked out. My tablet came upstairs with the old password and has been trying it all morning.',
     details: [
       { label: 'Login screen', text: 'This account has been locked.', ask: 'error' },
       { label: 'Devices', text: 'The tablet still has the old password, and keeps trying it.', ask: 'devices' },
@@ -2258,7 +2258,7 @@ export const TICKETS: Ticket[] = [
   {
     id: 't2106', day: 21, at: '16:00', who: 'pip', via: 'tray', priority: 'low', issue: 'mouse-battery', mood: 0,
     title: 'Mouse didn’t survive the stairs',
-    message: 'My mouse stopped on the stairs. It may be afraid of heights. Ribbit.',
+    message: 'My mouse stopped on the stairs. It may be afraid of heights.',
     details: [
       { label: 'Mouse', text: 'Wireless. The little light underneath is off.', ask: 'kind' },
       { label: 'Keyboard', text: 'Typing works fine.', ask: 'keyboard' },
@@ -2281,7 +2281,7 @@ export const TICKETS: Ticket[] = [
   {
     id: 't2202', day: 22, at: '10:20', who: 'pip', via: 'walkup', where: 'Finance corner', priority: 'normal', issue: 'switch-port', mood: 1,
     title: 'Wall socket is dead',
-    message: 'My new desk upstairs has a socket in the wall. The socket has no network. I have checked it thoroughly. With my finger. Ribbit.',
+    message: 'My new desk upstairs has a socket in the wall. The socket has no network. I have checked it thoroughly. With my finger.',
     details: [
       { label: 'Lights', text: 'No lights by the socket at all.', ask: 'lights' },
       { label: 'Other desk', text: 'Same cable works fine at the next desk.', ask: 'other' },
@@ -2364,7 +2364,7 @@ export const TICKETS: Ticket[] = [
   {
     id: 't2304', day: 23, at: '13:20', who: 'otis', via: 'tray', priority: 'normal', issue: 'printer-driver', mood: 1,
     title: 'Minutes printer, new floor',
-    message: 'Hoo. The new floor has a new printer. It came with a disc. My laptop has never seen a disc.',
+    message: 'The new floor has a new printer. It came with a disc. My laptop has never seen a disc.',
     details: [
       { label: 'Ports', text: 'Two USB-C. No disc drive.', ask: 'ports' },
       { label: 'How', text: 'With the disc that came in the box.', ask: 'how' },
@@ -2374,7 +2374,7 @@ export const TICKETS: Ticket[] = [
   {
     id: 't2305', day: 23, at: '14:50', who: 'pip', via: 'tray', priority: 'normal', issue: 'cable-unplugged', mood: 0,
     title: 'Cable came out in the move',
-    message: 'No internet. I moved my plant. The plant moved the cable. Ribbit.',
+    message: 'No internet. I moved my plant. The plant moved the cable.',
     details: [
       { label: 'Network icon', text: 'Network cable unplugged', ask: 'screen' },
       { label: 'Under the desk', text: 'The cable is out, behind the plant.', ask: 'under' },
@@ -2405,7 +2405,7 @@ export const TICKETS: Ticket[] = [
   {
     id: 't2402', day: 24, at: '10:30', who: 'otis', via: 'tray', priority: 'normal', issue: 'dns', mood: 1,
     title: 'Burrow Hub cannot be found',
-    message: 'Hoo. My laptop can find every website in the world except our own. The intranet has vanished. The minutes are on the intranet.',
+    message: 'My laptop can find every website in the world except our own. The intranet has vanished. The minutes are on the intranet.',
     details: [
       { label: 'Browser', text: 'Can’t reach this page. intranet.burrow.local’s address couldn’t be found.', ask: 'error' },
       { label: 'Outside sites', text: 'All fine.', ask: 'outside' },
@@ -2447,7 +2447,7 @@ export const TICKETS: Ticket[] = [
   {
     id: 't2406', day: 24, at: '16:10', who: 'pip', via: 'tray', priority: 'normal', issue: 'guest-wifi', mood: 1,
     title: 'Shared drive gone again',
-    message: 'I can see the internet but not the shared drive. I am on a Wi-Fi called Burrow-Guest. I picked it because it was there. Ribbit.',
+    message: 'I can see the internet but not the shared drive. I am on a Wi-Fi called Burrow-Guest. I picked it because it was there.',
     details: [
       { label: 'Wi-Fi', text: 'Burrow-Guest.', ask: 'network' },
       { label: 'Shared drive', text: 'Shared drive: not found', ask: 'drive' },
@@ -2499,7 +2499,7 @@ export const TICKETS: Ticket[] = [
   {
     id: 't2505', day: 25, at: '14:20', who: 'otis', via: 'tray', priority: 'low', issue: 'mouse-battery', mood: 0, fixedBy: 'spare',
     title: 'Mouse retired',
-    message: 'Hoo. My mouse has retired. I gave it new batteries. It did not come out of retirement.',
+    message: 'My mouse has retired. I gave it new batteries. It did not come out of retirement.',
     details: [
       { label: 'Mouse', text: 'Wireless. No light, even with new batteries.', ask: 'kind' },
       { label: 'Dropped', text: 'It fell down the new stairs. Every one of them.', ask: 'dropped' },
@@ -2509,7 +2509,7 @@ export const TICKETS: Ticket[] = [
   {
     id: 't2506', day: 25, at: '15:30', who: 'pip', via: 'tray', priority: 'normal', issue: 'dns', mood: 1,
     title: 'Burrow Hub can’t be found from the new floor',
-    message: 'Outside websites work. Oktopus works. Burrow Hub doesn’t. Someone helped me “speed up the internet”. Ribbit.',
+    message: 'Outside websites work. Oktopus works. Burrow Hub doesn’t. Someone helped me “speed up the internet”.',
     details: [
       { label: 'Browser', text: 'Can’t reach this page. The server’s address couldn’t be found.', ask: 'error' },
       { label: 'Outside sites', text: 'Fine.', ask: 'outside' },
@@ -2543,11 +2543,11 @@ export const TICKETS: Ticket[] = [
   {
     id: 't1408', day: 14, at: '10:15', who: 'otis', via: 'tray', priority: 'normal', issue: 'flow-build', mood: 1, flow: 'hr.left',
     title: 'Leavers, automatically',
-    message: 'Hoo. Hazel leaves us tomorrow, after two days. When HR marks someone as gone, they should lose their sign-in that same morning. And put the leaver steps in a helper flow of their own, please. The auditors will want to use them for more than one thing. Mark my words.',
+    message: 'Hazel leaves us tomorrow, after two days. When HR marks someone as gone, they should lose their sign-in that same morning. And put the leaver steps in a helper flow of their own, please. The auditors will want to use them for more than one thing. Mark my words.',
     details: [
       { label: 'What', text: 'Whoever leaves can’t sign in from that morning. And the steps for switching someone off should live in a flow of their own, so other flows can reuse them.', ask: 'what' },
       { label: 'When', text: 'Hazel, tomorrow morning.', ask: 'when' },
-      { label: 'Check', text: 'Test the leaver flow on Sam Sample. The helper’s steps show up under the card that called it. Hoo.', ask: 'check' },
+      { label: 'Check', text: 'Test the leaver flow on Sam Sample. The helper’s steps show up under the card that called it.', ask: 'check' },
     ],
     workaround: 'Deactivate Hazel by hand tomorrow',
   },
@@ -2577,11 +2577,11 @@ export const TICKETS: Ticket[] = [
   {
     id: 't1708', day: 17, at: '10:50', who: 'otis', via: 'tray', priority: 'normal', issue: 'verify-setup', mood: 1, subject: 'otis',
     title: 'A phone for the Company Secretary',
-    message: 'Hoo. I gather there are phones. I gather I am to have one. I would like it set up by someone who knows what they\u2019re doing, and failing that, by you.',
+    message: 'I gather there are phones. I gather I am to have one. I would like it set up by someone who knows what they\u2019re doing, and failing that, by you.',
     details: [
       { label: 'Who', text: 'Otis, Company Secretary.' },
       { label: 'Phone', text: 'Any of the new ones from your drawer.', ask: 'which' },
-      { label: 'Needs', text: 'Oktopus Verify on it, and a passcode. Hoo.', ask: 'how' },
+      { label: 'Needs', text: 'Oktopus Verify on it, and a passcode.', ask: 'how' },
       { label: 'When', text: 'Before the policy. He doesn\u2019t want to be locked out of his own minutes.', ask: 'when' },
     ],
     workaround: 'Lend him yours',
@@ -2612,7 +2612,7 @@ export const TICKETS: Ticket[] = [
   {
     id: 't1607', day: 16, at: '14:40', who: 'otis', via: 'tray', priority: 'normal', issue: 'flow-build', mood: 1, flow: 'sweep',
     title: 'Auditors: sweep every leaver, every morning',
-    message: 'Hoo. Told you. The auditors found Wren and Sam this morning, months gone and still in Active Directory. Never again: every morning, everyone HR has as left should be switched off. Oktopus AND Active Directory. And the leaver flow should do the same.',
+    message: 'Told you. The auditors found Wren and Sam this morning, months gone and still in Active Directory. Never again: every morning, everyone HR has as left should be switched off. Oktopus AND Active Directory. And the leaver flow should do the same.',
     details: [
       { label: 'What', text: 'A flow every morning at 9: get everyone HR has as terminated, and run your leaver helper for each of them. The helper should switch them off in Active Directory too.', ask: 'what' },
       { label: 'When', text: 'From tomorrow morning. Ideally before the auditors leave.', ask: 'when' },
@@ -2623,7 +2623,7 @@ export const TICKETS: Ticket[] = [
   {
     id: 't2307', day: 23, at: '15:20', who: 'otis', via: 'tray', priority: 'normal', issue: 'flow-build', mood: 1, flow: 'report',
     title: 'Auditors: who can use Voyago?',
-    message: 'Hoo. Last thing the auditors want: everyone in Finance who still works here (they’re who can book travel on Voyago), as Name (Title), posted in #general by Oktopus itself. Not typed by you. They want to see a machine did it.',
+    message: 'Last thing the auditors want: everyone in Finance who still works here (they’re who can book travel on Voyago), as Name (Title), posted in #general by Oktopus itself. Not typed by you. They want to see a machine did it.',
     details: [
       { label: 'What', text: 'One message in #general naming everyone in Finance, each as Name (Title). Only people who still work here. Posted by Oktopus, not by you.', ask: 'what' },
       { label: 'When', text: 'Today. Run it now, don’t wait for the morning.', ask: 'when' },

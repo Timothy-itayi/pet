@@ -162,7 +162,7 @@ export const NEW_STAFF_TICKETS: Ticket[] = [
   {
     id: 't614', day: 6, at: '11:30', who: 'otis', via: 'tray', priority: 'normal', issue: 'cable-unplugged', mood: 0,
     title: 'No network at the window desk',
-    message: 'Hoo. My desk PC says there is no network. I have sat here eleven years. It has never said this before.',
+    message: 'My desk PC says there is no network. I have sat here eleven years. It has never said this before.',
     details: [
       { label: 'PC screen', text: 'Network cable unplugged.', ask: 'screen' },
       { label: 'Under the desk', text: 'The cable is curled beside a pair of shoes that aren’t his.', ask: 'under' },
@@ -246,7 +246,7 @@ export const NEW_STAFF_TICKETS: Ticket[] = [
   {
     id: 't912', day: 9, at: '10:43', who: 'pip', via: 'tray', priority: 'low', issue: 'mouse-battery', mood: 0,
     title: 'Mouse has gone stiff',
-    message: 'My mouse stopped. I tapped it twice. Nothing. It’s a good mouse. I like it. Ribbit.',
+    message: 'My mouse stopped. I tapped it twice. Nothing. It’s a good mouse. I like it.',
     details: [
       { label: 'Mouse', text: 'Wireless. The light underneath is off.', ask: 'kind' },
       { label: 'Keyboard', text: 'Typing is fine.', ask: 'keyboard' },
@@ -277,7 +277,7 @@ export const NEW_STAFF_TICKETS: Ticket[] = [
   {
     id: 't1012', day: 10, at: '10:23', who: 'pip', via: 'tray', priority: 'normal', issue: 'wrong-charger', mood: 0,
     title: 'My laptop is hungry',
-    message: 'My laptop charges at the speed of a snail. It’s on a charger that fits. Is it not hungry? Ribbit.',
+    message: 'My laptop charges at the speed of a snail. It’s on a charger that fits. Is it not hungry?',
     details: [
       { label: 'Charger', text: 'USB-C, 18W. Says “phone” on it.', ask: 'charger' },
       { label: 'Laptop sticker', text: 'Use a 65W or higher USB-C charger.', ask: 'sticker' },
@@ -586,7 +586,7 @@ export const NEW_STAFF_TICKETS: Ticket[] = [
   {
     id: 't2213', day: 22, at: '10:58', who: 'pip', via: 'tray', priority: 'normal', issue: 'slow-laptop', mood: 1,
     title: 'Laptop slow as a snail',
-    message: 'My laptop is so slow it’s almost relaxing. But I can’t count staplers with it. Ribbit.',
+    message: 'My laptop is so slow it’s almost relaxing. But I can’t count staplers with it.',
     details: [
       { label: 'Laptop info', text: 'Last restarted: 24 days ago. 10 updates waiting.', ask: 'uptime' },
       { label: 'Disk', text: '35% used. Mostly photos of staplers.', ask: 'disk' },
@@ -653,7 +653,7 @@ export const NEW_STAFF_TICKETS: Ticket[] = [
   {
     id: 't2413', day: 24, at: '11:10', who: 'pip', via: 'tray', priority: 'low', issue: 'monitor-input', mood: 0,
     title: 'Stationery screen is blue',
-    message: 'The screen by the stationery cupboard says no signal. It’s an excellent blue. But I can’t read the delivery list. Ribbit.',
+    message: 'The screen by the stationery cupboard says no signal. It’s an excellent blue. But I can’t read the delivery list.',
     details: [
       { label: 'Screen', text: 'No signal – HDMI 1', ask: 'screen' },
       { label: 'Cable', text: 'Plugged into HDMI 2. (A delivery driver bumped it, humming.)', ask: 'cable' },

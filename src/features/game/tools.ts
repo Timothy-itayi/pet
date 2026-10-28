@@ -13,7 +13,7 @@ export const TOOLS: Tool[] = [
   },
   {
     id: 'wifi-card', from: 'otis', name: 'Otis’s staff Wi-Fi card', issue: 'guest-wifi',
-    gift: 'A laminated card with a QR code: “Burrow-Staff. Point a camera at it. No password to forget. Hoo. – Otis”',
+    gift: 'A laminated card with a QR code: “Burrow-Staff. Point a camera at it. No password to forget. – Otis”',
     fixLabel: 'Scan the staff Wi-Fi QR card with their laptop',
     note: {
       example: 'Staff Wi-Fi QR card: scan it to join Burrow-Staff. Staff only, never for visitors.',
@@ -31,7 +31,7 @@ export const TOOLS: Tool[] = [
   },
   {
     id: 'cable-tester', from: 'pip', name: 'Pip’s pocket cable tester', issue: 'cable-unplugged',
-    gift: 'A little yellow box with blinking lights. “Found it in my car. You need it more. Ribbit. – Pip”',
+    gift: 'A little yellow box with blinking lights. “Found it in my car. You need it more. – Pip”',
     fixLabel: 'Check the line with the cable tester, then plug it back in',
     note: {
       example: 'Cable tester: its lights show whether a network cable works end to end. Test before blaming the PC.',
