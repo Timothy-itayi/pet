@@ -62,7 +62,7 @@ export function endingScreen(app: App): HTMLElement {
     },
     passedOver: {
       title: 'Not this time',
-      text: `Two interviews, two polite no\u2019s. You know more than you showed them: you kept answering before you\u2019d asked. The feedback is yours to keep, and it\u2019s worth more than the bus fare it cost. ${MANAGER}\u2019s offer still stands: minimum wage, same desk, still no phone. The job board isn\u2019t going anywhere. Next time, ask before you answer.`,
+      text: `Two interviews, two polite no\u2019s. You know more than you showed them: you kept answering before you\u2019d asked. The feedback is yours to keep, and it\u2019s worth more than the bus fare it cost. ${MANAGER} will still take you on: minimum wage, same desk, still no phone. The job board isn\u2019t going anywhere. Next time, ask before you answer.`,
     },
     stay: {
       title: 'Same desk, forever',
