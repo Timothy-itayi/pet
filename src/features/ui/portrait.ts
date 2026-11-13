@@ -4,6 +4,7 @@
  * tone, hair and look.
  */
 import { artFor, faceId } from '../game/art.ts';
+import { INTERVIEWERS } from '../game/interview.ts';
 
 type Hair = 'short' | 'long' | 'bun' | 'curly' | 'bald' | 'bob';
 
@@ -34,6 +35,10 @@ const LOOKS: Record<string, Look> = {
   Hector: { skin: '#f1cfae', hair: 'short', hairColour: '#8a8a8a', shirt: '#44546a', glasses: true },
   Sam: { skin: '#d9a77f', hair: 'short', hairColour: '#5a3a22', shirt: '#555', beard: true },
   IT: { skin: '#e9bf98', hair: 'short', hairColour: '#3a2a1e', shirt: '#3a6ea5' },
+  // The interviewers at other companies.
+  'Ms. Hale': { skin: '#e7b996', hair: 'bun', hairColour: '#9a9a9a', shirt: '#6b4e7a', glasses: true },
+  'Mr. Okafor': { skin: '#6a4029', hair: 'short', hairColour: '#141010', shirt: '#22344f', beard: true },
+  'Ms. Marr': { skin: '#f4d6bd', hair: 'bob', hairColour: '#2b2b2b', shirt: '#1f5f63' },
 };
 
 const ns = 'http://www.w3.org/2000/svg';
@@ -45,7 +50,8 @@ function shape(tag: string, attrs: Record<string, string>): SVGElement {
 
 /** A round portrait of someone, by name: their painting, or their drawn face. Anyone without a look is the intern. */
 export function portrait(name: string, size = 40): Element {
-  const painted = artFor(faceId(name));
+  // Interviewers from other companies have no painting: drawn, rather than shown with the intern's face.
+  const painted = Object.values(INTERVIEWERS).includes(name) ? undefined : artFor(faceId(name));
   if (painted) {
     const img = document.createElement('img');
     Object.assign(img, { src: import.meta.env.BASE_URL + painted.image, alt: name, width: size, height: size, className: 'portrait painted' });
