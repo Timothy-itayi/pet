@@ -416,16 +416,16 @@ describe('money and endings', () => {
     expect(playDay({ ...newGame(), savings: DAILY_COST }, lazy).ending).toBe('burnout');
   });
 
-  it('fixing everything gets you hired by the library; Big Ocean also wants you to have written up what you learned', () => {
+  it('fixing everything gets you an interview at the library; Big Ocean also wants you to have written up what you learned', () => {
     const play = (each: Act) => { let s = newGame(); while (s.day <= DAYS) s = playDay(s, each); return s; };
     const fixesOnly = play((x, id) => handle(x, id, (y, i) => fix(admin(y, i), i, correct(i))));
     expect(apply(fixesOnly, 'ocean')).toBe(fixesOnly);
-    expect(apply(fixesOnly, 'library').ending).toBe('hired');
+    expect(apply(fixesOnly, 'library')).toMatchObject({ phase: 'interview', interview: { jobId: 'library' } });
     expect(acceptOffer(fixesOnly).ending).toBe('stay');
     const withNotes = play((x, id) => handle(x, id, (y, i) => writeNote(fix(admin(y, i), i, correct(i)), noteTarget(y, { ticketId: i, kind: 'fix', xp: 0 })?.note.example ?? '')));
-    expect(apply(withNotes, 'ocean').ending).toBe('hired');
+    expect(apply(withNotes, 'ocean').phase).toBe('interview');
     expect(apply(fixesOnly, 'lighthouse')).toBe(fixesOnly); // a security job needs access written up, not just done
-    expect(apply(withNotes, 'lighthouse')).toMatchObject({ ending: 'hired', jobId: 'lighthouse' });
+    expect(apply(withNotes, 'lighthouse')).toMatchObject({ phase: 'interview', interview: { jobId: 'lighthouse' } });
   }, 30_000); // plays every day of the game
 });
 

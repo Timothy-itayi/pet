@@ -60,6 +60,10 @@ export function endingScreen(app: App): HTMLElement {
       title: 'Burnt out',
       text: 'The bus fare ran out before the promises did. You hand in your badge. You learned a lot, but it’s hard to keep going without being paid. Next time, close more tickets and get your résumé onto that job board sooner.',
     },
+    passedOver: {
+      title: 'Not this time',
+      text: `Two interviews, two polite no\u2019s. You know more than you showed them: you kept answering before you\u2019d asked. The feedback is yours to keep, and it\u2019s worth more than the bus fare it cost. ${MANAGER} will still take you on: minimum wage, same desk, still no phone. The job board isn\u2019t going anywhere. Next time, ask before you answer.`,
+    },
     stay: {
       title: 'Same desk, forever',
       text: `You take ${MANAGER}’s offer. Minimum wage, same desk, still no phone. It’s a start, and your résumé says “IT Support” now. The job board is still there, whenever you’re ready.`,

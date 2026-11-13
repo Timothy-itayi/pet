@@ -14,6 +14,7 @@ import { refreshTimes } from './features/ui/desk.ts';
 import { powerAway } from './features/ui/power.ts';
 import { desktopScreen, notify } from './features/ui/desktop.ts';
 import { dayEndScreen, endingScreen } from './features/ui/endings.ts';
+import { interviewScreen } from './features/ui/interview.ts';
 import { announce, computerHud, deskVisitor, pickInRoom, roomHud, roomKeys } from './features/ui/roomHud.ts';
 import { ambience, chime, click, keystroke, wake } from './features/ui/sound.ts';
 
@@ -67,7 +68,9 @@ const app: App = {
   rerender() {
     const { phase } = app.state;
     const { ui } = app;
-    const fullPage = (phase === 'dayEnd' && !ui.windingDown) || phase === 'ending';
+    // An interview, like an ending, happens away from the office: the whole page, no room behind it.
+    const away = phase === 'ending' || phase === 'interview';
+    const fullPage = (phase === 'dayEnd' && !ui.windingDown) || away;
     const atComputer = ui.view === 'computer' && !fullPage;
 
     // The monitor: logged in, it's the game's computer; otherwise dark, asleep, booting or locked.
@@ -85,6 +88,7 @@ const app: App = {
 
     // The page over the 3D: full screens, the room's caption and buttons, or a way to stand up from the computer.
     const top = phase === 'ending' ? endingScreen(app)
+      : phase === 'interview' ? interviewScreen(app)
       : fullPage ? dayEndScreen(app)
       : ui.view === 'room' ? roomHud(app)
       : computerHud(app);
@@ -92,11 +96,11 @@ const app: App = {
 
     document.body.classList.toggle('in-room', !fullPage);
     // The day's summary sits over the desk, dimmed; an ending gets the whole page.
-    showRoom(phase !== 'ending');
+    showRoom(!away);
     document.body.classList.toggle('day-over', fullPage);
     setAtComputer(atComputer && !ui.flying);
     // The room is heard from the desk, and fades out once you sit down at the computer.
-    ambience(!atComputer && phase !== 'ending');
+    ambience(!atComputer && !away);
     void goTo(atComputer ? 'computer' : ui.shot);
     setScreen(p === 'off' ? 'off' : p === 'asleep' ? 'asleep' : 'on');
     setTools(app.state.tools);

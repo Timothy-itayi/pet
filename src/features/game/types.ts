@@ -1,6 +1,7 @@
 import type { VillagerId } from './data.ts';
 import type { Department } from './directory.ts';
 import type { FlowTask } from './flows.ts';
+import type { Kind } from './questions.ts';
 
 export type Skill = 'devices' | 'networks' | 'access';
 export const SKILLS: readonly Skill[] = ['devices', 'networks', 'access'];
@@ -60,6 +61,8 @@ export interface Ask {
   step?: 'context' | 'isolate';
   /** The suspects (fix ids) this question's answer rules out, usually. Never the ticket's real cause. */
   rulesOut?: string[];
+  /** Which question in the bank (questions.ts) gets this answer, from week 2. Set in reasoning.ts, like `step`. */
+  kind?: Kind;
 }
 
 /** Something you can see on the ticket: what's on their screen, a sticker, a cable. */
