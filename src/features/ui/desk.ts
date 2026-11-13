@@ -7,6 +7,7 @@ import {
   recordClue, ruleOut, scriptFor, suggest, suggestions, ticketById, ticketState, weekOf, workaround, writeNote, type GameState, type Outcome, type Status, type TicketState,
 } from '../game/rules.ts';
 import { cluesFor, duckLine, effortOf, SAMS_METHOD, suspectsOf, suspectText } from '../game/notebook.ts';
+import { askKind, questionsFor, usesBank } from '../game/questions.ts';
 import type { ConsoleFix, Fix, Ticket } from '../game/types.ts';
 import { portrait } from './portrait.ts';
 import type { App } from './app.ts';
@@ -149,7 +150,7 @@ function callerLine(app: App, t: Ticket): HTMLElement {
       c.doing === 'answer' ? `\u23F3 Waiting for ${name} to reply\u2026` : `\u23F3 ${name} is trying it\u2026`,
       h('span', { class: 'meta' }, ' Work on another ticket meanwhile; you\u2019ll get a notification.'));
   }
-  const said = st.heard.length || st.tried.length ? st.messages.at(-1) : undefined;
+  const said = st.heard.length || st.tried.length || st.duds?.length ? st.messages.at(-1) : undefined;
   return h('div', { class: 'sn-info said', 'data-testid': 'caller-line' }, said?.from === 'them'
     ? h('p', { class: 'sn-said' }, h('strong', {}, `${name}: `), quoted(said.text))
     : h('p', {}, `Find out what\u2019s really going on: ask ${name} a question, or suggest something to try.`));
@@ -176,14 +177,18 @@ function troubleshoot(app: App, t: Ticket): HTMLElement {
     : known && (id === fixFor(t) || id === issue.correctFix || id === 'console') ? 'Your notebook says this' : undefined;
   const chip = (label: string | HTMLElement[], testid: string, onclick: () => void, tag?: string) => h('button', { class: `sn-chip${tag ? ' hinted' : ''}`, 'data-testid': testid, disabled: busy, onclick },
     ...(Array.isArray(label) ? label : [label]), tag && h('span', { class: 'from-note-tag' }, tag));
+  // Week 1: the problem's own three questions. From week 2: the same eight on every ticket, and you pick.
+  const questions = usesBank(state)
+    ? questionsFor(state, t).map((q) => ({ key: q.kind, step: q.step, text: q.text, asked: q.asked, go: () => askKind(state, t.id, q.kind) }))
+    : asks.map((a) => ({ key: a.id, step: a.step ?? 'context', text: fill(t, a.text), asked: st.heard.includes(a.id), go: () => ask(state, t.id, a.id) }));
   const askGroup = (step: 'context' | 'isolate', title: string) => {
-    const these = asks.filter((a) => (a.step ?? 'context') === step);
+    const these = questions.filter((q) => q.step === step);
     return these.length > 0 && h('div', { role: 'group', 'aria-label': title },
       h('p', { class: 'sn-chip-title' }, title),
       // Asked ones stay, ticked, so the list never shifts under the pointer.
-      ...these.map((a) => st.heard.includes(a.id)
-        ? h('button', { class: 'sn-chip asked', 'data-testid': `asked-${a.id}`, disabled: true }, '✓ ', fill(t, a.text))
-        : chip(fill(t, a.text), `ask-${a.id}`, () => app.set(ask(state, t.id, a.id)))));
+      ...these.map((q) => q.asked
+        ? h('button', { class: 'sn-chip asked', 'data-testid': `asked-${q.key}`, disabled: true }, '✓ ', q.text)
+        : chip(q.text, `ask-${q.key}`, () => app.set(q.go()))));
   };
   const consoleCheck = suggestions(state, t).find((f) => f.id === 'console');
   return h('div', { class: 'sn-troubleshoot', 'data-testid': 'troubleshoot' },

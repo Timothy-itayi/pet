@@ -4,7 +4,8 @@
  * possible fix), the clues you've heard, and which suspects those clues rule out. Afterwards you pick the clue that
  * proved it, and that's your notebook entry for next time.
  */
-import type { Fix, Ticket } from './types.ts';
+import { BANK, usesBank } from './questions.ts';
+import type { Ask, Fix, Ticket } from './types.ts';
 import { fill, fixFor, issueOf, knownDetails, type GameState, type TicketState } from './rules.ts';
 
 export type Step = 'context' | 'isolate';
@@ -78,21 +79,23 @@ export function duckLine(s: GameState, t: Ticket, times: number): string {
   const issue = issueOf(t);
   const unasked = (step: Step) => issue.asks.find((a) => a.step === step && !st.heard.includes(a.id));
   const left = standing(t, st).filter((f) => !st.tried.includes(f.id));
+  // From week 2 you pick from the bank, so quoting the problem's own question would give it away.
+  const say = (q: Ask) => (usesBank(s) && q.kind ? BANK[q.kind].text : fill(t, q.text));
   // A request (set someone up, add an app) has no suspects: nothing's broken, so the questions are what and for whom.
   const request = suspectsOf(t).length === 0;
   if (!st.heard.length) {
     const q = unasked('context');
     const opener = request ? 'Quack. What exactly are they asking for, and for whom?' : 'Quack. What do you actually know so far? What changed since it last worked?';
-    return times === 0 || !q ? opener : `Quack. Sam would start with something like: “${fill(t, q.text)}”`;
+    return times === 0 || !q ? opener : `Quack. Sam would start with something like: “${say(q)}”`;
   }
   const isolated = issue.asks.some((a) => a.step === 'isolate' && st.heard.includes(a.id));
   if (!isolated && (st.crossed ?? []).length === 0 && suspectsOf(t).length >= 2) {
     const q = unasked('isolate');
-    return times === 0 || !q ? 'Quack. What would cut this in half? One person, or everyone? This device, or all of them?' : `Quack. What about: “${fill(t, q.text)}”`;
+    return times === 0 || !q ? 'Quack. What would cut this in half? One person, or everyone? This device, or all of them?' : `Quack. What about: “${say(q)}”`;
   }
   if (request) {
     const q = unasked('context') ?? unasked('isolate');
-    return times === 0 || !q ? 'Quack. Where would you look to know for sure? Check it before you change anything.' : `Quack. Have you asked: “${fill(t, q.text)}”`;
+    return times === 0 || !q ? 'Quack. Where would you look to know for sure? Check it before you change anything.' : `Quack. Have you asked: “${say(q)}”`;
   }
   if (left.length > 1) {
     const cheapest = [...left].sort((a, b) => effortOf(a) - effortOf(b))[0];
