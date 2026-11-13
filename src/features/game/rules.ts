@@ -8,6 +8,7 @@ import { flowProblem, runToday, TASKS, TRIGGERS, upgradeFlow } from './flows.ts'
 import { cluesFor, crossedBy, firstTest, methodStars, suspectsOf, type Stars } from './notebook.ts';
 import { BREAK, breakPhone, newPhones, PHONES_DAY, replacedSince, replaceProblem, settleRequests, verifyProblem, type HardwareRequest, type Phone } from './phones.ts';
 import { awayLine, backAt, dayMood } from './people.ts';
+import type { Kind } from './questions.ts';
 import { appsOf, CATALOG, hrOn, needsMfa, newOkta, type Okta } from './oktopus.ts';
 import { MOODS, type ConsoleFix, type Fix, type Issue, type Note, type Job, type Mood, type PageStatus, type Relation, type Skill, type Ticket, type Tool } from './types.ts';
 
@@ -51,6 +52,8 @@ export interface TicketState {
   looked?: boolean;
   /** How you started testing; `known` if it was already in your notebook then. */
   first?: { fix: string; asked: number; crossed: number; simplest: boolean; known?: boolean };
+  /** Questions from the bank that didn't fit this problem: asked, and answered with a shrug. Never clues. */
+  duds?: Kind[];
 }
 
 export interface Outcome {
@@ -206,7 +209,7 @@ const emptyToday = (): Today => ({
 });
 
 /** Each action copies the state, so the caller can keep or drop the old one. */
-function act(s: GameState, fn: (d: GameState) => void): GameState {
+export function act(s: GameState, fn: (d: GameState) => void): GameState {
   const d = structuredClone(s);
   fn(d);
   return d;
@@ -309,7 +312,7 @@ function slip(d: GameState, t: Ticket): void {
 }
 
 /** Run the office clock forward: people's tickets and messages arrive on time. */
-function advance(d: GameState, minutes: number): void {
+export function advance(d: GameState, minutes: number): void {
   d.clock = Math.min(d.clock + minutes, LOCKUP);
   settleRequests(d);
   for (const id of [...d.queue]) {
@@ -643,7 +646,7 @@ function replyAt(d: GameState, t: Ticket, minutes: number): number {
 }
 
 /** It's your move on this ticket: it's in your queue and the caller isn't busy with something you asked. */
-function yourMove(s: GameState, id: string): Ticket | undefined {
+export function yourMove(s: GameState, id: string): Ticket | undefined {
   const t = workable(s, id);
   return t && !ticketState(s, id).caller ? t : undefined;
 }
