@@ -7,13 +7,14 @@ import { MINUTES_A_DAY, newAccounts, type Account } from './directory.ts';
 import { flowProblem, runToday, TASKS, TRIGGERS, upgradeFlow } from './flows.ts';
 import { cluesFor, crossedBy, firstTest, methodStars, suspectsOf, type Stars } from './notebook.ts';
 import { BREAK, breakPhone, newPhones, PHONES_DAY, replacedSince, replaceProblem, settleRequests, verifyProblem, type HardwareRequest, type Phone } from './phones.ts';
+import { interviewFor, type InterviewState } from './interview.ts';
 import { awayLine, backAt, dayMood } from './people.ts';
 import type { Kind } from './questions.ts';
 import { appsOf, CATALOG, hrOn, needsMfa, newOkta, type Okta } from './oktopus.ts';
 import { MOODS, type ConsoleFix, type Fix, type Issue, type Note, type Job, type Mood, type PageStatus, type Relation, type Skill, type Ticket, type Tool } from './types.ts';
 
-export type Phase = 'boot' | 'desktop' | 'desk' | 'dayEnd' | 'ending';
-export type Ending = 'hired' | 'burnout' | 'stay';
+export type Phase = 'boot' | 'desktop' | 'desk' | 'dayEnd' | 'interview' | 'ending';
+export type Ending = 'hired' | 'burnout' | 'stay' | 'passedOver';
 /** A ticket's life, like a real service desk: new, open (you've replied), pending (pushed back), resolved. */
 export type Status = 'new' | 'open' | 'pending' | 'resolved';
 /** At your computer, or away from it helping someone in person. */
@@ -144,6 +145,8 @@ export interface GameState {
   notice?: { ticketId: string; text: string };
   ending?: Ending;
   jobId?: string;
+  /** A job interview you're sitting, after applying. */
+  interview?: InterviewState;
 }
 
 const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
@@ -953,13 +956,13 @@ export const missingFor = (s: GameState, job: Job): { skill: Skill; need: number
     .filter(([skill, need]) => s.xp[skill] < need)
     .map(([skill, need]) => ({ skill, need, have: s.xp[skill] }));
 
+/** Apply for a job you're qualified for: they invite you to an interview (interview.ts). */
 export function apply(s: GameState, jobId: string): GameState {
   const job = JOBS.find((j) => j.id === jobId);
   if (!job || missingFor(s, job).length > 0) return s;
   return act(s, (d) => {
-    d.ending = 'hired';
-    d.jobId = jobId;
-    d.phase = 'ending';
+    d.interview = interviewFor(jobId);
+    d.phase = 'interview';
   });
 }
 
